@@ -194,7 +194,7 @@
     </section>
 
     <!-- ========================================== -->
-    <!-- VIEW 3: مخزن الأجهزة والأرصدة (الجدول المباشر فقط) -->
+    <!-- VIEW 3: مخزن الأجهزة والأرصدة (بدون عمود الحذف) -->
     <!-- ========================================== -->
     <section id="view-inventory" class="hidden">
       <div class="bg-[#111726] border border-slate-800 rounded-3xl p-4 shadow-xl">
@@ -208,7 +208,6 @@
                 <th class="p-2.5">سعر الشراء</th>
                 <th class="p-2.5 text-emerald-400 font-bold">سعر الكاش المعتمد</th>
                 <th class="p-2.5 text-center">تحديث السعر</th>
-                <th class="p-2.5 text-center">حذف الصنف</th>
               </tr>
             </thead>
             <tbody id="inventoryTableBody" class="divide-y divide-slate-800 text-slate-300"></tbody>
@@ -1049,7 +1048,7 @@
     }
 
     // ==========================================
-    // 2. إدارة المخزن (جدول مباشر فقط)
+    // 2. إدارة المخزن (جدول مباشر ونظيف بدون عمود الحذف)
     // ==========================================
     function renderInventoryTable() {
       const inventory = buildDynamicInventory();
@@ -1059,7 +1058,7 @@
       if (inventory.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="7" class="p-8 text-center text-slate-500">
+            <td colspan="6" class="p-8 text-center text-slate-500">
               المخزن فارغ حالياً. لإضافة بضاعة للمخزن، توجه إلى قسم <b>"الموردين والمشتريات"</b> وسجل توريدة جديدة من أحد الموردين وستظهر هنا فوراً.
             </td>
           </tr>
@@ -1085,11 +1084,6 @@
                 تحديث
               </button>
             </td>
-            <td class="p-2.5 text-center">
-              <button onclick="deleteInventoryItemDirectly('${item.supplierId}', '${item.itemId}')" class="text-rose-400 hover:text-rose-300 p-1 text-xs" title="حذف الصنف من المخزن والمورد">
-                <i class="fa-solid fa-trash-can"></i>
-              </button>
-            </td>
           </tr>
         `;
       });
@@ -1110,11 +1104,6 @@
       populateDeviceSelects();
       renderInventoryTable();
       alert(`تم اعتماد وتحديث سعر البيع الكاش لصنف (${itemName}) إلى ${newPrice.toLocaleString()} ج.م.`);
-    }
-
-    function deleteInventoryItemDirectly(supId, itemId) {
-      deleteSupplierItem(supId, itemId);
-      renderInventoryTable();
     }
 
     function populateDeviceSelects() {
