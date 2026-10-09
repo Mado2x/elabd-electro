@@ -182,42 +182,21 @@
             </button>
           </div>
 
-          <!-- قائمة كروت الموردين القابلة للنقر -->
           <div id="suppliersMasterList" class="flex-1 overflow-y-auto space-y-2 custom-scrollbar"></div>
         </div>
 
         <!-- اللوحة اليسرى: التفاصيل وجدول الأصناف للمورد المختار -->
         <div class="flex-1 bg-[#111726] border border-slate-800 rounded-3xl p-4 md:p-5 flex flex-col justify-between">
-          <div id="supplierDetailContainer" class="space-y-4">
-            <!-- يمتلئ تلقائياً عبر JavaScript -->
-          </div>
+          <div id="supplierDetailContainer" class="space-y-4"></div>
         </div>
 
       </div>
     </section>
 
     <!-- ========================================== -->
-    <!-- VIEW 3: مخزن الأجهزة والأرصدة (مرتبط حصراً بالموردين) -->
+    <!-- VIEW 3: مخزن الأجهزة والأرصدة (الجدول المباشر فقط) -->
     <!-- ========================================== -->
-    <section id="view-inventory" class="hidden space-y-4">
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-[#111726] p-4 rounded-3xl border border-slate-800 shadow-lg">
-        <div>
-          <h3 class="text-base font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-boxes-stacked text-cyan-400"></i>
-            مخزن الأجهزة والأرصدة المركزية
-          </h3>
-          <p class="text-xs text-slate-400 mt-0.5">الأصناف تُضاف تلقائياً عند تسجيل فواتير الموردين لمنع الأخطاء والتلاعب</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="px-3 py-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl text-xs font-bold flex items-center gap-1.5">
-            <i class="fa-solid fa-link"></i> ربط آلي مع الموردين
-          </span>
-          <button onclick="switchView('suppliers')" class="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow transition flex items-center gap-1.5">
-            <i class="fa-solid fa-plus"></i> توريد بضاعة جديدة
-          </button>
-        </div>
-      </div>
-
+    <section id="view-inventory" class="hidden">
       <div class="bg-[#111726] border border-slate-800 rounded-3xl p-4 shadow-xl">
         <div class="overflow-x-auto">
           <table class="w-full text-right text-xs">
@@ -228,7 +207,7 @@
                 <th class="p-2.5 text-center text-cyan-400 font-bold">الكمية</th>
                 <th class="p-2.5">سعر الشراء</th>
                 <th class="p-2.5 text-emerald-400 font-bold">سعر الكاش المعتمد</th>
-                <th class="p-2.5 text-center">تحديث سعر البيع</th>
+                <th class="p-2.5 text-center">تحديث السعر</th>
                 <th class="p-2.5 text-center">حذف الصنف</th>
               </tr>
             </thead>
@@ -573,7 +552,6 @@
     const STORAGE_KEY_SALES = 'elabd_sales_v3';
     const STORAGE_KEY_CONTRACTS = 'elabd_contracts_v3';
 
-    // الموردين الافتراضيين مع الأصناف الموردة
     const defaultSuppliersData = [
       {
         id: 'SUP-01',
@@ -597,7 +575,6 @@
       }
     ];
 
-    // أسعار البيع الكاش المحددة للأصناف
     const defaultSellingPrices = {
       'ثلاجة توشيبا 16 قدم نوفروست': 25000,
       'ميكروويف شارب 25 لتر بالشواية': 6500,
@@ -649,7 +626,6 @@
     let selectedSupplierId = 'SUP-01';
     let selectedContractForView = null;
 
-    // دوال الحفظ والاسترجاع
     function getDetailedSuppliers() {
       const d = localStorage.getItem(STORAGE_KEY_DETAILED_SUPPLIERS);
       return d ? JSON.parse(d) : defaultSuppliersData;
@@ -682,7 +658,6 @@
       localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(d));
     }
 
-    // بناء قائمة المخزن ديناميكياً من الموردين مطروحاً منها المبيعات
     function buildDynamicInventory() {
       const suppliers = getDetailedSuppliers();
       const sales = getStoredSales();
@@ -710,7 +685,6 @@
         });
       });
 
-      // خصم الأجهزة المباعة
       sales.forEach(sale => {
         const itemEntry = Object.values(inventoryMap).find(x => x.name === sale.deviceName);
         if (itemEntry) {
@@ -1014,7 +988,6 @@
         remaining
       });
 
-      // حفظ سعر بيع كاش افتراضي بهامش ربح 20% إن لم يكن محدداً مسبقاً
       const sellingPrices = getSellingPrices();
       if (!sellingPrices[itemName]) {
         sellingPrices[itemName] = Math.round(unitPrice * 1.2);
@@ -1076,7 +1049,7 @@
     }
 
     // ==========================================
-    // 2. إدارة المخزن (مرتبط بالموردين حصراً - الكمية رقم مجرد)
+    // 2. إدارة المخزن (جدول مباشر فقط)
     // ==========================================
     function renderInventoryTable() {
       const inventory = buildDynamicInventory();
