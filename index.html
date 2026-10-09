@@ -58,16 +58,16 @@
       </div>
     </div>
 
-    <!-- الروابط -->
+    <!-- الروابط الأساسية -->
     <nav class="p-3 space-y-1.5 text-xs flex-1 overflow-y-auto custom-scrollbar">
       <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold transition">
         <i class="fa-solid fa-chart-pie w-4 text-center"></i>
         <span>الرئيسية والمحفظة</span>
       </button>
 
-      <button onclick="switchView('installments')" id="nav-installments" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition">
-        <i class="fa-solid fa-calendar-check w-4 text-center text-emerald-400"></i>
-        <span>سجل وإدارة الأقساط</span>
+      <button onclick="switchView('suppliers')" id="nav-suppliers" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition">
+        <i class="fa-solid fa-truck-ramp-box w-4 text-center text-purple-400"></i>
+        <span>الموردين والمشتريات</span>
       </button>
 
       <button onclick="switchView('inventory')" id="nav-inventory" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition">
@@ -80,9 +80,9 @@
         <span>فواتير وعقود البيع</span>
       </button>
 
-      <button onclick="switchView('suppliers')" id="nav-suppliers" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition">
-        <i class="fa-solid fa-truck-ramp-box w-4 text-center text-purple-400"></i>
-        <span>الموردين والشركات</span>
+      <button onclick="switchView('installments')" id="nav-installments" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition">
+        <i class="fa-solid fa-calendar-check w-4 text-center text-emerald-400"></i>
+        <span>سجل وإدارة الأقساط</span>
       </button>
     </nav>
   </aside>
@@ -109,7 +109,6 @@
     <!-- VIEW 1: الرئيسية والموقف المالي (DASHBOARD) -->
     <!-- ========================================== -->
     <section id="view-dashboard" class="space-y-4">
-      <!-- كارت المحفظة الرئيسي -->
       <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-[#111726] to-blue-950/80 border border-blue-500/30 p-5 shadow-2xl">
         <div class="flex justify-between items-start mb-3">
           <div>
@@ -121,7 +120,6 @@
           </button>
         </div>
 
-        <!-- ملخص أرقام المعرض -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2 pt-3 border-t border-slate-800/80 text-center">
           <div class="bg-slate-900/80 border border-emerald-500/20 p-2.5 rounded-2xl">
             <span class="text-[10px] text-emerald-400 block font-bold">المحصل في الخزينة</span>
@@ -132,7 +130,7 @@
             <p class="text-sm md:text-base font-black text-amber-300 mt-0.5" id="dashInstallmentsRemainingVal">0 ج.م</p>
           </div>
           <div class="bg-slate-900/80 border border-rose-500/20 p-2.5 rounded-2xl">
-            <span class="text-[10px] text-rose-400 block font-bold">أقساط متأخرة واجبة التحصيل</span>
+            <span class="text-[10px] text-rose-400 block font-bold">أقساط متأخرة مستحقة</span>
             <p class="text-sm md:text-base font-black text-rose-300 mt-0.5" id="dashOverdueInstallmentsVal">0 ج.م</p>
           </div>
           <div class="bg-slate-900/80 border border-purple-500/20 p-2.5 rounded-2xl">
@@ -142,7 +140,6 @@
         </div>
       </div>
 
-      <!-- الأقساط المستحقة هذا الشهر وتنبيهات السداد -->
       <div class="bg-[#111726] border border-slate-800 rounded-3xl p-4 shadow-xl">
         <div class="flex justify-between items-center mb-3">
           <h4 class="font-bold text-sm text-white flex items-center gap-2">
@@ -169,38 +166,33 @@
     </section>
 
     <!-- ========================================== -->
-    <!-- VIEW 2: سجل وإدارة الأقساط بالكامل (INSTALLMENTS) -->
+    <!-- VIEW 2: الموردين بنظام القائمة المزدوجة المفصلة -->
     <!-- ========================================== -->
-    <section id="view-installments" class="hidden space-y-4">
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-[#111726] p-4 rounded-3xl border border-slate-800">
-        <div>
-          <h3 class="text-base font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-calendar-check text-emerald-400"></i>
-            دفتر وعقود البيع بالتقسيط
-          </h3>
-          <p class="text-xs text-slate-400 mt-0.5">متابعة دفعات العملاء، حساب الفائدة، تواريخ الاستحقاق، ورصيد كل عميل</p>
-        </div>
-        <input type="text" id="searchInstallmentInput" oninput="renderInstallmentsTable()" placeholder="ابحث باسم العميل أو رقم الهاتف..." class="bg-[#090d16] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white w-full md:w-64">
-      </div>
+    <section id="view-suppliers" class="hidden space-y-4">
+      <div class="flex flex-col md:flex-row gap-4 min-h-[580px]">
+        
+        <!-- القائمة الجانبية اليمنى: أسماء الموردين -->
+        <div class="w-full md:w-80 bg-[#111726] border border-slate-800 rounded-3xl p-4 flex flex-col shrink-0">
+          <div class="flex justify-between items-center mb-3 pb-3 border-b border-slate-800">
+            <h3 class="font-bold text-sm text-white flex items-center gap-2">
+              <i class="fa-solid fa-truck-field text-purple-400"></i> قائمة الموردين
+            </h3>
+            <button onclick="openModal('addNewSupplierProfileModal')" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1 transition">
+              <i class="fa-solid fa-plus text-[10px]"></i> مورد جديد
+            </button>
+          </div>
 
-      <div class="bg-[#111726] border border-slate-800 rounded-3xl p-4 shadow-xl">
-        <div class="overflow-x-auto">
-          <table class="w-full text-right text-xs">
-            <thead class="bg-slate-900 text-slate-400 border-b border-slate-800">
-              <tr>
-                <th class="p-2.5">رقم العقد</th>
-                <th class="p-2.5">العميل والهاتف</th>
-                <th class="p-2.5">الجهاز</th>
-                <th class="p-2.5">إجمالي العقد</th>
-                <th class="p-2.5 text-emerald-400">المسدد</th>
-                <th class="p-2.5 text-rose-400">المتبقي</th>
-                <th class="p-2.5">القسط الشهري</th>
-                <th class="p-2.5 text-center">كشف الحساب</th>
-              </tr>
-            </thead>
-            <tbody id="installmentsContractsTableBody" class="divide-y divide-slate-800 text-slate-300"></tbody>
-          </table>
+          <!-- قائمة كروت الموردين القابلة للنقر -->
+          <div id="suppliersMasterList" class="flex-1 overflow-y-auto space-y-2 custom-scrollbar"></div>
         </div>
+
+        <!-- اللوحة اليسرى: التفاصيل وجدول الأصناف للمورد المختار -->
+        <div class="flex-1 bg-[#111726] border border-slate-800 rounded-3xl p-4 md:p-5 flex flex-col justify-between">
+          <div id="supplierDetailContainer" class="space-y-4">
+            <!-- يمتلئ تلقائياً عبر JavaScript -->
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -270,7 +262,7 @@
                 <th class="p-2.5">نوع العملية</th>
                 <th class="p-2.5 font-bold text-white">إجمالي القيمة</th>
                 <th class="p-2.5 text-emerald-400">المدفوع فوراً</th>
-                <th class="p-2.5 text-center">طباعة / تفاصيل</th>
+                <th class="p-2.5 text-center">عرض الفاتورة</th>
               </tr>
             </thead>
             <tbody id="salesInvoicesTableBody" class="divide-y divide-slate-800 text-slate-300"></tbody>
@@ -280,20 +272,18 @@
     </section>
 
     <!-- ========================================== -->
-    <!-- VIEW 5: الموردين والشركات (SUPPLIERS) -->
+    <!-- VIEW 5: سجل وإدارة الأقساط (INSTALLMENTS) -->
     <!-- ========================================== -->
-    <section id="view-suppliers" class="hidden space-y-4">
-      <div class="flex justify-between items-center bg-[#111726] p-4 rounded-3xl border border-slate-800">
+    <section id="view-installments" class="hidden space-y-4">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-[#111726] p-4 rounded-3xl border border-slate-800">
         <div>
           <h3 class="text-base font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-truck-ramp-box text-purple-400"></i>
-            حسابات شركات الأجهزة والموردين
+            <i class="fa-solid fa-calendar-check text-emerald-400"></i>
+            دفتر وعقود البيع بالتقسيط
           </h3>
-          <p class="text-xs text-slate-400 mt-0.5">متابعة الفواتير الواردة، المسدد للشركات، والمتبقي</p>
+          <p class="text-xs text-slate-400 mt-0.5">متابعة دفعات العملاء، حساب الفائدة، تواريخ الاستحقاق، ورصيد كل عميل</p>
         </div>
-        <button onclick="openModal('newSupplierInvoiceModal')" class="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5">
-          <i class="fa-solid fa-plus"></i> + فاتورة مشتريات شركة
-        </button>
+        <input type="text" id="searchInstallmentInput" oninput="renderInstallmentsTable()" placeholder="ابحث باسم العميل أو رقم الهاتف..." class="bg-[#090d16] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white w-full md:w-64">
       </div>
 
       <div class="bg-[#111726] border border-slate-800 rounded-3xl p-4 shadow-xl">
@@ -301,16 +291,17 @@
           <table class="w-full text-right text-xs">
             <thead class="bg-slate-900 text-slate-400 border-b border-slate-800">
               <tr>
-                <th class="p-2.5">الشركة / المورد</th>
-                <th class="p-2.5">الأجهزة المستلمة</th>
-                <th class="p-2.5">التاريخ</th>
-                <th class="p-2.5 font-bold text-white">الإجمالي</th>
-                <th class="p-2.5 text-emerald-400">المسدد للشركة</th>
-                <th class="p-2.5 text-rose-400">المتبقي للشركة</th>
-                <th class="p-2.5 text-center">سداد دفعة</th>
+                <th class="p-2.5">رقم العقد</th>
+                <th class="p-2.5">العميل والهاتف</th>
+                <th class="p-2.5">الجهاز</th>
+                <th class="p-2.5">إجمالي العقد</th>
+                <th class="p-2.5 text-emerald-400">المسدد</th>
+                <th class="p-2.5 text-rose-400">المتبقي</th>
+                <th class="p-2.5">القسط الشهري</th>
+                <th class="p-2.5 text-center">كشف الحساب</th>
               </tr>
             </thead>
-            <tbody id="suppliersTableBody" class="divide-y divide-slate-800 text-slate-300"></tbody>
+            <tbody id="installmentsContractsTableBody" class="divide-y divide-slate-800 text-slate-300"></tbody>
           </table>
         </div>
       </div>
@@ -324,9 +315,9 @@
       <i class="fa-solid fa-chart-pie text-base"></i>
       <span class="text-[10px] font-bold">المحفظة</span>
     </button>
-    <button onclick="switchView('installments')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-emerald-400 focus:text-emerald-400">
-      <i class="fa-solid fa-calendar-check text-base"></i>
-      <span class="text-[10px]">الأقساط</span>
+    <button onclick="switchView('suppliers')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-purple-400 focus:text-purple-400">
+      <i class="fa-solid fa-truck-ramp-box text-base"></i>
+      <span class="text-[10px]">الموردين</span>
     </button>
     <button onclick="switchView('inventory')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-cyan-400 focus:text-cyan-400">
       <i class="fa-solid fa-tv text-base"></i>
@@ -336,17 +327,143 @@
       <i class="fa-solid fa-receipt text-base"></i>
       <span class="text-[10px]">المبيعات</span>
     </button>
-    <button onclick="switchView('suppliers')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-purple-400 focus:text-purple-400">
-      <i class="fa-solid fa-truck-ramp-box text-base"></i>
-      <span class="text-[10px]">الموردين</span>
+    <button onclick="switchView('installments')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-emerald-400 focus:text-emerald-400">
+      <i class="fa-solid fa-calendar-check text-base"></i>
+      <span class="text-[10px]">الأقساط</span>
     </button>
   </nav>
 
   <!-- ========================================== -->
-  <!-- MODALS المنظومة -->
+  <!-- MODALS المنظومة بالكامل -->
   <!-- ========================================== -->
 
-  <!-- MODAL 1: فاتورة وعقد بيع جديد (كاش أو قسط) -->
+  <!-- MODAL 1: إضافة مورد جديد -->
+  <div id="addNewSupplierProfileModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[#111726] border border-slate-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-user-plus text-purple-400"></i> إضافة مورد جديد
+        </h3>
+        <button onclick="closeModal('addNewSupplierProfileModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="text-xs space-y-2.5">
+        <div>
+          <label class="block text-slate-300 mb-1">اسم المورد / الشركة</label>
+          <input type="text" id="newSupNameInput" placeholder="مثال: شركة العربي جروب" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-1">رقم الهاتف / الواتساب</label>
+          <input type="tel" id="newSupPhoneInput" placeholder="010xxxxxxxx" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-1">عنوان المورد أو المخزن</label>
+          <input type="text" id="newSupAddressInput" placeholder="مثال: مخازن بنها" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
+        </div>
+      </div>
+      <div class="flex gap-2 pt-2 border-t border-slate-800">
+        <button onclick="handleCreateSupplierProfile()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl text-xs shadow">حفظ المورد</button>
+        <button onclick="closeModal('addNewSupplierProfileModal')" class="px-4 bg-slate-800 text-slate-300 rounded-xl text-xs">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: إضافة شحنة توريد أصناف لهذا المورد -->
+  <div id="addSupplierShipmentModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[#111726] border border-slate-700 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-box-open text-purple-400"></i> تسجيل أصناف واردة من: <span id="shipmentSupplierName" class="text-purple-300 font-bold"></span>
+        </h3>
+        <button onclick="closeModal('addSupplierShipmentModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="text-xs space-y-2.5">
+        <div>
+          <label class="block text-slate-300 mb-1">اسم الصنف / الموديل</label>
+          <input type="text" id="shipmentItemName" placeholder="مثال: ثلاجة شارب 18 قدم ديجيتال" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-slate-300 mb-1">العدد (القطع)</label>
+            <input type="number" id="shipmentQty" oninput="calculateShipmentTotal()" value="5" min="1" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
+          </div>
+          <div>
+            <label class="block text-slate-300 mb-1">سعر القطعة (ج.م)</label>
+            <input type="number" id="shipmentUnitPrice" oninput="calculateShipmentTotal()" value="20000" min="1" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
+          </div>
+        </div>
+        <div class="p-2.5 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center">
+          <span class="text-slate-400">إجمالي التوريدة:</span>
+          <b class="text-sm text-purple-300 font-bold" id="shipmentTotalDisplay">100,000 ج.م</b>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-slate-300 mb-1 text-emerald-400 font-semibold">المسدد نقداً الآن</label>
+            <input type="number" id="shipmentPaidAmount" value="30000" min="0" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold">
+          </div>
+          <div>
+            <label class="block text-slate-300 mb-1">تاريخ التوريد</label>
+            <input type="date" id="shipmentDateInput" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-2 pt-2 border-t border-slate-800">
+        <button onclick="handleSaveSupplierShipment()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl text-xs shadow">إضافة الفاتورة وزيادة المخزن</button>
+        <button onclick="closeModal('addSupplierShipmentModal')" class="px-4 bg-slate-800 text-slate-300 rounded-xl text-xs">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: إضافة جهاز جديد للمخزن -->
+  <div id="addNewDeviceModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[#111726] border border-slate-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-tv text-cyan-400"></i>
+          إضافة جهاز كهربائي للمخزن
+        </h3>
+        <button onclick="closeModal('addNewDeviceModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="text-xs space-y-2.5">
+        <div>
+          <label class="block text-slate-300 mb-1">اسم الجهاز والموديل</label>
+          <input type="text" id="devNameInput" placeholder="مثال: غسالة إل جي 9 كيلو سيلفر" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-1">القسم</label>
+          <select id="devCategoryInput" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
+            <option value="غسالات">غسالات</option>
+            <option value="ثلاجات وديب فريزر">ثلاجات وديب فريزر</option>
+            <option value="شاشات وتلفزيونات">شاشات وتلفزيونات</option>
+            <option value="بوتاجازات وأفران">بوتاجازات وأفران</option>
+            <option value="أجهزة منزلية صغيرة">أجهزة منزلية صغيرة</option>
+            <option value="تكييفات">تكييفات</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block text-slate-300 mb-1">الكمية</label>
+            <input type="number" id="devQtyInput" value="5" min="1" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
+          </div>
+          <div>
+            <label class="block text-slate-300 mb-1">سعر الشراء</label>
+            <input type="number" id="devBuyPriceInput" value="18000" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
+          </div>
+          <div>
+            <label class="block text-slate-300 mb-1 text-emerald-400">سعر الكاش</label>
+            <input type="number" id="devCashPriceInput" value="22500" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2 border-t border-slate-800">
+        <button onclick="handleSaveNewDevice()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs shadow">حفظ الجهاز بالمخزن</button>
+        <button onclick="closeModal('addNewDeviceModal')" class="px-4 bg-slate-800 text-slate-300 rounded-xl text-xs">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: فاتورة وعقد بيع جديد (كاش أو قسط) -->
   <div id="newSaleModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-lg rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -417,7 +534,6 @@
             </div>
           </div>
 
-          <!-- تفقيط القسط المحسوب -->
           <div class="p-2.5 bg-blue-950/40 rounded-xl border border-blue-500/40 flex justify-between items-center text-xs">
             <div>
               <span class="text-slate-400 block text-[10px]">إجمالي العقد بالفوائد:</span>
@@ -440,57 +556,7 @@
     </div>
   </div>
 
-  <!-- MODAL 2: إضافة جهاز جديد للمخزن -->
-  <div id="addNewDeviceModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-[#111726] border border-slate-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-tv text-cyan-400"></i>
-          إضافة جهاز كهربائي للمخزن
-        </h3>
-        <button onclick="closeModal('addNewDeviceModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-
-      <div class="text-xs space-y-2.5">
-        <div>
-          <label class="block text-slate-300 mb-1">اسم الجهاز والموديل</label>
-          <input type="text" id="devNameInput" placeholder="مثال: غسالة إل جي 9 كيلو سيلفر" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
-        </div>
-        <div>
-          <label class="block text-slate-300 mb-1">القسم</label>
-          <select id="devCategoryInput" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
-            <option value="غسالات">غسالات</option>
-            <option value="ثلاجات وديب فريزر">ثلاجات وديب فريزر</option>
-            <option value="شاشات وتلفزيونات">شاشات وتلفزيونات</option>
-            <option value="بوتاجازات وأفران">بوتاجازات وأفران</option>
-            <option value="أجهزة منزلية صغيرة">أجهزة منزلية صغيرة</option>
-            <option value="تكييفات">تكييفات</option>
-          </select>
-        </div>
-        <div class="grid grid-cols-3 gap-2">
-          <div>
-            <label class="block text-slate-300 mb-1">الكمية</label>
-            <input type="number" id="devQtyInput" value="5" min="1" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
-          </div>
-          <div>
-            <label class="block text-slate-300 mb-1">سعر الشراء</label>
-            <input type="number" id="devBuyPriceInput" value="18000" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
-          </div>
-          <div>
-            <label class="block text-slate-300 mb-1 text-emerald-400">سعر الكاش</label>
-            <input type="number" id="devCashPriceInput" value="22500" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold">
-          </div>
-        </div>
-      </div>
-
-      <div class="flex gap-2 pt-2 border-t border-slate-800">
-        <button onclick="handleSaveNewDevice()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs shadow">حفظ الجهاز بالمخزن</button>
-        <button onclick="closeModal('addNewDeviceModal')" class="px-4 bg-slate-800 text-slate-300 rounded-xl text-xs">إلغاء</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL 3: كشف حساب العميل وجدول أقساطه -->
+  <!-- MODAL 5: كشف حساب العميل وجدول أقساطه -->
   <div id="contractDetailsModal" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-2xl rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh]">
       <div class="flex justify-between items-start border-b border-slate-800 pb-3">
@@ -519,7 +585,6 @@
         </div>
       </div>
 
-      <!-- جدول تفاصيل الأقساط الشهرية -->
       <div class="flex-1 overflow-y-auto custom-scrollbar my-1">
         <table class="w-full text-right text-xs">
           <thead class="bg-slate-900 text-slate-400 border-b border-slate-800 sticky top-0">
@@ -544,54 +609,14 @@
     </div>
   </div>
 
-  <!-- MODAL 4: فاتورة مشتريات من شركة أجهزة -->
-  <div id="newSupplierInvoiceModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-[#111726] border border-slate-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-truck-ramp-box text-purple-400"></i>
-          تسجيل شحنة من شركة / مورد
-        </h3>
-        <button onclick="closeModal('newSupplierInvoiceModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-
-      <div class="text-xs space-y-2.5">
-        <div>
-          <label class="block text-slate-300 mb-1">اسم الشركة / المورد</label>
-          <input type="text" id="supCompanyName" placeholder="مثال: شركة العربي توشيبا" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
-        </div>
-        <div>
-          <label class="block text-slate-300 mb-1">بيان الأجهزة المستلمة</label>
-          <input type="text" id="supDevicesDesc" placeholder="مثال: 10 شاشات توشيبا 43 بوصة" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-slate-300 mb-1">إجمالي الفاتورة (ج.م)</label>
-            <input type="number" id="supTotalBill" value="100000" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold">
-          </div>
-          <div>
-            <label class="block text-slate-300 mb-1 text-emerald-400">المدفوع للشركة</label>
-            <input type="number" id="supPaidAmount" value="40000" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold">
-          </div>
-        </div>
-      </div>
-
-      <div class="flex gap-2 pt-2 border-t border-slate-800">
-        <button onclick="handleSaveSupplierInvoice()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl text-xs shadow">حفظ الفاتورة</button>
-        <button onclick="closeModal('newSupplierInvoiceModal')" class="px-4 bg-slate-800 text-slate-300 rounded-xl text-xs">إلغاء</button>
-      </div>
-    </div>
-  </div>
-
   <!-- ========================================== -->
-  <!-- 2. المنطق البرمجي (JAVASCRIPT) لنظام الأجهزة والأقساط -->
+  <!-- 2. المنطق البرمجي الكامل (JAVASCRIPT) -->
   <!-- ========================================== -->
   <script>
-    // مفاتيح التخزين
     const STORAGE_KEY_DEVICES = 'elabd_devices_v1';
     const STORAGE_KEY_SALES = 'elabd_sales_v1';
     const STORAGE_KEY_CONTRACTS = 'elabd_contracts_v1';
-    const STORAGE_KEY_SUPPLIERS = 'elabd_suppliers_v1';
+    const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_detailed_suppliers_v2';
 
     // الأجهزة الافتراضية
     const defaultDevices = [
@@ -600,6 +625,29 @@
       { id: 'DEV-3', name: 'شاشة سامسونج 55 بوصة سمارت 4K', category: 'شاشات وتلفزيونات', qty: 8, buyPrice: 14500, cashPrice: 17800 },
       { id: 'DEV-4', name: 'بوتاجاز فريش بروفيشنال 5 شعلة أمان كامل', category: 'بوتاجازات وأفران', qty: 5, buyPrice: 11000, cashPrice: 13500 },
       { id: 'DEV-5', name: 'ميكروويف شارب 25 لتر بالشواية', category: 'أجهزة منزلية صغيرة', qty: 10, buyPrice: 5200, cashPrice: 6500 }
+    ];
+
+    // الموردين الافتراضيين
+    const defaultSuppliersData = [
+      {
+        id: 'SUP-01',
+        name: 'شركة العربي (توشيبا وشارب)',
+        phone: '01099887766',
+        address: 'مخازن بنها',
+        items: [
+          { id: 'ITM-1', date: '2026-09-15', name: 'ثلاجة توشيبا 16 قدم نوفروست', qty: 5, unitPrice: 21000, total: 105000, paid: 70000, remaining: 35000 },
+          { id: 'ITM-2', date: '2026-09-28', name: 'ميكروويف شارب 25 لتر بالشواية', qty: 10, unitPrice: 5200, total: 52000, paid: 30000, remaining: 22000 }
+        ]
+      },
+      {
+        id: 'SUP-02',
+        name: 'موزع غسالات وشاشات إل جي',
+        phone: '01155443322',
+        address: 'مصر الجديدة',
+        items: [
+          { id: 'ITM-3', date: '2026-10-01', name: 'غسالة إل جي 9 كيلو فول أوتوماتيك', qty: 6, unitPrice: 19500, total: 117000, paid: 117000, remaining: 0 }
+        ]
+      }
     ];
 
     // عقود وعمليات بيع تجريبية
@@ -616,7 +664,7 @@
         interestRate: 15,
         totalWithInterest: 26500,
         monthlyAmount: 1917,
-        paidAmount: 7334, // مقدم + قسطين
+        paidAmount: 7334,
         remainingAmount: 19166,
         startDate: '2026-08-01',
         installments: [
@@ -663,36 +711,24 @@
       }
     ];
 
-    const defaultSuppliers = [
-      {
-        id: 'SUP-01',
-        companyName: 'شركة العربي (توشيبا وشارب)',
-        devicesDesc: '5 ثلاجات 16 قدم + 10 ميكروويف شارب',
-        date: '2026-09-20',
-        totalBill: 157000,
-        paidAmount: 100000,
-        remainingAmount: 57000
-      },
-      {
-        id: 'SUP-02',
-        companyName: 'موزع غسالات وشاشات إل جي',
-        devicesDesc: '6 غسالات 9 كيلو سيلفر',
-        date: '2026-09-25',
-        totalBill: 117000,
-        paidAmount: 117000,
-        remainingAmount: 0
-      }
-    ];
-
+    let selectedSupplierId = 'SUP-01';
     let selectedContractForView = null;
 
-    // دوال قراءة وتخزين البيانات في المتصفح
+    // دوال قراءة وتخزين البيانات
     function getStoredDevices() {
       const d = localStorage.getItem(STORAGE_KEY_DEVICES);
       return d ? JSON.parse(d) : defaultDevices;
     }
     function setStoredDevices(d) {
       localStorage.setItem(STORAGE_KEY_DEVICES, JSON.stringify(d));
+    }
+
+    function getDetailedSuppliers() {
+      const d = localStorage.getItem(STORAGE_KEY_DETAILED_SUPPLIERS);
+      return d ? JSON.parse(d) : defaultSuppliersData;
+    }
+    function setDetailedSuppliers(d) {
+      localStorage.setItem(STORAGE_KEY_DETAILED_SUPPLIERS, JSON.stringify(d));
     }
 
     function getStoredContracts() {
@@ -711,15 +747,6 @@
       localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(d));
     }
 
-    function getStoredSuppliers() {
-      const d = localStorage.getItem(STORAGE_KEY_SUPPLIERS);
-      return d ? JSON.parse(d) : defaultSuppliers;
-    }
-    function setStoredSuppliers(d) {
-      localStorage.setItem(STORAGE_KEY_SUPPLIERS, JSON.stringify(d));
-    }
-
-    // تشغيل النظام
     window.addEventListener('DOMContentLoaded', () => {
       populateDeviceSelects();
       const today = new Date().toISOString().split('T')[0];
@@ -744,7 +771,7 @@
         if (!sb.classList.contains('translate-x-full')) toggleSidebar();
       }
 
-      ['dashboard', 'installments', 'inventory', 'sales', 'suppliers'].forEach(v => {
+      ['dashboard', 'suppliers', 'inventory', 'sales', 'installments'].forEach(v => {
         document.getElementById(`view-${v}`).classList.add('hidden');
         const navBtn = document.getElementById(`nav-${v}`);
         if (navBtn) {
@@ -759,17 +786,292 @@
       }
 
       if (viewName === 'dashboard') renderDashboard();
-      if (viewName === 'installments') renderInstallmentsTable();
+      if (viewName === 'suppliers') renderSuppliersTable();
       if (viewName === 'inventory') renderInventoryTable();
       if (viewName === 'sales') renderSalesTable();
-      if (viewName === 'suppliers') renderSuppliersTable();
+      if (viewName === 'installments') renderInstallmentsTable();
     }
 
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
     // ==========================================
-    // 1. إدارة المخزن والأجهزة
+    // 1. نظام الموردين المطور (القائمة المزدوجة وكشف الحساب)
+    // ==========================================
+    function renderSuppliersTable() {
+      const suppliers = getDetailedSuppliers();
+      const listContainer = document.getElementById('suppliersMasterList');
+      listContainer.innerHTML = '';
+
+      if (suppliers.length === 0) {
+        listContainer.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">لا يوجد موردين مسجلين.</p>';
+        document.getElementById('supplierDetailContainer').innerHTML = '';
+        return;
+      }
+
+      if (!selectedSupplierId || !suppliers.find(s => s.id === selectedSupplierId)) {
+        selectedSupplierId = suppliers[0].id;
+      }
+
+      suppliers.forEach(sup => {
+        let totalBill = 0;
+        let totalPaid = 0;
+        (sup.items || []).forEach(it => {
+          totalBill += it.total;
+          totalPaid += it.paid;
+        });
+        const remaining = Math.max(0, totalBill - totalPaid);
+        const isSelected = sup.id === selectedSupplierId;
+
+        listContainer.innerHTML += `
+          <div onclick="selectSupplierProfile('${sup.id}')" class="p-3 rounded-2xl cursor-pointer border transition ${isSelected ? 'bg-purple-950/40 border-purple-500' : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'}">
+            <div class="flex justify-between items-start">
+              <h4 class="font-bold text-xs text-white truncate">${sup.name}</h4>
+              <span class="text-[9px] px-1.5 py-0.5 rounded font-bold ${remaining > 0 ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}">
+                ${remaining > 0 ? remaining.toLocaleString() + ' ج متبقي' : 'خالص ✔'}
+              </span>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-1"><i class="fa-solid fa-phone text-slate-500"></i> ${sup.phone}</p>
+            <div class="mt-2 pt-2 border-t border-slate-800/80 flex justify-between text-[10px]">
+              <span class="text-slate-400">الإجمالي: <b class="text-slate-200">${totalBill.toLocaleString()} ج</b></span>
+              <span class="text-emerald-400">المدفوع: <b>${totalPaid.toLocaleString()} ج</b></span>
+            </div>
+          </div>
+        `;
+      });
+
+      renderSelectedSupplierDetails();
+    }
+
+    function selectSupplierProfile(supId) {
+      selectedSupplierId = supId;
+      renderSuppliersTable();
+    }
+
+    function renderSelectedSupplierDetails() {
+      const suppliers = getDetailedSuppliers();
+      const sup = suppliers.find(s => s.id === selectedSupplierId);
+      const container = document.getElementById('supplierDetailContainer');
+
+      if (!sup) {
+        container.innerHTML = '<p class="text-slate-500 text-center py-10">اختر مورداً من القائمة اليمنى لعرض كشف حسابه.</p>';
+        return;
+      }
+
+      let grandTotal = 0;
+      let grandPaid = 0;
+      let totalPieces = 0;
+      let rowsHtml = '';
+
+      (sup.items || []).forEach(it => {
+        grandTotal += it.total;
+        grandPaid += it.paid;
+        totalPieces += (parseInt(it.qty) || 0);
+
+        rowsHtml += `
+          <tr>
+            <td class="p-2.5 text-slate-400">${it.date}</td>
+            <td class="p-2.5 font-bold text-white">${it.name}</td>
+            <td class="p-2.5 font-black text-cyan-400">${it.qty}</td>
+            <td class="p-2.5 text-slate-300">${it.unitPrice.toLocaleString()} ج</td>
+            <td class="p-2.5 font-bold text-white">${it.total.toLocaleString()} ج</td>
+            <td class="p-2.5 font-bold text-emerald-400">${it.paid.toLocaleString()} ج</td>
+            <td class="p-2.5 font-bold text-rose-400">${it.remaining.toLocaleString()} ج</td>
+          </tr>
+        `;
+      });
+
+      const grandRemaining = Math.max(0, grandTotal - grandPaid);
+
+      container.innerHTML = `
+        <div class="bg-gradient-to-r from-purple-950/40 via-slate-900 to-[#111726] border border-purple-500/30 p-4 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-black text-white">${sup.name}</h3>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">كود: ${sup.id}</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">
+              هاتف: <a href="tel:${sup.phone}" class="text-blue-400 underline">${sup.phone}</a> | 
+              عنوان: <span class="text-slate-300">${sup.address || 'غير محدد'}</span>
+            </p>
+          </div>
+          <div class="flex gap-2 w-full md:w-auto">
+            <button onclick="openAddShipmentModal('${sup.id}')" class="flex-1 md:flex-none px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-plus"></i> توريدة أصناف جديدة
+            </button>
+            <button onclick="paySupplierPrompt('${sup.id}')" class="flex-1 md:flex-none px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-hand-holding-dollar"></i> سداد دفعة
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2.5 text-center text-xs">
+          <div class="p-2.5 bg-slate-900/90 rounded-2xl border border-slate-800">
+            <span class="text-[10px] text-slate-400 block font-semibold">إجمالي المشتريات منه</span>
+            <b class="text-sm md:text-base font-black text-white mt-0.5 block">${grandTotal.toLocaleString()} ج.م</b>
+          </div>
+          <div class="p-2.5 bg-slate-900/90 rounded-2xl border border-emerald-500/20">
+            <span class="text-[10px] text-emerald-400 block font-semibold">المسدد له فعلياً</span>
+            <b class="text-sm md:text-base font-black text-emerald-300 mt-0.5 block">${grandPaid.toLocaleString()} ج.م</b>
+          </div>
+          <div class="p-2.5 bg-slate-900/90 rounded-2xl border border-rose-500/20">
+            <span class="text-[10px] text-rose-400 block font-semibold">المتبقي له في ذمتنا</span>
+            <b class="text-sm md:text-base font-black text-rose-300 mt-0.5 block">${grandRemaining.toLocaleString()} ج.م</b>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto border border-slate-800 rounded-2xl">
+          <table class="w-full text-right text-xs">
+            <thead class="bg-slate-900/90 text-slate-400 border-b border-slate-800">
+              <tr>
+                <th class="p-2.5">التاريخ</th>
+                <th class="p-2.5">الصنف والموديل</th>
+                <th class="p-2.5 text-cyan-400">العدد</th>
+                <th class="p-2.5">سعر القطعة</th>
+                <th class="p-2.5 text-white font-bold">الإجمالي</th>
+                <th class="p-2.5 text-emerald-400">المدفوع</th>
+                <th class="p-2.5 text-rose-400">المتبقي</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800 text-slate-300">
+              ${rowsHtml || '<tr><td colspan="7" class="p-6 text-center text-slate-500">لا توجد أصناف موردة مسجلة لهذا المورد حتى الآن.</td></tr>'}
+            </tbody>
+            <tfoot class="bg-slate-900 font-bold border-t-2 border-slate-700 text-white">
+              <tr>
+                <td colspan="2" class="p-2.5 text-right">إجمالي جميع القطع والتوريدات:</td>
+                <td class="p-2.5 text-cyan-400 text-sm font-black">${totalPieces} قطعة</td>
+                <td>--</td>
+                <td class="p-2.5 text-white text-sm font-black">${grandTotal.toLocaleString()} ج</td>
+                <td class="p-2.5 text-emerald-400 text-sm font-black">${grandPaid.toLocaleString()} ج</td>
+                <td class="p-2.5 text-rose-400 text-sm font-black">${grandRemaining.toLocaleString()} ج</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      `;
+    }
+
+    function handleCreateSupplierProfile() {
+      const name = document.getElementById('newSupNameInput').value.trim();
+      const phone = document.getElementById('newSupPhoneInput').value.trim();
+      const address = document.getElementById('newSupAddressInput').value.trim();
+
+      if (!name || !phone) {
+        alert('يرجى إدخال اسم المورد ورقم الهاتف على الأقل.');
+        return;
+      }
+
+      const suppliers = getDetailedSuppliers();
+      const newSup = {
+        id: 'SUP-' + (suppliers.length + 10),
+        name,
+        phone,
+        address,
+        items: []
+      };
+
+      suppliers.push(newSup);
+      setDetailedSuppliers(suppliers);
+      selectedSupplierId = newSup.id;
+
+      closeModal('addNewSupplierProfileModal');
+      document.getElementById('newSupNameInput').value = '';
+      document.getElementById('newSupPhoneInput').value = '';
+      document.getElementById('newSupAddressInput').value = '';
+
+      renderSuppliersTable();
+      alert(`تم إضافة المورد (${name}) بنجاح.`);
+    }
+
+    function openAddShipmentModal(supId) {
+      const suppliers = getDetailedSuppliers();
+      const sup = suppliers.find(s => s.id === supId);
+      if (!sup) return;
+
+      document.getElementById('shipmentSupplierName').innerText = sup.name;
+      document.getElementById('shipmentDateInput').value = new Date().toISOString().split('T')[0];
+      calculateShipmentTotal();
+      openModal('addSupplierShipmentModal');
+    }
+
+    function calculateShipmentTotal() {
+      const qty = parseFloat(document.getElementById('shipmentQty').value) || 0;
+      const price = parseFloat(document.getElementById('shipmentUnitPrice').value) || 0;
+      const total = qty * price;
+      document.getElementById('shipmentTotalDisplay').innerText = `${total.toLocaleString()} ج.م`;
+    }
+
+    function handleSaveSupplierShipment() {
+      const suppliers = getDetailedSuppliers();
+      const sup = suppliers.find(s => s.id === selectedSupplierId);
+      if (!sup) return;
+
+      const itemName = document.getElementById('shipmentItemName').value.trim();
+      const qty = parseInt(document.getElementById('shipmentQty').value);
+      const unitPrice = parseFloat(document.getElementById('shipmentUnitPrice').value);
+      const paid = parseFloat(document.getElementById('shipmentPaidAmount').value) || 0;
+      const date = document.getElementById('shipmentDateInput').value || new Date().toISOString().split('T')[0];
+
+      if (!itemName || isNaN(qty) || isNaN(unitPrice)) {
+        alert('يرجى ملء جميع بيانات الشحنة.');
+        return;
+      }
+
+      const total = qty * unitPrice;
+      const remaining = Math.max(0, total - paid);
+
+      if (!sup.items) sup.items = [];
+      sup.items.unshift({
+        id: 'ITM-' + Date.now(),
+        date,
+        name: itemName,
+        qty,
+        unitPrice,
+        total,
+        paid,
+        remaining
+      });
+
+      setDetailedSuppliers(suppliers);
+      closeModal('addSupplierShipmentModal');
+      document.getElementById('shipmentItemName').value = '';
+      renderSuppliersTable();
+      alert(`تم بنجاح حفظ توريدة (${itemName}) بعدد ${qty} قطع وإضافتها لكشف حساب المورد.`);
+    }
+
+    function paySupplierPrompt(supId) {
+      const suppliers = getDetailedSuppliers();
+      const sup = suppliers.find(s => s.id === supId);
+      if (!sup) return;
+
+      let totalBill = 0;
+      let totalPaid = 0;
+      (sup.items || []).forEach(it => { totalBill += it.total; totalPaid += it.paid; });
+      const currentRem = Math.max(0, totalBill - totalPaid);
+
+      const amt = prompt(`أدخل المبلغ المراد سداده للمورد (${sup.name}) - المتبقي في ذمتنا: ${currentRem.toLocaleString()} ج:`);
+      if (amt && !isNaN(amt) && parseFloat(amt) > 0) {
+        let paymentToDistribute = parseFloat(amt);
+
+        for (let it of (sup.items || [])) {
+          if (paymentToDistribute <= 0) break;
+          const itemRem = it.total - it.paid;
+          if (itemRem > 0) {
+            const addPay = Math.min(itemRem, paymentToDistribute);
+            it.paid += addPay;
+            it.remaining = it.total - it.paid;
+            paymentToDistribute -= addPay;
+          }
+        }
+
+        setDetailedSuppliers(suppliers);
+        renderSuppliersTable();
+        alert('تم تسجيل وتوزيع سداد الدفعة للمورد بنجاح.');
+      }
+    }
+
+    // ==========================================
+    // 2. المخزن وإدارة الأجهزة
     // ==========================================
     function populateDeviceSelects() {
       const devices = getStoredDevices();
@@ -807,7 +1109,7 @@
       }
 
       devices.forEach(dev => {
-        const suggestedInstallment = Math.round(dev.cashPrice * 1.15); // فائدة تقريبية 15%
+        const suggestedInstallment = Math.round(dev.cashPrice * 1.15);
         const isLow = dev.qty <= 2;
         tbody.innerHTML += `
           <tr>
@@ -869,7 +1171,7 @@
     }
 
     // ==========================================
-    // 2. محرك الأقساط والبيع الذكي
+    // 3. محرك البيع والأقساط
     // ==========================================
     function toggleInstallmentFields() {
       const type = document.getElementById('saleTypeSelect').value;
@@ -889,7 +1191,6 @@
       const interestAmount = remainingBase * (interestRate / 100) * (months / 12);
       const totalRemainingWithInterest = remainingBase + interestAmount;
       const grandTotalContract = downPayment + totalRemainingWithInterest;
-
       const monthlyAmount = months > 0 ? Math.round(totalRemainingWithInterest / months) : 0;
 
       document.getElementById('instCalculatedTotal').innerText = `${grandTotalContract.toLocaleString()} ج.م`;
@@ -945,7 +1246,6 @@
           contractId: null
         });
 
-        // خصم 1 جهاز من المخزن
         dev.qty -= 1;
         setStoredDevices(devices);
         setStoredSales(sales);
@@ -955,13 +1255,11 @@
         renderDashboard();
         alert(`تم حفظ فاتورة البيع الكاش (${newInvoiceId}) بقيمة ${cashPrice.toLocaleString()} ج.م وخصم الجهاز من المخزن.`);
       } else {
-        // إنشاء عقد قسط
         const math = calculateInstallmentMath();
         const contracts = getStoredContracts();
         const contractId = 'CNT-' + (contracts.length + 101);
         const startDateStr = document.getElementById('instStartDate').value || today;
 
-        // توليد جدول الأقساط الشهرية
         const installmentsList = [];
         let currentMonthDate = new Date(startDateStr);
 
@@ -998,7 +1296,6 @@
         contracts.unshift(newContract);
         setStoredContracts(contracts);
 
-        // تسجيل في الفواتير
         sales.unshift({
           id: newInvoiceId,
           date: today,
@@ -1012,7 +1309,6 @@
           contractId: contractId
         });
 
-        // خصم من المخزن
         dev.qty -= 1;
         setStoredDevices(devices);
         setStoredSales(sales);
@@ -1025,7 +1321,7 @@
     }
 
     // ==========================================
-    // 3. لوحة المحفظة وجدول الاستحقاق (Dashboard)
+    // 4. لوحة الإحصائيات (Dashboard)
     // ==========================================
     function renderDashboard() {
       const sales = getStoredSales();
@@ -1038,12 +1334,10 @@
       let overdueInstallmentsVal = 0;
       let netProfitVal = 0;
 
-      // حساب المبيعات والكاش
       sales.forEach(s => {
         totalSalesVal += s.totalPrice;
         cashCollectedVal += s.paidImmediately;
 
-        // تقدير الربح من فارق سعر الشراء
         const dev = devices.find(d => d.name === s.deviceName);
         if (dev) {
           const cost = dev.buyPrice;
@@ -1051,7 +1345,6 @@
         }
       });
 
-      // فحص الأقساط
       const today = new Date().toISOString().split('T')[0];
       const dueTableBody = document.getElementById('dueInstallmentsTableBody');
       dueTableBody.innerHTML = '';
@@ -1101,7 +1394,7 @@
     }
 
     // ==========================================
-    // 4. جدول الأقساط وكشف الحساب والواتساب
+    // 5. سجل الأقساط والفواتير والواتساب
     // ==========================================
     function renderInstallmentsTable() {
       const contracts = getStoredContracts();
@@ -1226,9 +1519,6 @@
       window.open(`https://wa.me/2${cleanPhone}?text=${msg}`, '_blank');
     }
 
-    // ==========================================
-    // 5. سجل الفواتير والموردين
-    // ==========================================
     function renderSalesTable() {
       const sales = getStoredSales();
       const tbody = document.getElementById('salesInvoicesTableBody');
@@ -1252,78 +1542,6 @@
           </tr>
         `;
       });
-    }
-
-    function renderSuppliersTable() {
-      const suppliers = getStoredSuppliers();
-      const tbody = document.getElementById('suppliersTableBody');
-      tbody.innerHTML = '';
-
-      suppliers.forEach(sup => {
-        tbody.innerHTML += `
-          <tr>
-            <td class="p-2.5 font-bold text-purple-300">${sup.companyName}</td>
-            <td class="p-2.5 text-slate-300 max-w-xs truncate">${sup.devicesDesc}</td>
-            <td class="p-2.5 text-slate-400">${sup.date}</td>
-            <td class="p-2.5 font-bold text-white">${sup.totalBill.toLocaleString()} ج.م</td>
-            <td class="p-2.5 font-bold text-emerald-400">${sup.paidAmount.toLocaleString()} ج.م</td>
-            <td class="p-2.5 font-bold text-rose-400">${sup.remainingAmount.toLocaleString()} ج.م</td>
-            <td class="p-2.5 text-center">
-              ${sup.remainingAmount > 0 ? `
-                <button onclick="paySupplierPrompt('${sup.id}')" class="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-[10px] font-bold">
-                  سداد دفعة
-                </button>
-              ` : '<span class="text-emerald-400 text-[10px]">خالص ✔</span>'}
-            </td>
-          </tr>
-        `;
-      });
-    }
-
-    function handleSaveSupplierInvoice() {
-      const companyName = document.getElementById('supCompanyName').value.trim();
-      const devicesDesc = document.getElementById('supDevicesDesc').value.trim();
-      const totalBill = parseFloat(document.getElementById('supTotalBill').value);
-      const paidAmount = parseFloat(document.getElementById('supPaidAmount').value) || 0;
-
-      if (!companyName || !devicesDesc || isNaN(totalBill)) {
-        alert('يرجى ملء جميع بيانات فاتورة المورد.');
-        return;
-      }
-
-      const suppliers = getStoredSuppliers();
-      const today = new Date().toISOString().split('T')[0];
-
-      suppliers.unshift({
-        id: 'SUP-' + (suppliers.length + 10),
-        companyName,
-        devicesDesc,
-        date: today,
-        totalBill,
-        paidAmount,
-        remainingAmount: Math.max(0, totalBill - paidAmount)
-      });
-
-      setStoredSuppliers(suppliers);
-      closeModal('newSupplierInvoiceModal');
-      renderSuppliersTable();
-      alert(`تم بنجاح حفظ فاتورة شركة (${companyName}).`);
-    }
-
-    function paySupplierPrompt(supId) {
-      const suppliers = getStoredSuppliers();
-      const sup = suppliers.find(s => s.id === supId);
-      if (!sup) return;
-
-      const amt = prompt(`أدخل المبلغ المراد سداده لشركة (${sup.companyName}) - المتبقي: ${sup.remainingAmount.toLocaleString()} ج:`);
-      if (amt && !isNaN(amt) && parseFloat(amt) > 0) {
-        const val = parseFloat(amt);
-        sup.paidAmount += val;
-        sup.remainingAmount = Math.max(0, sup.totalBill - sup.paidAmount);
-        setStoredSuppliers(suppliers);
-        renderSuppliersTable();
-        alert('تم تسجيل سداد الدفعة للشركة بنجاح.');
-      }
     }
   </script>
 </body>
