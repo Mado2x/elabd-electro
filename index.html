@@ -109,8 +109,6 @@
     <!-- VIEW 1: الصفحة الرئيسية والموقف المالي المطور -->
     <!-- ========================================== -->
     <section id="view-dashboard" class="space-y-4">
-      
-      <!-- كارت الموقف المالي التنفيذي الفخم -->
       <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-[#111726] to-blue-950/80 border border-blue-500/30 p-5 shadow-2xl">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
           <div>
@@ -128,9 +126,7 @@
           </button>
         </div>
 
-        <!-- شبكة المؤشرات المالية المطورة -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 pt-3 border-t border-slate-800/80">
-          
           <div class="bg-slate-900/90 border border-emerald-500/30 p-3 rounded-2xl relative overflow-hidden">
             <div class="flex items-center justify-between mb-1">
               <span class="text-[10px] text-emerald-400 font-bold">خزينة المعرض (المحصل)</span>
@@ -166,7 +162,6 @@
             <p class="text-base md:text-lg font-black text-purple-300" id="dashNetProfitVal">0 ج.م</p>
             <span class="text-[9px] text-slate-400 block mt-0.5">فارق الشراء والفوائد</span>
           </div>
-
         </div>
       </div>
 
@@ -182,7 +177,6 @@
           </div>
           <span class="px-2.5 py-1 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-bold" id="currentMonthBadgeDisplay"></span>
         </div>
-
         <div id="topSellingReportContainer" class="space-y-2.5"></div>
       </div>
 
@@ -241,7 +235,6 @@
           </div>
           <div id="suppliersMasterList" class="flex-1 overflow-y-auto space-y-2 custom-scrollbar"></div>
         </div>
-
         <div class="flex-1 bg-[#111726] border border-slate-800 rounded-3xl p-4 md:p-5 flex flex-col justify-between">
           <div id="supplierDetailContainer" class="space-y-4"></div>
         </div>
@@ -374,7 +367,62 @@
   <!-- MODALS المنظومة -->
   <!-- ========================================== -->
 
-  <!-- MODAL: نافذة التحصيل اليدوي الذكي والترحيل التلقائي -->
+  <!-- MODAL: نافذة اختيار نموذج رسالة الواتساب للعميل (3 أزرار مختلفة) -->
+  <div id="chooseWhatsAppTemplateModal" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[#111726] border border-slate-700 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div>
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i class="fa-brands fa-whatsapp text-emerald-400 text-lg"></i>
+            إرسال إشعار قسط للعميل: <span id="waModalCustomerName" class="text-emerald-400 font-bold"></span>
+          </h3>
+          <p class="text-[10px] text-slate-400 mt-0.5">اختر نموذج الرسالة المناسب لموقف العميل (مفند بالكامل)</p>
+        </div>
+        <button onclick="closeModal('chooseWhatsAppTemplateModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="space-y-2.5 text-xs">
+        <!-- الخيار 1: تذكير مهني وودي -->
+        <button onclick="executeSendWhatsAppTemplate('friendly')" class="w-full text-right p-3 rounded-2xl bg-blue-950/40 hover:bg-blue-900/60 border border-blue-500/30 hover:border-blue-400 transition flex items-start gap-3 group">
+          <div class="w-8 h-8 rounded-xl bg-blue-600/30 text-blue-400 flex items-center justify-center text-sm shrink-0 mt-0.5 group-hover:scale-110 transition">
+            🌸
+          </div>
+          <div class="flex-1">
+            <h4 class="font-bold text-white text-xs group-hover:text-blue-300">النموذج 1: تذكير مهني وودي (تأخير خفيف)</h4>
+            <p class="text-[10px] text-slate-400 mt-0.5">رسالة راقية وهادئة لتذكير العميل بموعد القسط مع التفنيد الكامل للمسدد والمتبقي.</p>
+          </div>
+        </button>
+
+        <!-- الخيار 2: إشعار محاسبي جاد -->
+        <button onclick="executeSendWhatsAppTemplate('formal')" class="w-full text-right p-3 rounded-2xl bg-amber-950/40 hover:bg-amber-900/60 border border-amber-500/30 hover:border-amber-400 transition flex items-start gap-3 group">
+          <div class="w-8 h-8 rounded-xl bg-amber-600/30 text-amber-400 flex items-center justify-center text-sm shrink-0 mt-0.5 group-hover:scale-110 transition">
+            ⚠️
+          </div>
+          <div class="flex-1">
+            <h4 class="font-bold text-white text-xs group-hover:text-amber-300">النموذج 2: إشعار استحقاق محاسبي جاد (تأخير متوسط)</h4>
+            <p class="text-[10px] text-slate-400 mt-0.5">لهجة حسابية واضحة ومحددة تطالب بالسداد الفوري لتفادي التعثر أو تراكم الأقساط.</p>
+          </div>
+        </button>
+
+        <!-- الخيار 3: إنذار رسمي حازم -->
+        <button onclick="executeSendWhatsAppTemplate('urgent')" class="w-full text-right p-3 rounded-2xl bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/30 hover:border-rose-400 transition flex items-start gap-3 group">
+          <div class="w-8 h-8 rounded-xl bg-rose-600/30 text-rose-400 flex items-center justify-center text-sm shrink-0 mt-0.5 group-hover:scale-110 transition">
+            🛑
+          </div>
+          <div class="flex-1">
+            <h4 class="font-bold text-white text-xs group-hover:text-rose-300">النموذج 3: إنذار رسمي حازم (تأخير طويل وعدم رد)</h4>
+            <p class="text-[10px] text-slate-400 mt-0.5">مهلة نهائية 48 ساعة قبل اتخاذ الإجراءات الإدارية والقانونية المنصوص عليها في العقد.</p>
+          </div>
+        </button>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800 text-left">
+        <button onclick="closeModal('chooseWhatsAppTemplateModal')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: نافذة التحصيل اليدوي والترحيل التلقائي -->
   <div id="collectInstallmentModal" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -399,7 +447,6 @@
           <input type="number" id="colModalPaidInput" oninput="updateCollectModalPreview()" min="1" class="w-full bg-[#090d16] border-2 border-emerald-500/60 rounded-xl p-2.5 text-emerald-300 font-black text-base text-center">
         </div>
 
-        <!-- معاينة الترحيل التلقائي -->
         <div id="colModalRolloverNotice" class="p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[11px] text-amber-300 space-y-1">
           <p class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-arrow-turn-down"></i> ترحيل العجز تلقائياً:</p>
           <p id="colModalRolloverText">سيتم ترحيل 0 ج.م ليضاف تلقائياً على القسط القادم.</p>
@@ -489,11 +536,11 @@
           <button onclick="saveDetailedInvoiceChanges()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5">
             <i class="fa-solid fa-floppy-disk"></i> حفظ واعتماد التعديل
           </button>
-          <button onclick="sendDetailedInvoiceViaWhatsApp()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow">
-            <i class="fa-brands fa-whatsapp text-sm"></i> إرسال الفاتورة للعميل
+          <button onclick="openChooseWhatsAppModal(selectedContractForInvoice.id)" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow">
+            <i class="fa-brands fa-whatsapp text-sm"></i> اختيار رسالة وإرسال بالواتساب
           </button>
         </div>
-        <button onclick="closeModal('customerDetailedInvoiceModal')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">إغلاق</button>
+        <button onclick="closeModal('customerDetailedInvoiceModal')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">إلغاء</button>
       </div>
     </div>
   </div>
@@ -725,10 +772,13 @@
         remainingAmount: 19166,
         startDate: '2026-08-01',
         installments: [
-          { number: 1, dueDate: '2026-08-01', amount: 1917, status: 'مدفوع', paidDate: '2026-08-01' },
-          { number: 2, dueDate: '2026-09-01', amount: 1917, status: 'مدفوع', paidDate: '2026-09-02' },
-          { number: 3, dueDate: '2026-10-01', amount: 1917, status: 'مستحق', paidDate: null },
-          { number: 4, dueDate: '2026-11-01', amount: 1917, status: 'قادم', paidDate: null }
+          { number: 1, dueDate: '2026-08-01', amount: 1917, status: 'مدفوع', paidDate: '2026-08-01', paidActual: 1917 },
+          { number: 2, dueDate: '2026-09-01', amount: 1917, status: 'مدفوع', paidDate: '2026-09-02', paidActual: 1917 },
+          { number: 3, dueDate: '2026-10-01', amount: 1917, status: 'مستحق', paidDate: null, paidActual: 0 },
+          { number: 4, dueDate: '2026-11-01', amount: 1917, status: 'قادم', paidDate: null, paidActual: 0 },
+          { number: 5, dueDate: '2026-12-01', amount: 1917, status: 'قادم', paidDate: null, paidActual: 0 },
+          { number: 6, dueDate: '2027-01-01', amount: 1917, status: 'قادم', paidDate: null, paidActual: 0 },
+          { number: 7, dueDate: '2027-02-01', amount: 1917, status: 'قادم', paidDate: null, paidActual: 0 }
         ]
       },
       {
@@ -752,7 +802,8 @@
         remainingAmount: 22400,
         startDate: '2026-09-15',
         installments: [
-          { number: 1, dueDate: '2026-10-15', amount: 2240, status: 'قادم', paidDate: null }
+          { number: 1, dueDate: '2026-10-15', amount: 2240, status: 'قادم', paidDate: null, paidActual: 0 },
+          { number: 2, dueDate: '2026-11-15', amount: 2240, status: 'قادم', paidDate: null, paidActual: 0 }
         ]
       }
     ];
@@ -799,10 +850,12 @@
     let selectedSupplierId = 'SUP-01';
     let selectedContractForInvoice = null;
 
-    // متغيرات جلسة التحصيل اليدوي الحالية
     let currentCollectingContractId = null;
     let currentCollectingInstallmentNum = null;
     let currentCollectingRequiredAmount = 0;
+
+    // معرف العقد المحدد لإرسال الواتساب
+    let currentContractForWhatsApp = null;
 
     function getDetailedSuppliers() {
       const d = localStorage.getItem(STORAGE_KEY_DETAILED_SUPPLIERS);
@@ -1004,7 +1057,7 @@
                     <button onclick="openCollectInstallmentModal('${cnt.id}', ${inst.number}, ${inst.amount})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow">
                       تحصيل يدوي 💰
                     </button>
-                    <button onclick="sendQuickClientInvoiceWhatsApp('${cnt.id}')" class="px-2 py-1 bg-emerald-700/30 text-emerald-300 border border-emerald-500/40 rounded-lg text-[10px] font-bold">
+                    <button onclick="openChooseWhatsAppModal('${cnt.id}')" class="px-2 py-1 bg-emerald-700/30 text-emerald-300 border border-emerald-500/40 rounded-lg text-[10px] font-bold">
                       <i class="fa-brands fa-whatsapp"></i> تذكير
                     </button>
                   </td>
@@ -1080,7 +1133,7 @@
       document.getElementById('colModalRequiredAmount').innerText = `${requiredAmount.toLocaleString()} ج.م`;
       
       const paidInput = document.getElementById('colModalPaidInput');
-      paidInput.value = requiredAmount; // كتابة المبلغ كاملاً كافتراضي
+      paidInput.value = requiredAmount;
 
       updateCollectModalPreview();
       openModal('collectInstallmentModal');
@@ -1125,19 +1178,16 @@
       const today = new Date().toISOString().split('T')[0];
       const diff = currentCollectingRequiredAmount - paidVal;
 
-      // 1. تحديث القسط الحالي
       inst.status = 'مدفوع';
       inst.paidDate = today;
       inst.paidActual = paidVal;
 
-      // 2. ترحيل العجز أو الفائض للقسط القادم إن وجد
       const nextInst = cnt.installments[instIndex + 1];
       if (nextInst && diff !== 0) {
         nextInst.amount += diff;
         nextInst.rolloverNote = diff > 0 ? `(يشمل ${diff.toLocaleString()} ج مرحلة من القسط السابق)` : `(تم خصم ${Math.abs(diff).toLocaleString()} ج زيادة مسددة مسبقاً)`;
       }
 
-      // 3. تحديث المبالغ في العقد الرئيسي
       cnt.paidAmount = (cnt.paidAmount || 0) + paidVal;
       cnt.remainingAmount = Math.max(0, cnt.totalWithInterest - cnt.paidAmount);
 
@@ -1155,7 +1205,130 @@
     }
 
     // ==========================================
-    // 3. الموردين والمشتريات
+    // 3. محرك رسائل الواتساب التفصيلية بالأزرار الـ 3
+    // ==========================================
+    function openChooseWhatsAppModal(contractId) {
+      const contracts = getStoredContracts();
+      const c = contracts.find(x => x.id === contractId);
+      if (!c) return;
+
+      currentContractForWhatsApp = c;
+      document.getElementById('waModalCustomerName').innerText = c.customerName;
+      openModal('chooseWhatsAppTemplateModal');
+    }
+
+    // دالة إنشاء نصوص الأقساط مفندة (القسط الأول: كذا... القسط الثاني: كذا)
+    function buildDetailedInstallmentsBreakdown(contract) {
+      const arabicNumbers = ["الأول", "الثاني", "الثالث", "الرابع", "الخامس", "السادس", "السابع", "الثامن", "التاسع", "العاشر", "الحادي عشر", "الثاني عشر", "الثالث عشر", "الرابع عشر", "الخامس عشر"];
+      
+      const paidLines = [];
+      const remainingLines = [];
+
+      let totalPaidFromInst = 0;
+      let totalRemainingFromInst = 0;
+      let currentDueAmount = 0;
+
+      (contract.installments || []).forEach((inst, index) => {
+        const numLabel = arabicNumbers[index] || `رقم ${inst.number}`;
+
+        if (inst.status === 'مدفوع') {
+          const actualPaid = inst.paidActual !== undefined ? inst.paidActual : inst.amount;
+          totalPaidFromInst += actualPaid;
+          paidLines.push(`• القسط ${numLabel}: ${actualPaid.toLocaleString()} ج.م ✅`);
+        } else {
+          totalRemainingFromInst += inst.amount;
+          if (currentDueAmount === 0) currentDueAmount = inst.amount; // أول قسط متبقي هو المستحق حالياً
+          const note = inst.rolloverNote ? ` ${inst.rolloverNote}` : '';
+          remainingLines.push(`• القسط ${numLabel}: ${inst.amount.toLocaleString()} ج.م ⏳${note}`);
+        }
+      });
+
+      return {
+        paidText: paidLines.length > 0 ? paidLines.join('\n') : '• لم يتم تسجيل أقساط مسددة بعد.',
+        remainingText: remainingLines.length > 0 ? remainingLines.join('\n') : '• تم سداد كامل الأقساط بحمد الله ✔',
+        totalPaid: totalPaidFromInst,
+        totalRemaining: totalRemainingFromInst,
+        currentDueAmount: currentDueAmount || contract.monthlyAmount
+      };
+    }
+
+    function executeSendWhatsAppTemplate(templateType) {
+      if (!currentContractForWhatsApp) return;
+      const c = currentContractForWhatsApp;
+      const cleanPhone = c.customerPhone.replace(/[^0-9]/g, '');
+
+      const breakdown = buildDetailedInstallmentsBreakdown(c);
+      let message = '';
+
+      if (templateType === 'friendly') {
+        // النموذج 1: تذكير مهني وودي
+        message = 
+`مرحباً بك أستاذ ${c.customerName} المحترم 🌸
+تحية طيبة من إدارة (معرض أولاد العبد للأجهزة الكهربائية والمنزلية) 🏢
+كود العميل: #${c.clientCode || 1} | الجهاز: ${c.deviceName}
+
+نود تذكير سيادتكم ببيان الأقساط وموقف الحساب:
+━━━━━━━━━━━━━━━━━━━
+🟢 الأقساط المسددة (إجمالي ${breakdown.totalPaid.toLocaleString()} ج.م):
+${breakdown.paidText}
+
+🔴 الأقساط المتبقية (إجمالي ${breakdown.totalRemaining.toLocaleString()} ج.م):
+${breakdown.remainingText}
+━━━━━━━━━━━━━━━━━━━
+💰 إجمالي المتبقي لإغلاق الحساب: ${breakdown.totalRemaining.toLocaleString()} ج.م
+⚠️ القسط المستحق للتحصيل حالياً: ${breakdown.currentDueAmount.toLocaleString()} ج.م
+
+شاكرين لتعاملكم وحرصكم الدائم على الالتزام بمواعيد السداد 🤝`;
+
+      } else if (templateType === 'formal') {
+        // النموذج 2: إشعار محاسبي جاد
+        message = 
+`عناية العميل المحترم / ${c.customerName} 
+كود العميل: #${c.clientCode || 1} 
+إشعار استحقاق قسط - معرض أولاد العبد للأجهزة الكهربائية ⚠️
+الجهاز: ${c.deviceName}
+
+نلفت انتباه سيادتكم إلى ضرورة سداد القسط المستحق طرفكم، وبيان الحساب كالتالي:
+━━━━━━━━━━━━━━━━━━━
+🟢 الأقساط المسددة حتى الآن (${breakdown.totalPaid.toLocaleString()} ج.م):
+${breakdown.paidText}
+
+🔴 الأقساط المتبقية طرفكم (${breakdown.totalRemaining.toLocaleString()} ج.م):
+${breakdown.remainingText}
+━━━━━━━━━━━━━━━━━━━
+⚠️ المبلغ المطلوب إيداعه وسداده فوراً: ${breakdown.currentDueAmount.toLocaleString()} ج.م
+💰 صافي المديونية المتبقية: ${breakdown.totalRemaining.toLocaleString()} ج.م
+
+برجاء التكرم بالسداد اليوم بالمعرض لتسوية الدفعة وتجنب تراكم الأقساط القادمة.`;
+
+      } else if (templateType === 'urgent') {
+        // النموذج 3: إنذار رسمي حازم
+        message = 
+`🛑 إنذار رسمي بالسداد - إدارة الشؤون والحسابات
+معرض أولاد العبد للأجهزة الكهربائية والمنزلية 🏢
+
+إلى السيد / ${c.customerName} (كود: #${c.clientCode || 1})
+بخصوص عقد الشراء لجهاز: ${c.deviceName}
+
+نظراً لمرور فترة الاستحقاق وتأخر سداد القسط الشهري، نرفق لسيادتكم سجل السداد المسجل بالنظام:
+━━━━━━━━━━━━━━━━━━━
+🟢 المسدد طرفنا (${breakdown.totalPaid.toLocaleString()} ج.م):
+${breakdown.paidText}
+
+🔴 المتبقي المستحق (${breakdown.totalRemaining.toLocaleString()} ج.م):
+${breakdown.remainingText}
+━━━━━━━━━━━━━━━━━━━
+⚠️ القسط المتأخر المطلوب سداده فوراً: ${breakdown.currentDueAmount.toLocaleString()} ج.م
+
+نرجو التوجه لإدارة المعرض والتسوية خلال 48 ساعة من تاريخ هذه الرسالة، وذلك لتفادي وقف التسهيلات والبدء في الإجراءات القانونية المترتبة على بنود العقد.`;
+      }
+
+      closeModal('chooseWhatsAppTemplateModal');
+      window.open(`https://wa.me/2${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank');
+    }
+
+    // ==========================================
+    // 4. الموردين والمشتريات
     // ==========================================
     function renderSuppliersTable() {
       const suppliers = getDetailedSuppliers();
@@ -1467,7 +1640,7 @@
     }
 
     // ==========================================
-    // 4. سجل الأقساط وفواتير العملاء
+    // 5. سجل الأقساط وفواتير العملاء
     // ==========================================
     function renderInstallmentsTable() {
       const contracts = getStoredContracts();
@@ -1508,7 +1681,7 @@
               </a>
             </td>
             <td class="p-2.5 text-center">
-              <button onclick="sendQuickClientInvoiceWhatsApp('${c.id}')" class="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 mx-auto">
+              <button onclick="openChooseWhatsAppModal('${c.id}')" class="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 mx-auto">
                 <i class="fa-brands fa-whatsapp text-sm text-emerald-400"></i>
                 <span>إرسال الفاتورة</span>
               </button>
@@ -1620,27 +1793,8 @@
       alert('تم بنجاح حفظ وتحديث بيانات الفاتورة ونسبة الفائدة وقيمة الأقساط.');
     }
 
-    function sendQuickClientInvoiceWhatsApp(contractId) {
-      const contracts = getStoredContracts();
-      const c = contracts.find(x => x.id === contractId);
-      if (!c) return;
-
-      const cleanPhone = c.customerPhone.replace(/[^0-9]/g, '');
-      const itemsText = (c.items || []).map(i => `• ${i.name} (عدد ${i.qty}) بسعر ${i.total} ج`).join('\n');
-
-      const msg = encodeURIComponent(
-        `فاتورة مشتريات وتقسيط - معرض أولاد العبد للأجهزة الكهربائية 🏢\nكود العميل: #${c.clientCode || 1}\nالعميل المحترم: ${c.customerName}\n\nبيان المشتريات:\n${itemsText}\n\n- إجمالي الفاتورة شامل الفائدة: ${c.totalWithInterest.toLocaleString()} ج.م\n- المسدد حتى الآن: ${c.paidAmount.toLocaleString()} ج.م\n- المتبقي المطلوب: ${c.remainingAmount.toLocaleString()} ج.م\n- القسط الشهري: ${c.monthlyAmount.toLocaleString()} ج.م (على ${c.months} شهر)\n\nنشكركم لتعاملكم الراقي معنا!`
-      );
-      window.open(`https://wa.me/2${cleanPhone}?text=${msg}`, '_blank');
-    }
-
-    function sendDetailedInvoiceViaWhatsApp() {
-      if (!selectedContractForInvoice) return;
-      sendQuickClientInvoiceWhatsApp(selectedContractForInvoice.id);
-    }
-
     // ==========================================
-    // 5. إدارة المخزن
+    // 6. إدارة المخزن
     // ==========================================
     function renderInventoryTable() {
       const inventory = buildDynamicInventory();
@@ -1725,7 +1879,7 @@
     }
 
     // ==========================================
-    // 6. محرك البيع الجديد
+    // 7. محرك البيع الجديد
     // ==========================================
     function toggleInstallmentFields() {
       const type = document.getElementById('saleTypeSelect').value;
@@ -1818,7 +1972,8 @@
             dueDate: dueDateStr,
             amount: math.monthlyAmount,
             status: 'قادم',
-            paidDate: null
+            paidDate: null,
+            paidActual: 0
           });
           currentMonthDate.setMonth(currentMonthDate.getMonth() + 1);
         }
@@ -1872,7 +2027,7 @@
     }
 
     // ==========================================
-    // 7. سجل فواتير المبيعات
+    // 8. سجل فواتير المبيعات
     // ==========================================
     function renderSalesTable() {
       const sales = getStoredSales();
