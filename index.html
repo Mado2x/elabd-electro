@@ -98,9 +98,14 @@
       </button>
       <span class="font-black text-sm text-white">معرض أولاد العبد</span>
     </div>
-    <button onclick="openModal('newSaleModal')" class="px-3 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5">
-      <i class="fa-solid fa-plus"></i> بيع جديد
-    </button>
+    <div class="flex items-center gap-1.5">
+      <button onclick="openBarcodeScanner('home_inquiry')" class="px-2.5 py-1.5 bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 rounded-xl text-xs font-bold flex items-center gap-1">
+        <i class="fa-solid fa-barcode"></i> فحص
+      </button>
+      <button onclick="openModal('newSaleModal')" class="px-3 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5">
+        <i class="fa-solid fa-plus"></i> بيع
+      </button>
+    </div>
   </div>
 
   <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-40 hidden md:hidden"></div>
@@ -109,9 +114,11 @@
   <main class="flex-1 p-3 md:p-6 max-w-6xl w-full mx-auto overflow-y-auto">
 
     <!-- ========================================== -->
-    <!-- VIEW 1: الصفحة الرئيسية والموقف المالي -->
+    <!-- VIEW 1: الصفحة الرئيسية والموقف المالي + فحص الباركود السريع -->
     <!-- ========================================== -->
     <section id="view-dashboard" class="space-y-4">
+      
+      <!-- كارت الموقف المالي الشامل + أزرار الإجراء السريع -->
       <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-[#111726] to-blue-950/80 border border-blue-500/30 p-5 shadow-2xl">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
           <div>
@@ -124,9 +131,18 @@
               <span class="text-xs text-slate-400 font-semibold">إجمالي المبيعات المنفذة</span>
             </div>
           </div>
-          <button onclick="openModal('newSaleModal')" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-600/30 flex items-center gap-2 transition">
-            <i class="fa-solid fa-cart-plus"></i> فاتورة بيع جديدة
-          </button>
+          
+          <div class="flex items-center gap-2 w-full md:w-auto">
+            <!-- زر كاميرا الاستعلام السريع بالباركود في الصفحة الرئيسية -->
+            <button onclick="openBarcodeScanner('home_inquiry')" class="flex-1 md:flex-none px-3.5 py-2.5 bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white border border-cyan-500/40 rounded-xl text-xs font-bold shadow-lg flex items-center justify-center gap-1.5 transition">
+              <i class="fa-solid fa-barcode text-sm"></i>
+              <span>📷 فحص باركود جهاز</span>
+            </button>
+            <button onclick="openModal('newSaleModal')" class="flex-1 md:flex-none px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-600/30 flex items-center justify-center gap-1.5 transition">
+              <i class="fa-solid fa-cart-plus"></i>
+              <span>فاتورة بيع جديدة</span>
+            </button>
+          </div>
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 pt-3 border-t border-slate-800/80">
@@ -295,6 +311,7 @@
             <thead class="bg-slate-900 text-slate-400 border-b border-slate-800">
               <tr>
                 <th class="p-2.5">اسم الجهاز والموديل</th>
+                <th class="p-2.5">الباركود المسجل</th>
                 <th class="p-2.5">المورد المسجل منه</th>
                 <th class="p-2.5 text-center text-cyan-400 font-bold">الكمية</th>
                 <th class="p-2.5">سعر الشراء</th>
@@ -388,18 +405,41 @@
       </div>
 
       <div class="relative overflow-hidden rounded-2xl bg-black border border-slate-800 min-h-[260px] flex items-center justify-center">
-        <!-- عنصر عرض كاميرا المسح -->
         <div id="barcode-scanner-box" class="w-full"></div>
       </div>
 
       <div class="p-2.5 bg-cyan-950/40 rounded-xl border border-cyan-500/30 text-center">
-        <p class="text-[11px] text-cyan-300 font-semibold">وجّه كاميرا الهاتف على الباركود أو السيريال الملصق على الكرتونة مباشرة.</p>
+        <p class="text-[11px] text-cyan-300 font-semibold" id="scannerInstructionText">وجّه كاميرا الهاتف على الباركود أو السيريال الملصق على الكرتونة مباشرة.</p>
       </div>
 
       <div class="pt-1 text-center">
         <button onclick="closeBarcodeScanner()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition">
           إلغاء وإغلاق الكاميرا
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: بطاقة نتيجة فحص الباركود والاستعلام السريع من الصفحة الرئيسية 🔍 -->
+  <div id="deviceInquiryModal" class="fixed inset-0 bg-black/85 z-[60] flex items-center justify-center p-4 hidden">
+    <div class="bg-[#111726] border border-cyan-500/50 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-circle-check text-cyan-400"></i>
+          نتيجة فحص الباركود والاستعلام عن الجهاز
+        </h3>
+        <button onclick="closeModal('deviceInquiryModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div id="deviceInquiryResultContent" class="space-y-3 text-xs">
+        <!-- يمتلئ آلياً عبر الجافاسكريبت -->
+      </div>
+
+      <div class="flex gap-2 pt-2 border-t border-slate-800">
+        <button onclick="proceedToSellInquiredDevice()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs shadow flex items-center justify-center gap-1.5 transition">
+          <i class="fa-solid fa-cart-plus"></i> بيع هذا الجهاز الآن
+        </button>
+        <button onclick="closeModal('deviceInquiryModal')" class="px-4 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold">إغلاق</button>
       </div>
     </div>
   </div>
@@ -491,7 +531,6 @@
           </div>
         </div>
 
-        <!-- خانة السيريال مع زر الكاميرا -->
         <div>
           <div class="flex justify-between items-center mb-1">
             <label class="block text-slate-300 font-semibold">السيريال نمبر للأجهزة</label>
@@ -681,7 +720,7 @@
     </div>
   </div>
 
-  <!-- MODAL: إضافة شحنة توريد أصناف لهذا المورد -->
+  <!-- MODAL: إضافة شحنة توريد أصناف لهذا المورد (مع باركود الصنف) -->
   <div id="addSupplierShipmentModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -695,6 +734,18 @@
           <label class="block text-slate-300 mb-1">اسم الصنف والموديل (يسمّع بالمخزن فوراً)</label>
           <input type="text" id="shipmentItemName" placeholder="مثال: غسالة توشيبا 10 كيلو نصف أوتوماتيك" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
         </div>
+
+        <!-- خانة باركود الصنف عند التوريد -->
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="block text-slate-300 font-semibold">باركود الصنف / كود الكرتونة</label>
+            <button type="button" onclick="openBarcodeScanner('shipmentBarcode')" class="px-2 py-0.5 rounded-lg bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white border border-purple-500/30 text-[10px] font-bold flex items-center gap-1 transition">
+              <i class="fa-solid fa-camera"></i> مسح باركود الكرتونة 📷
+            </button>
+          </div>
+          <input type="text" id="shipmentBarcode" placeholder="امسح باركود المصنع أو اكتب كود الصنف..." class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-mono">
+        </div>
+
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block text-slate-300 mb-1">الكمية (عدد القطع)</label>
@@ -727,7 +778,7 @@
     </div>
   </div>
 
-  <!-- MODAL: فاتورة وعقد بيع جديد (مع قارئ الكاميرا للسيريال) -->
+  <!-- MODAL: فاتورة وعقد بيع جديد (مع قارئ الكاميرا للسيريال والباركود) -->
   <div id="newSaleModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-lg rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -751,11 +802,16 @@
         </div>
 
         <div>
-          <label class="block text-slate-300 mb-1 font-semibold">اختر الجهاز من بضاعة المخزن الواردة</label>
+          <div class="flex justify-between items-center mb-1">
+            <label class="block text-slate-300 font-semibold">اختر الجهاز من المخزن</label>
+            <!-- زر مسح باركود الكرتونة للتعرف التلقائي على الجهاز وملء السعر -->
+            <button type="button" onclick="openBarcodeScanner('sale_barcode_detect')" class="px-2 py-0.5 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/30 text-[10px] font-bold flex items-center gap-1 transition">
+              <i class="fa-solid fa-barcode"></i> مسح باركود الجهاز لتنزيل بياناته 📷
+            </button>
+          </div>
           <select id="saleDeviceSelect" onchange="autoFillDevicePrice()" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white"></select>
         </div>
 
-        <!-- اختيار عدد القطع مع عرض سعر القطعة والإجمالي -->
         <div class="grid grid-cols-3 gap-2 bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800">
           <div>
             <label class="block text-cyan-400 mb-1 font-bold">عدد القطع المباعة</label>
@@ -771,15 +827,14 @@
           </div>
         </div>
 
-        <!-- خانة السيريال مع زر الكاميرا لقراءة الباركود والسيريال -->
         <div>
           <div class="flex justify-between items-center mb-1">
             <label class="block text-slate-300 font-semibold">السيريال نمبر للأجهزة المباعة (للضمان)</label>
             <button type="button" onclick="openBarcodeScanner('saleSerialInput')" class="px-2 py-0.5 rounded-lg bg-cyan-600/20 text-cyan-400 hover:bg-cyan-600 hover:text-white border border-cyan-500/30 text-[10px] font-bold flex items-center gap-1 transition">
-              <i class="fa-solid fa-camera"></i> مسح بالكاميرا 📷
+              <i class="fa-solid fa-camera"></i> مسح السيريال بالكاميرا 📷
             </button>
           </div>
-          <input type="text" id="saleSerialInput" placeholder="اكتب أو امسح الباركود بالكاميرا..." class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white font-mono">
+          <input type="text" id="saleSerialInput" placeholder="اكتب أو امسح السيريال بالكاميرا..." class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white font-mono">
         </div>
 
         <div>
@@ -790,7 +845,6 @@
           </select>
         </div>
 
-        <!-- حقول التقسيط الذكية -->
         <div id="installmentFieldsBox" class="space-y-2.5 bg-slate-900/80 p-3 rounded-2xl border border-blue-500/30">
           <div class="grid grid-cols-2 gap-2">
             <div>
@@ -843,7 +897,7 @@
     const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_detailed_suppliers_v3';
     const STORAGE_KEY_SELLING_PRICES = 'elabd_selling_prices_v3';
     const STORAGE_KEY_SALES = 'elabd_sales_v3';
-    const STORAGE_KEY_CONTRACTS = 'elabd_contracts_v10';
+    const STORAGE_KEY_CONTRACTS = 'elabd_contracts_v11';
     const STORAGE_KEY_CURRENT_TAB = 'elabd_current_tab';
 
     const defaultSuppliersData = [
@@ -853,8 +907,8 @@
         phone: '01099887766',
         address: 'مخازن بنها',
         items: [
-          { id: 'ITM-1', date: '2026-09-15', name: 'ثلاجة توشيبا 16 قدم نوفروست', qty: 5, unitPrice: 21000, total: 105000, paid: 70000, remaining: 35000 },
-          { id: 'ITM-2', date: '2026-09-28', name: 'ميكروويف شارب 25 لتر بالشواية', qty: 10, unitPrice: 5200, total: 52000, paid: 30000, remaining: 22000 }
+          { id: 'ITM-1', barcode: 'TOSH-16-REF', date: '2026-09-15', name: 'ثلاجة توشيبا 16 قدم نوفروست', qty: 5, unitPrice: 21000, total: 105000, paid: 70000, remaining: 35000 },
+          { id: 'ITM-2', barcode: 'SHARP-25-MIC', date: '2026-09-28', name: 'ميكروويف شارب 25 لتر بالشواية', qty: 10, unitPrice: 5200, total: 52000, paid: 30000, remaining: 22000 }
         ]
       },
       {
@@ -863,8 +917,8 @@
         phone: '01155443322',
         address: 'مصر الجديدة',
         items: [
-          { id: 'ITM-3', date: '2026-10-01', name: 'غسالة إل جي 9 كيلو فول أوتوماتيك', qty: 6, unitPrice: 19500, total: 117000, paid: 117000, remaining: 0 },
-          { id: 'ITM-4', date: '2026-10-03', name: 'شاشة سامسونج 55 بوصة سمارت 4K', qty: 8, unitPrice: 14500, total: 116000, paid: 60000, remaining: 56000 }
+          { id: 'ITM-3', barcode: 'LG-9K-WASH', date: '2026-10-01', name: 'غسالة إل جي 9 كيلو فول أوتوماتيك', qty: 6, unitPrice: 19500, total: 117000, paid: 117000, remaining: 0 },
+          { id: 'ITM-4', barcode: 'SAM-55-4K', date: '2026-10-03', name: 'شاشة سامسونج 55 بوصة سمارت 4K', qty: 8, unitPrice: 14500, total: 116000, paid: 60000, remaining: 56000 }
         ]
       }
     ];
@@ -1034,9 +1088,9 @@
     let activeInvoiceIdInProfile = null;
     let currentEditingInvoiceId = null;
 
-    // كائن الماسح الضوئي للكاميرا
     let html5QrCodeScannerInstance = null;
     let currentTargetInputIdForScanner = null;
+    let lastInquiredDeviceObject = null;
 
     function getDetailedSuppliers() {
       const d = localStorage.getItem(STORAGE_KEY_DETAILED_SUPPLIERS);
@@ -1093,9 +1147,11 @@
           if (!inventoryMap[it.id]) {
             inventoryMap[it.id] = {
               itemId: it.id,
+              barcode: it.barcode || ('BAR-' + it.id),
               name: it.name,
               supplierId: sup.id,
               supplierName: sup.name,
+              supplyDate: it.date || '',
               buyPrice: it.unitPrice,
               initialQty: parseInt(it.qty) || 0,
               currentQty: parseInt(it.qty) || 0,
@@ -1182,45 +1238,41 @@
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
     // ==========================================
-    // 0. تشغيل ماسح الكاميرا للباركود والسيريال 📷
+    // 0. تشغيل ماسح الكاميرا الذكي المتعدد المهام 📷
     // ==========================================
-    function openBarcodeScanner(targetInputId) {
-      currentTargetInputIdForScanner = targetInputId;
+    function openBarcodeScanner(targetMode) {
+      currentTargetInputIdForScanner = targetMode;
       openModal('barcodeScannerModal');
+
+      const instruction = document.getElementById('scannerInstructionText');
+      if (targetMode === 'home_inquiry') {
+        instruction.innerText = "وجّه الكاميرا على باركود الجهاز لعرض كافة بياناته وأسعاره من المخزن فوراً.";
+      } else if (targetMode === 'sale_barcode_detect') {
+        instruction.innerText = "امسح باركود كرتونة الجهاز للتعرف عليه وملء الفاتورة تلقائياً.";
+      } else {
+        instruction.innerText = "وجّه كاميرا الهاتف على الباركود أو السيريال الملصق على الكرتونة مباشرة.";
+      }
 
       const config = { fps: 15, qrbox: { width: 250, height: 160 } };
       html5QrCodeScannerInstance = new Html5Qrcode("barcode-scanner-box");
 
       html5QrCodeScannerInstance.start(
-        { facingMode: "environment" }, // استخدام الكاميرا الخلفية تلقائياً
+        { facingMode: "environment" },
         config,
         (decodedText) => {
-          // نجاح القراءة والتقاط الكود
           handleBarcodeScannedSuccessfully(decodedText);
         },
-        (errorMessage) => {
-          // استمرار المسح دون إزعاج المستخدم
-        }
+        (errorMessage) => {}
       ).catch((err) => {
         alert("تعذر الوصول إلى الكاميرا. يرجى التأكد من إعطاء إذن الكاميرا للمتصفح.");
         closeBarcodeScanner();
       });
     }
 
-    function handleBarcodeScannedSuccessfully(code) {
-      if (currentTargetInputIdForScanner) {
-        const inputElem = document.getElementById(currentTargetInputIdForScanner);
-        if (inputElem) {
-          // إذا كان مكتوباً سيريال مسبقاً، نضيف إليه الكود الجديد بفارز
-          if (inputElem.value && inputElem.value.trim().length > 0) {
-            inputElem.value = inputElem.value.trim() + ", " + code.trim();
-          } else {
-            inputElem.value = code.trim();
-          }
-        }
-      }
+    function handleBarcodeScannedSuccessfully(scannedCode) {
+      const codeClean = scannedCode.trim();
 
-      // صوت تنبيه خفيف (Beep) للإشعار بنجاح القراءة
+      // تشغيل نغمة Beep خفيفة
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = audioCtx.createOscillator();
@@ -1232,6 +1284,28 @@
       } catch (e) {}
 
       closeBarcodeScanner();
+
+      // السيناريو 1: فحص واستعلام من الصفحة الرئيسية
+      if (currentTargetInputIdForScanner === 'home_inquiry') {
+        executeDeviceInquiryByBarcode(codeClean);
+        return;
+      }
+
+      // السيناريو 2: التعرف التلقائي على الجهاز عند البيع بمسح الباركود
+      if (currentTargetInputIdForScanner === 'sale_barcode_detect') {
+        executeAutoSelectDeviceForSaleByBarcode(codeClean);
+        return;
+      }
+
+      // السيناريو 3: كتابة السيريال/الباركود في خانة إدخال محددة
+      const inputElem = document.getElementById(currentTargetInputIdForScanner);
+      if (inputElem) {
+        if (inputElem.value && inputElem.value.trim().length > 0) {
+          inputElem.value = inputElem.value.trim() + ", " + codeClean;
+        } else {
+          inputElem.value = codeClean;
+        }
+      }
     }
 
     function closeBarcodeScanner() {
@@ -1244,6 +1318,95 @@
         });
       }
       closeModal('barcodeScannerModal');
+    }
+
+    // استعلام سريع وعرض تفاصيل الجهاز بالكامل من الصفحة الرئيسية
+    function executeDeviceInquiryByBarcode(barcode) {
+      const inventory = buildDynamicInventory();
+      const matchedItem = inventory.find(i => 
+        (i.barcode && i.barcode.toLowerCase() === barcode.toLowerCase()) ||
+        i.name.toLowerCase().includes(barcode.toLowerCase())
+      );
+
+      const content = document.getElementById('deviceInquiryResultContent');
+
+      if (!matchedItem) {
+        lastInquiredDeviceObject = null;
+        content.innerHTML = `
+          <div class="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-center space-y-1">
+            <i class="fa-solid fa-triangle-exclamation text-rose-400 text-xl"></i>
+            <h4 class="font-bold text-white text-sm">الجهاز غير موجود بالمخزن!</h4>
+            <p class="text-[11px] text-slate-400">الباركود المفحوص: <span class="font-mono text-rose-300">${barcode}</span></p>
+            <p class="text-[10px] text-slate-500">تأكد من تسجيل الصنف وتوريده من قسم الموردين أولاً.</p>
+          </div>
+        `;
+      } else {
+        lastInquiredDeviceObject = matchedItem;
+        const profitMargin = matchedItem.cashPrice - matchedItem.buyPrice;
+        const isOutOfStock = matchedItem.currentQty <= 0;
+
+        content.innerHTML = `
+          <div class="bg-slate-900 border border-cyan-500/30 rounded-2xl p-4 space-y-3">
+            <div>
+              <span class="text-[10px] text-cyan-400 font-bold block">باركود: ${matchedItem.barcode}</span>
+              <h4 class="text-base font-black text-white mt-0.5">${matchedItem.name}</h4>
+              <p class="text-xs text-slate-400 mt-0.5">المورد: <b class="text-purple-300">${matchedItem.supplierName}</b></p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-center">
+              <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+                <span class="text-[10px] text-slate-400 block font-semibold">الرصيد المتوفر بالمخزن</span>
+                <b class="text-base font-black ${isOutOfStock ? 'text-rose-400' : 'text-emerald-400'}">
+                  ${isOutOfStock ? 'نفذت الكمية ❌' : matchedItem.currentQty + ' أجهزة متوفرة'}
+                </b>
+              </div>
+              <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+                <span class="text-[10px] text-emerald-400 block font-semibold">سعر البيع الكاش المعتمد</span>
+                <b class="text-base font-black text-white">${matchedItem.cashPrice.toLocaleString()} ج.م</b>
+              </div>
+            </div>
+
+            <div class="p-2 bg-slate-950/70 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+              <span class="text-slate-400">سعر الشراء: <b class="text-slate-300">${matchedItem.buyPrice.toLocaleString()} ج</b></span>
+              <span class="text-emerald-400">هامش الربح المتوقع: <b>+${profitMargin.toLocaleString()} ج</b></span>
+            </div>
+          </div>
+        `;
+      }
+
+      openModal('deviceInquiryModal');
+    }
+
+    function proceedToSellInquiredDevice() {
+      if (!lastInquiredDeviceObject) return;
+      closeModal('deviceInquiryModal');
+      openModal('newSaleModal');
+
+      const select = document.getElementById('saleDeviceSelect');
+      if (select) {
+        select.value = lastInquiredDeviceObject.itemId;
+        autoFillDevicePrice();
+      }
+    }
+
+    // التعرف التلقائي عند مسح باركود الكرتونة في شاشة البيع
+    function executeAutoSelectDeviceForSaleByBarcode(barcode) {
+      const inventory = buildDynamicInventory();
+      const matched = inventory.find(i => 
+        (i.barcode && i.barcode.toLowerCase() === barcode.toLowerCase()) ||
+        i.name.toLowerCase().includes(barcode.toLowerCase())
+      );
+
+      if (matched) {
+        const select = document.getElementById('saleDeviceSelect');
+        if (select) {
+          select.value = matched.itemId;
+          autoFillDevicePrice();
+        }
+        alert(`تم بنجاح التعرف على الجهاز: (${matched.name}) وتعبئة أسعاره من المخزن.`);
+      } else {
+        alert(`لم يتم العثور على جهاز بهذا الباركود (${barcode}) في المخزن.`);
+      }
     }
 
     // ==========================================
@@ -2257,6 +2420,7 @@ ${breakdown.remainingText}
       if (!sup) return;
 
       const itemName = document.getElementById('shipmentItemName').value.trim();
+      const barcode = document.getElementById('shipmentBarcode').value.trim() || ('BAR-' + Date.now().toString().slice(-6));
       const qty = parseInt(document.getElementById('shipmentQty').value);
       const unitPrice = parseFloat(document.getElementById('shipmentUnitPrice').value);
       const paid = parseFloat(document.getElementById('shipmentPaidAmount').value) || 0;
@@ -2273,6 +2437,7 @@ ${breakdown.remainingText}
       if (!sup.items) sup.items = [];
       sup.items.unshift({
         id: 'ITM-' + Date.now(),
+        barcode,
         date,
         name: itemName,
         qty,
@@ -2291,11 +2456,12 @@ ${breakdown.remainingText}
       setDetailedSuppliers(suppliers);
       closeModal('addSupplierShipmentModal');
       document.getElementById('shipmentItemName').value = '';
+      document.getElementById('shipmentBarcode').value = '';
       
       renderSuppliersTable();
       populateDeviceSelects();
       renderDashboard();
-      alert(`تم تسجيل التوريدة بنجاح وترحيل ${qty} قطع إلى المخزن مباشرة.`);
+      alert(`تم تسجيل التوريدة بنجاح وحفظ الباركود (${barcode}) بالمخزن.`);
     }
 
     function deleteSupplierItem(supId, itemId) {
@@ -2356,7 +2522,7 @@ ${breakdown.remainingText}
       if (inventory.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="6" class="p-8 text-center text-slate-500">
+            <td colspan="7" class="p-8 text-center text-slate-500">
               المخزن فارغ حالياً. لإضافة بضاعة للمخزن، توجه إلى قسم <b>"الموردين والمشتريات"</b> وسجل توريدة جديدة من أحد الموردين وستظهر هنا فوراً.
             </td>
           </tr>
@@ -2369,6 +2535,7 @@ ${breakdown.remainingText}
         tbody.innerHTML += `
           <tr>
             <td class="p-2.5 font-bold text-white">${item.name}</td>
+            <td class="p-2.5 font-mono text-cyan-300 text-xs">${item.barcode || '--'}</td>
             <td class="p-2.5 text-purple-300 font-semibold">${item.supplierName}</td>
             <td class="p-2.5 text-center font-black text-base ${isLow ? 'text-rose-400' : 'text-emerald-400'}">
               ${item.currentQty}
@@ -2413,7 +2580,7 @@ ${breakdown.remainingText}
       inventory.forEach(dev => {
         const disabled = dev.currentQty <= 0 ? 'disabled' : '';
         select.innerHTML += `
-          <option value="${dev.itemId}" data-name="${dev.name}" data-price="${dev.cashPrice}" data-maxqty="${dev.currentQty}" ${disabled}>
+          <option value="${dev.itemId}" data-name="${dev.name}" data-price="${dev.cashPrice}" data-maxqty="${dev.currentQty}" data-barcode="${dev.barcode}" ${disabled}>
             ${dev.name} [المتوفر: ${dev.currentQty}] - ${dev.cashPrice.toLocaleString()} ج.م
           </option>
         `;
