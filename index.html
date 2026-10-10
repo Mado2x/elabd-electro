@@ -128,7 +128,7 @@
           </button>
         </div>
 
-        <!-- شبكة المؤشرات المالية المطورة (Fintech Cards) -->
+        <!-- شبكة المؤشرات المالية المطورة -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 pt-3 border-t border-slate-800/80">
           
           <div class="bg-slate-900/90 border border-emerald-500/30 p-3 rounded-2xl relative overflow-hidden">
@@ -183,9 +183,7 @@
           <span class="px-2.5 py-1 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-bold" id="currentMonthBadgeDisplay"></span>
         </div>
 
-        <div id="topSellingReportContainer" class="space-y-2.5">
-          <!-- يمتلئ تلقائياً ببيانات حركة السحب -->
-        </div>
+        <div id="topSellingReportContainer" class="space-y-2.5"></div>
       </div>
 
       <!-- الأقساط المستحقة للتحصيل الفوري -->
@@ -205,7 +203,7 @@
                 <th class="p-2.5">الجهاز المباع</th>
                 <th class="p-2.5">تاريخ استحقاق القسط</th>
                 <th class="p-2.5 text-amber-300 font-bold">قيمة القسط</th>
-                <th class="p-2.5 text-center">إجراء التحصيل والتذكير</th>
+                <th class="p-2.5 text-center">إجراء التحصيل اليدوي والتذكير</th>
               </tr>
             </thead>
             <tbody id="dueInstallmentsTableBody" class="divide-y divide-slate-800 text-slate-300"></tbody>
@@ -215,11 +213,9 @@
     </section>
 
     <!-- ========================================== -->
-    <!-- VIEW 2: الموردين والمشتريات (مع إجمالي المتبقي العام) -->
+    <!-- VIEW 2: الموردين والمشتريات -->
     <!-- ========================================== -->
     <section id="view-suppliers" class="hidden space-y-4">
-      
-      <!-- كارت إجمالي المتبقي لجميع الموردين (إجمالي ما عليّ بالخارج) -->
       <div class="bg-gradient-to-r from-purple-950/60 via-slate-900 to-[#111726] border border-purple-500/40 p-4 rounded-3xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3 shadow-xl">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 rounded-2xl bg-purple-600/20 text-purple-400 border border-purple-500/30 flex items-center justify-center text-xl shrink-0">
@@ -236,8 +232,6 @@
       </div>
 
       <div class="flex flex-col md:flex-row gap-4 min-h-[560px]">
-        
-        <!-- القائمة الجانبية اليمنى: أسماء الموردين -->
         <div class="w-full md:w-80 bg-[#111726] border border-slate-800 rounded-3xl p-4 flex flex-col shrink-0">
           <div class="flex justify-between items-center mb-3 pb-3 border-b border-slate-800">
             <h3 class="font-bold text-sm text-white flex items-center gap-2">
@@ -245,15 +239,12 @@
             </h3>
             <span class="text-[10px] text-slate-400" id="suppliersCountBadge">0 مورد</span>
           </div>
-
           <div id="suppliersMasterList" class="flex-1 overflow-y-auto space-y-2 custom-scrollbar"></div>
         </div>
 
-        <!-- اللوحة اليسرى: التفاصيل وجدول الأصناف للمورد المختار -->
         <div class="flex-1 bg-[#111726] border border-slate-800 rounded-3xl p-4 md:p-5 flex flex-col justify-between">
           <div id="supplierDetailContainer" class="space-y-4"></div>
         </div>
-
       </div>
     </section>
 
@@ -382,6 +373,47 @@
   <!-- ========================================== -->
   <!-- MODALS المنظومة -->
   <!-- ========================================== -->
+
+  <!-- MODAL: نافذة التحصيل اليدوي الذكي والترحيل التلقائي -->
+  <div id="collectInstallmentModal" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[#111726] border border-slate-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div>
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-hand-holding-dollar text-emerald-400"></i>
+            تحصيل قسط العميل: <span id="colModalCustomerName" class="text-blue-400"></span>
+          </h3>
+          <p class="text-[10px] text-slate-400 mt-0.5" id="colModalInstallmentDesc"></p>
+        </div>
+        <button onclick="closeModal('collectInstallmentModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="text-xs space-y-3">
+        <div class="p-3 bg-slate-900 rounded-2xl border border-slate-800 flex justify-between items-center">
+          <span class="text-slate-400">قيمة القسط المطلوبة:</span>
+          <b class="text-sm text-amber-300 font-black" id="colModalRequiredAmount">0 ج.م</b>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 mb-1 font-semibold">المبلغ المستلم باليد الآن (ج.م):</label>
+          <input type="number" id="colModalPaidInput" oninput="updateCollectModalPreview()" min="1" class="w-full bg-[#090d16] border-2 border-emerald-500/60 rounded-xl p-2.5 text-emerald-300 font-black text-base text-center">
+        </div>
+
+        <!-- معاينة الترحيل التلقائي -->
+        <div id="colModalRolloverNotice" class="p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[11px] text-amber-300 space-y-1">
+          <p class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-arrow-turn-down"></i> ترحيل العجز تلقائياً:</p>
+          <p id="colModalRolloverText">سيتم ترحيل 0 ج.م ليضاف تلقائياً على القسط القادم.</p>
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2 border-t border-slate-800">
+        <button onclick="confirmCollectInstallment()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-lg shadow-emerald-600/30">
+          تأكيد تسجيل التحصيل
+        </button>
+        <button onclick="closeModal('collectInstallmentModal')" class="px-4 bg-slate-800 text-slate-300 rounded-xl text-xs">إلغاء</button>
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL: الفاتورة التفصيلية للعميل -->
   <div id="customerDetailedInvoiceModal" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 hidden">
@@ -640,7 +672,7 @@
     const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_detailed_suppliers_v3';
     const STORAGE_KEY_SELLING_PRICES = 'elabd_selling_prices_v3';
     const STORAGE_KEY_SALES = 'elabd_sales_v3';
-    const STORAGE_KEY_CONTRACTS = 'elabd_contracts_v4';
+    const STORAGE_KEY_CONTRACTS = 'elabd_contracts_v5';
 
     const defaultSuppliersData = [
       {
@@ -767,6 +799,11 @@
     let selectedSupplierId = 'SUP-01';
     let selectedContractForInvoice = null;
 
+    // متغيرات جلسة التحصيل اليدوي الحالية
+    let currentCollectingContractId = null;
+    let currentCollectingInstallmentNum = null;
+    let currentCollectingRequiredAmount = 0;
+
     function getDetailedSuppliers() {
       const d = localStorage.getItem(STORAGE_KEY_DETAILED_SUPPLIERS);
       return d ? JSON.parse(d) : defaultSuppliersData;
@@ -799,7 +836,6 @@
       localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(d));
     }
 
-    // حساب إجمالي الديون المستحقة لجميع الموردين (عليا برا)
     function calculateAllSuppliersTotalRemaining() {
       const suppliers = getDetailedSuppliers();
       let totalRemaining = 0;
@@ -904,7 +940,7 @@
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
     // ==========================================
-    // 1. لوحة الإحصائيات وتقرير المنتجات الأكثر طلباً
+    // 1. لوحة الإحصائيات وتقرير الأكثر طلباً
     // ==========================================
     function renderDashboard() {
       const sales = getStoredSales();
@@ -917,7 +953,6 @@
       let overdueInstallmentsVal = 0;
       let netProfitVal = 0;
 
-      // تجميع مبيعات الأجهزة لمعرفة الأكثر سحباً
       const salesCountMap = {};
 
       sales.forEach(s => {
@@ -929,7 +964,6 @@
           netProfitVal += Math.max(0, s.totalPrice - invItem.buyPrice);
         }
 
-        // عد القطع المباعة لكل جهاز
         salesCountMap[s.deviceName] = (salesCountMap[s.deviceName] || 0) + 1;
       });
 
@@ -945,10 +979,8 @@
       document.getElementById('dashSuppliersDebtsVal').innerText = `${suppliersDebtTotal.toLocaleString()} ج.م`;
       document.getElementById('dashNetProfitVal').innerText = `${netProfitVal.toLocaleString()} ج.م`;
 
-      // بناء تقرير المنتجات الأكثر سحباً وطلباً
       renderTopSellingProductsReport(salesCountMap, sales.length);
 
-      // الأقساط المستحقة
       const today = new Date().toISOString().split('T')[0];
       const dueTableBody = document.getElementById('dueInstallmentsTableBody');
       dueTableBody.innerHTML = '';
@@ -969,8 +1001,8 @@
                   <td class="p-2.5 font-bold text-rose-400">${inst.dueDate}</td>
                   <td class="p-2.5 font-black text-amber-300">${inst.amount.toLocaleString()} ج.م</td>
                   <td class="p-2.5 text-center space-x-1 space-x-reverse">
-                    <button onclick="paySpecificInstallment('${cnt.id}', ${inst.number})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow">
-                      تحصيل الآن 💰
+                    <button onclick="openCollectInstallmentModal('${cnt.id}', ${inst.number}, ${inst.amount})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow">
+                      تحصيل يدوي 💰
                     </button>
                     <button onclick="sendQuickClientInvoiceWhatsApp('${cnt.id}')" class="px-2 py-1 bg-emerald-700/30 text-emerald-300 border border-emerald-500/40 rounded-lg text-[10px] font-bold">
                       <i class="fa-brands fa-whatsapp"></i> تذكير
@@ -1032,14 +1064,104 @@
     }
 
     // ==========================================
-    // 2. الموردين والمشتريات (مع إجمالي الديون)
+    // 2. التحصيل اليدوي الذكي والترحيل التلقائي
+    // ==========================================
+    function openCollectInstallmentModal(contractId, installmentNumber, requiredAmount) {
+      currentCollectingContractId = contractId;
+      currentCollectingInstallmentNum = installmentNumber;
+      currentCollectingRequiredAmount = requiredAmount;
+
+      const contracts = getStoredContracts();
+      const cnt = contracts.find(c => c.id === contractId);
+      if (!cnt) return;
+
+      document.getElementById('colModalCustomerName').innerText = cnt.customerName;
+      document.getElementById('colModalInstallmentDesc').innerText = `القسط رقم (#${installmentNumber}) - استحقاق قسط شهر جاري`;
+      document.getElementById('colModalRequiredAmount').innerText = `${requiredAmount.toLocaleString()} ج.م`;
+      
+      const paidInput = document.getElementById('colModalPaidInput');
+      paidInput.value = requiredAmount; // كتابة المبلغ كاملاً كافتراضي
+
+      updateCollectModalPreview();
+      openModal('collectInstallmentModal');
+    }
+
+    function updateCollectModalPreview() {
+      const paidVal = parseFloat(document.getElementById('colModalPaidInput').value) || 0;
+      const diff = currentCollectingRequiredAmount - paidVal;
+      const noticeBox = document.getElementById('colModalRolloverNotice');
+      const textNotice = document.getElementById('colModalRolloverText');
+
+      if (diff > 0) {
+        noticeBox.className = 'p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[11px] text-amber-300 space-y-1';
+        noticeBox.classList.remove('hidden');
+        textNotice.innerHTML = `المدفوع أقل من القسط: سيتم ترحيل مبلغ <b>${diff.toLocaleString()} ج.م</b> عجزاً ليضاف تلقائياً على القسط القادم.`;
+      } else if (diff < 0) {
+        noticeBox.className = 'p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-[11px] text-emerald-300 space-y-1';
+        noticeBox.classList.remove('hidden');
+        textNotice.innerHTML = `المدفوع أكثر من القسط: سيتم خصم مبلغ الزيادة <b>${Math.abs(diff).toLocaleString()} ج.م</b> من القسط القادم فوراً.`;
+      } else {
+        noticeBox.classList.add('hidden');
+      }
+    }
+
+    function confirmCollectInstallment() {
+      if (!currentCollectingContractId || !currentCollectingInstallmentNum) return;
+
+      const paidVal = parseFloat(document.getElementById('colModalPaidInput').value);
+      if (isNaN(paidVal) || paidVal <= 0) {
+        alert('يرجى كتابة المبلغ المسدد باليد بصورة صحيحة.');
+        return;
+      }
+
+      const contracts = getStoredContracts();
+      const cnt = contracts.find(c => c.id === currentCollectingContractId);
+      if (!cnt) return;
+
+      const instIndex = cnt.installments.findIndex(i => i.number === currentCollectingInstallmentNum);
+      if (instIndex === -1) return;
+
+      const inst = cnt.installments[instIndex];
+      const today = new Date().toISOString().split('T')[0];
+      const diff = currentCollectingRequiredAmount - paidVal;
+
+      // 1. تحديث القسط الحالي
+      inst.status = 'مدفوع';
+      inst.paidDate = today;
+      inst.paidActual = paidVal;
+
+      // 2. ترحيل العجز أو الفائض للقسط القادم إن وجد
+      const nextInst = cnt.installments[instIndex + 1];
+      if (nextInst && diff !== 0) {
+        nextInst.amount += diff;
+        nextInst.rolloverNote = diff > 0 ? `(يشمل ${diff.toLocaleString()} ج مرحلة من القسط السابق)` : `(تم خصم ${Math.abs(diff).toLocaleString()} ج زيادة مسددة مسبقاً)`;
+      }
+
+      // 3. تحديث المبالغ في العقد الرئيسي
+      cnt.paidAmount = (cnt.paidAmount || 0) + paidVal;
+      cnt.remainingAmount = Math.max(0, cnt.totalWithInterest - cnt.paidAmount);
+
+      setStoredContracts(contracts);
+      closeModal('collectInstallmentModal');
+
+      renderDashboard();
+      renderInstallmentsTable();
+
+      let successMsg = `تم بنجاح تسجيل تحصيل مبلغ ${paidVal.toLocaleString()} ج.م للعميل (${cnt.customerName}).`;
+      if (diff > 0 && nextInst) {
+        successMsg += `\nتم ترحيل مبلغ ${diff.toLocaleString()} ج.م للقسط القادم ليصبح مبلغه الجديد (${nextInst.amount.toLocaleString()} ج.م).`;
+      }
+      alert(successMsg);
+    }
+
+    // ==========================================
+    // 3. الموردين والمشتريات
     // ==========================================
     function renderSuppliersTable() {
       const suppliers = getDetailedSuppliers();
       const listContainer = document.getElementById('suppliersMasterList');
       listContainer.innerHTML = '';
 
-      // تحديث كارت إجمالي المتبقي لجميع الموردين (عليا برا)
       const grandTotalDebts = calculateAllSuppliersTotalRemaining();
       document.getElementById('allSuppliersGrandRemainingVal').innerText = `${grandTotalDebts.toLocaleString()} ج.م`;
       document.getElementById('suppliersCountBadge').innerText = `${suppliers.length} موردين`;
@@ -1345,7 +1467,7 @@
     }
 
     // ==========================================
-    // 3. سجل الأقساط وفواتير العملاء
+    // 4. سجل الأقساط وفواتير العملاء
     // ==========================================
     function renderInstallmentsTable() {
       const contracts = getStoredContracts();
@@ -1517,30 +1639,8 @@
       sendQuickClientInvoiceWhatsApp(selectedContractForInvoice.id);
     }
 
-    function paySpecificInstallment(contractId, installmentNumber) {
-      const contracts = getStoredContracts();
-      const cnt = contracts.find(c => c.id === contractId);
-      if (!cnt) return;
-
-      const inst = cnt.installments.find(i => i.number === installmentNumber);
-      if (inst && inst.status !== 'مدفوع') {
-        const today = new Date().toISOString().split('T')[0];
-        inst.status = 'مدفوع';
-        inst.paidDate = today;
-
-        cnt.paidAmount += inst.amount;
-        cnt.remainingAmount = Math.max(0, cnt.remainingAmount - inst.amount);
-
-        setStoredContracts(contracts);
-
-        renderDashboard();
-        renderInstallmentsTable();
-        alert(`تم بنجاح تسجيل تحصيل القسط رقم (${installmentNumber}) بقيمة ${inst.amount.toLocaleString()} ج.م للعميل #${cnt.clientCode || 1}.`);
-      }
-    }
-
     // ==========================================
-    // 4. إدارة المخزن
+    // 5. إدارة المخزن
     // ==========================================
     function renderInventoryTable() {
       const inventory = buildDynamicInventory();
@@ -1625,7 +1725,7 @@
     }
 
     // ==========================================
-    // 5. محرك البيع الجديد
+    // 6. محرك البيع الجديد
     // ==========================================
     function toggleInstallmentFields() {
       const type = document.getElementById('saleTypeSelect').value;
@@ -1772,7 +1872,7 @@
     }
 
     // ==========================================
-    // 6. سجل فواتير المبيعات
+    // 7. سجل فواتير المبيعات
     // ==========================================
     function renderSalesTable() {
       const sales = getStoredSales();
