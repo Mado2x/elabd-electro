@@ -60,7 +60,7 @@
 
     <!-- الروابط الأساسية -->
     <nav class="p-3 space-y-1.5 text-xs flex-1 overflow-y-auto custom-scrollbar">
-      <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold transition">
+      <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition">
         <i class="fa-solid fa-house-chimney w-4 text-center"></i>
         <span>الصفحة الرئيسية</span>
       </button>
@@ -106,11 +106,9 @@
   <main class="flex-1 p-3 md:p-6 max-w-6xl w-full mx-auto overflow-y-auto">
 
     <!-- ========================================== -->
-    <!-- VIEW 1: الصفحة الرئيسية والموقف المالي والفلتر الشهري -->
+    <!-- VIEW 1: الصفحة الرئيسية والموقف المالي -->
     <!-- ========================================== -->
     <section id="view-dashboard" class="space-y-4">
-      
-      <!-- كارت الموقف المالي الشامل -->
       <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-[#111726] to-blue-950/80 border border-blue-500/30 p-5 shadow-2xl">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
           <div>
@@ -128,7 +126,6 @@
           </button>
         </div>
 
-        <!-- شبكة المؤشرات المالية المطورة -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 pt-3 border-t border-slate-800/80">
           <div class="bg-slate-900/90 border border-emerald-500/30 p-3 rounded-2xl relative overflow-hidden">
             <div class="flex items-center justify-between mb-1">
@@ -168,7 +165,7 @@
         </div>
       </div>
 
-      <!-- تقرير مبيعات الشهر وسحب الأجهزة مع الفلتر اليدوي للاختيار -->
+      <!-- تقرير مبيعات الشهر وسحب الأجهزة مع الفلتر اليدوي -->
       <div class="bg-[#111726] border border-slate-800 rounded-3xl p-4 shadow-xl space-y-3">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-slate-800/80 pb-3">
           <div>
@@ -179,7 +176,6 @@
             <p class="text-[10px] text-slate-400 mt-0.5">اختر الشهر لمشاهدة إحصائيات السحب والأجهزة الأكثر مبيعاً فيه</p>
           </div>
           
-          <!-- الفلتر اليدوي لاختيار الشهر والسنة -->
           <div class="flex items-center gap-2 w-full md:w-auto">
             <span class="text-xs text-slate-400 font-semibold whitespace-nowrap">اختر الشهر:</span>
             <input type="month" id="selectedReportMonthInput" onchange="renderDashboard()" class="bg-[#090d16] border border-blue-500/40 rounded-xl px-3 py-1.5 text-xs text-white font-bold focus:outline-none focus:border-blue-400">
@@ -189,12 +185,12 @@
         <div id="topSellingReportContainer" class="space-y-2.5"></div>
       </div>
 
-      <!-- الأقساط المستحقة للتحصيل الفوري -->
+      <!-- جدول الأقساط المستحقة للتحصيل الفوري المسمع من كافة الفواتير -->
       <div class="bg-[#111726] border border-slate-800 rounded-3xl p-4 shadow-xl">
         <div class="flex justify-between items-center mb-3">
           <h4 class="font-bold text-sm text-white flex items-center gap-2">
             <i class="fa-solid fa-bell text-amber-400"></i>
-            الأقساط المستحقة للتحصيل الفوري (خلال الشهر المحدد)
+            الأقساط المستحقة للتحصيل الفوري (مسمّعة من كافة الفواتير)
           </h4>
           <span class="text-[11px] text-slate-400" id="dueCountBadge">0 عميل مستحق</span>
         </div>
@@ -260,7 +256,7 @@
             <i class="fa-solid fa-calendar-check text-emerald-400"></i>
             سجل متابعة الأقساط وملفات العملاء
           </h3>
-          <p class="text-xs text-slate-400 mt-0.5">اضغط على اسم العميل لمشاهدة جميع فواتيره المفتوحة والسابقة على حدة</p>
+          <p class="text-xs text-slate-400 mt-0.5">اضغط على اسم العميل لفتح ملفه المنظم واستعراض فواتيره المنفصلة</p>
         </div>
         <input type="text" id="searchInstallmentInput" oninput="renderInstallmentsTable()" placeholder="ابحث باسم العميل أو رقم الهاتف أو الكود..." class="bg-[#090d16] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white w-full md:w-72">
       </div>
@@ -271,8 +267,8 @@
             <thead class="bg-slate-900 text-slate-400 border-b border-slate-800">
               <tr>
                 <th class="p-2.5 text-center">كود</th>
-                <th class="p-2.5">اسم العميل (اضغط لعرض كافة فواتيره)</th>
-                <th class="p-2.5 text-center text-cyan-400">عدد الفواتير</th>
+                <th class="p-2.5">اسم العميل (اضغط لعرض الفواتير)</th>
+                <th class="p-2.5 text-center text-cyan-400">الفواتير</th>
                 <th class="p-2.5 text-white font-bold">إجمالي الحساب</th>
                 <th class="p-2.5 text-emerald-400 font-bold">المحصل</th>
                 <th class="p-2.5 text-rose-400 font-bold">المتبقي</th>
@@ -351,7 +347,7 @@
 
   <!-- شريط الموبايل السفلي السريع -->
   <nav class="md:hidden fixed bottom-0 inset-x-0 bg-[#0d1322]/95 backdrop-blur-md border-t border-slate-800 flex justify-around items-center p-2 z-40 text-xs">
-    <button onclick="switchView('dashboard')" class="flex flex-col items-center gap-1 text-blue-400 focus:text-blue-400">
+    <button onclick="switchView('dashboard')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-blue-400 focus:text-blue-400">
       <i class="fa-solid fa-house-chimney text-base"></i>
       <span class="text-[10px] font-bold">الرئيسية</span>
     </button>
@@ -374,12 +370,14 @@
   </nav>
 
   <!-- ========================================== -->
-  <!-- MODALS المنظومة -->
+  <!-- MODALS المنظومة المنظمة تماماً -->
   <!-- ========================================== -->
 
-  <!-- MODAL: ملف العميل الشامل (يعرض كافة فواتيره على حدة) -->
+  <!-- MODAL: ملف العميل المطور (نظام التبويبات بدون أي تزاحم) -->
   <div id="customerProfileModal" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-3 md:p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-3xl rounded-3xl p-5 shadow-2xl flex flex-col max-h-[92vh]">
+      
+      <!-- ترويسة ملف العميل -->
       <div class="flex justify-between items-start border-b border-slate-800 pb-3">
         <div>
           <div class="flex items-center gap-2">
@@ -388,13 +386,13 @@
           </div>
           <p class="text-xs text-slate-400 mt-1">
             الهاتف: <a id="cpModalCustomerPhoneLink" href="" class="text-emerald-400 font-mono underline"></a> | 
-            إجمالي فواتير التقسيط: <b class="text-white" id="cpModalInvoicesCount">0</b> فواتير
+            عدد الفواتير المسجلة: <b class="text-white" id="cpModalInvoicesCount">0</b> فواتير
           </p>
         </div>
         <button onclick="closeModal('customerProfileModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
 
-      <!-- ملخص مالي عام لحساب العميل -->
+      <!-- ملخص الحساب الإجمالي للعميل -->
       <div class="grid grid-cols-3 gap-2 my-3 text-center text-xs">
         <div class="p-2.5 bg-slate-900 rounded-2xl border border-slate-800">
           <span class="text-[10px] text-slate-400 block">إجمالي مشتريات العميل</span>
@@ -410,15 +408,20 @@
         </div>
       </div>
 
-      <!-- حاوية الفواتير المنفصلة للعميل -->
-      <div class="flex-1 overflow-y-auto space-y-4 custom-scrollbar pr-1 my-1" id="cpModalInvoicesContainer"></div>
+      <!-- شريط تبويبات الفواتير (تختار الفاتورة بضغطة زر دون تزاحم) -->
+      <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-2 border-b border-slate-800" id="cpModalInvoicesTabs"></div>
 
+      <!-- مساحة عرض الفاتورة المختارة بوضوح ونظام -->
+      <div class="flex-1 overflow-y-auto custom-scrollbar my-2" id="cpModalSelectedInvoiceContainer"></div>
+
+      <!-- أزرار الإجراءات بالأسفل -->
       <div class="border-t border-slate-800 pt-3 flex justify-between items-center">
         <button onclick="openNewSaleForThisCustomer()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5">
-          <i class="fa-solid fa-plus"></i> تسجيل فاتورة شراء جديدة لهذا العميل
+          <i class="fa-solid fa-plus"></i> تسجيل فاتورة جديدة لهذا العميل
         </button>
         <button onclick="closeModal('customerProfileModal')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold">إغلاق</button>
       </div>
+
     </div>
   </div>
 
@@ -682,7 +685,8 @@
     const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_detailed_suppliers_v3';
     const STORAGE_KEY_SELLING_PRICES = 'elabd_selling_prices_v3';
     const STORAGE_KEY_SALES = 'elabd_sales_v3';
-    const STORAGE_KEY_CONTRACTS = 'elabd_contracts_v6';
+    const STORAGE_KEY_CONTRACTS = 'elabd_contracts_v7';
+    const STORAGE_KEY_CURRENT_TAB = 'elabd_current_tab';
 
     const defaultSuppliersData = [
       {
@@ -714,7 +718,6 @@
       'شاشة سامسونج 55 بوصة سمارت 4K': 17800
     };
 
-    // عقود وعملاء تجريبيين (يدعم فواتير متعددة لنفس العميل برقم هاتف واحد)
     const defaultContracts = [
       {
         clientCode: 1,
@@ -743,7 +746,6 @@
           { number: 4, dueDate: '2026-11-01', amount: 1917, status: 'قادم', paidDate: null, paidActual: 0 }
         ]
       },
-      // فاتورة ثانية لنفس العميل (محمود عبد الفتاح - اشترى بعدين ميكروويف)
       {
         clientCode: 1,
         id: 'CNT-103',
@@ -765,8 +767,8 @@
         remainingAmount: 5500,
         startDate: '2026-10-05',
         installments: [
-          { number: 1, dueDate: '2026-11-05', amount: 917, status: 'قادم', paidDate: null, paidActual: 0 },
-          { number: 2, dueDate: '2026-12-05', amount: 917, status: 'قادم', paidDate: null, paidActual: 0 }
+          { number: 1, dueDate: '2026-10-25', amount: 917, status: 'قادم', paidDate: null, paidActual: 0 },
+          { number: 2, dueDate: '2026-11-25', amount: 917, status: 'قادم', paidDate: null, paidActual: 0 }
         ]
       },
       {
@@ -852,6 +854,7 @@
     let currentCollectingRequiredAmount = 0;
     let currentContractForWhatsApp = null;
     let activeCustomerPhoneForProfile = null;
+    let activeInvoiceIdInProfile = null;
 
     function getDetailedSuppliers() {
       const d = localStorage.getItem(STORAGE_KEY_DETAILED_SUPPLIERS);
@@ -939,14 +942,15 @@
       const startDateInput = document.getElementById('instStartDate');
       if (startDateInput) startDateInput.value = today;
 
-      // ضبط القيمة الافتراضية لفلتر الشهر على الشهر الجاري (YYYY-MM)
       const currentYearMonth = today.substring(0, 7);
       const reportMonthInput = document.getElementById('selectedReportMonthInput');
       if (reportMonthInput && !reportMonthInput.value) {
         reportMonthInput.value = currentYearMonth;
       }
 
-      renderDashboard();
+      // قراءة الصفحة المحفوظة عند عمل Refresh لثبات الشاشة
+      const savedTab = localStorage.getItem(STORAGE_KEY_CURRENT_TAB) || 'dashboard';
+      switchView(savedTab);
     });
 
     function toggleSidebar() {
@@ -958,21 +962,27 @@
       ov.classList.toggle('hidden', !isClosed);
     }
 
+    // التنقل مع حفظ التبويب لتفادي الرجوع للرئيسية عند الـ Refresh
     function switchView(viewName) {
       if (window.innerWidth < 768) {
         const sb = document.getElementById('sidebar');
         if (!sb.classList.contains('translate-x-full')) toggleSidebar();
       }
 
+      localStorage.setItem(STORAGE_KEY_CURRENT_TAB, viewName);
+
       ['dashboard', 'suppliers', 'installments', 'inventory', 'sales'].forEach(v => {
-        document.getElementById(`view-${v}`).classList.add('hidden');
+        const section = document.getElementById(`view-${v}`);
+        if (section) section.classList.add('hidden');
         const navBtn = document.getElementById(`nav-${v}`);
         if (navBtn) {
           navBtn.className = 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition';
         }
       });
 
-      document.getElementById(`view-${viewName}`).classList.remove('hidden');
+      const targetSection = document.getElementById(`view-${viewName}`);
+      if (targetSection) targetSection.classList.remove('hidden');
+
       const activeBtn = document.getElementById(`nav-${viewName}`);
       if (activeBtn) {
         activeBtn.className = 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold transition';
@@ -996,7 +1006,6 @@
       const contracts = getStoredContracts();
       const inventory = buildDynamicInventory();
 
-      // الشهر المختار يدوياً (YYYY-MM)
       const selectedMonthVal = document.getElementById('selectedReportMonthInput').value || new Date().toISOString().substring(0, 7);
 
       let totalSalesVal = 0;
@@ -1008,7 +1017,6 @@
       const salesCountMap = {};
       let filteredMonthSalesCount = 0;
 
-      // حساب المبيعات الإجمالية والمبيعات الخاصة بالشهر المختار
       sales.forEach(s => {
         totalSalesVal += s.totalPrice;
         cashCollectedVal += s.paidImmediately;
@@ -1018,7 +1026,6 @@
           netProfitVal += Math.max(0, s.totalPrice - invItem.buyPrice);
         }
 
-        // فحص ما إذا كانت الفاتورة تقع في الشهر المختار
         if (s.date && s.date.startsWith(selectedMonthVal)) {
           filteredMonthSalesCount++;
           salesCountMap[s.deviceName] = (salesCountMap[s.deviceName] || 0) + 1;
@@ -1037,10 +1044,9 @@
       document.getElementById('dashSuppliersDebtsVal').innerText = `${suppliersDebtTotal.toLocaleString()} ج.م`;
       document.getElementById('dashNetProfitVal').innerText = `${netProfitVal.toLocaleString()} ج.م`;
 
-      // بناء تقرير الأكثر طلباً وسحباً بناءً على الشهر المختار يدوياً
       renderTopSellingProductsReport(salesCountMap, filteredMonthSalesCount, selectedMonthVal);
 
-      // الأقساط المستحقة في هذا الشهر المختار
+      // تجميع الأقساط المستحقة في هذا الشهر المختار من كافة الفواتير
       const dueTableBody = document.getElementById('dueInstallmentsTableBody');
       dueTableBody.innerHTML = '';
       let dueCount = 0;
@@ -1131,7 +1137,6 @@
       const search = document.getElementById('searchInstallmentInput').value.trim().toLowerCase();
       tbody.innerHTML = '';
 
-      // تجميع العقود حسب رقم هاتف العميل (الملف الموحد للعميل)
       const clientsMap = {};
 
       contracts.forEach((cnt, idx) => {
@@ -1188,7 +1193,7 @@
             </td>
             <td class="p-2.5 text-center">
               <button onclick="openCustomerProfileModal('${cl.customerPhone}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 mx-auto shadow">
-                <i class="fa-solid fa-eye"></i> عرض الفواتير
+                <i class="fa-solid fa-eye"></i> فتح الملف
               </button>
             </td>
           </tr>
@@ -1196,8 +1201,8 @@
       });
     }
 
-    // فتح ملف العميل الشامل واستعراض كافة فواتيره على حدة
-    function openCustomerProfileModal(phone) {
+    // فتح ملف العميل بنظام التبويبات الفردية المنظمة
+    function openCustomerProfileModal(phone, preferredInvoiceId = null) {
       activeCustomerPhoneForProfile = phone;
       const contracts = getStoredContracts().filter(c => c.customerPhone.trim() === phone.trim());
       if (contracts.length === 0) return;
@@ -1213,100 +1218,135 @@
       let grandPaid = 0;
       let grandRemaining = 0;
 
-      const invoicesContainer = document.getElementById('cpModalInvoicesContainer');
-      invoicesContainer.innerHTML = '';
-
-      contracts.forEach((cnt, idx) => {
-        grandTotal += cnt.totalWithInterest;
-        grandPaid += cnt.paidAmount;
-        grandRemaining += cnt.remainingAmount;
-
-        const isFullyPaid = cnt.remainingAmount <= 0;
-
-        // بطاقة كل فاتورة منفصلة مع تفاصيلها الخاصة
-        invoicesContainer.innerHTML += `
-          <div class="bg-slate-900 border ${isFullyPaid ? 'border-emerald-500/40' : 'border-slate-800'} rounded-3xl p-4 space-y-3">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-slate-800 pb-2.5">
-              <div class="flex items-center gap-2">
-                <span class="w-6 h-6 rounded-lg bg-blue-600/30 text-blue-400 flex items-center justify-center text-xs font-bold">#${idx + 1}</span>
-                <h4 class="font-bold text-white text-sm">${cnt.deviceName}</h4>
-                <span class="text-[10px] px-2 py-0.5 rounded-full ${isFullyPaid ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'} font-bold">
-                  ${isFullyPaid ? 'خالصة تماماً ✔' : 'جارية السداد ⏳'}
-                </span>
-              </div>
-              <span class="text-xs text-slate-400">تاريخ الفاتورة: <b class="text-slate-300">${cnt.invoiceDate || cnt.startDate}</b></span>
-            </div>
-
-            <!-- تفاصيل الحساب لهذه الفاتورة -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-              <div class="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
-                <span class="text-[10px] text-slate-400 block">إجمالي العقد بالفوائد</span>
-                <b class="text-white">${cnt.totalWithInterest.toLocaleString()} ج</b>
-              </div>
-              <div class="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
-                <span class="text-[10px] text-emerald-400 block">المسدد من هذه الفاتورة</span>
-                <b class="text-emerald-300">${cnt.paidAmount.toLocaleString()} ج</b>
-              </div>
-              <div class="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
-                <span class="text-[10px] text-rose-400 block">المتبقي المطلوب</span>
-                <b class="text-rose-300 font-bold">${cnt.remainingAmount.toLocaleString()} ج</b>
-              </div>
-              <div class="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
-                <span class="text-[10px] text-cyan-400 block">القسط الشهري</span>
-                <b class="text-cyan-300 font-bold">${cnt.monthlyAmount.toLocaleString()} ج (${cnt.months} شهر)</b>
-              </div>
-            </div>
-
-            <!-- جدول الأقساط الخاص بهذه الفاتورة فقط -->
-            <div class="overflow-x-auto border border-slate-800/80 rounded-2xl max-h-48 custom-scrollbar">
-              <table class="w-full text-right text-xs">
-                <thead class="bg-slate-950 text-slate-400 sticky top-0 border-b border-slate-800">
-                  <tr>
-                    <th class="p-2">رقم القسط</th>
-                    <th class="p-2">تاريخ الاستحقاق</th>
-                    <th class="p-2">المبلغ المطلوب</th>
-                    <th class="p-2">الحالة</th>
-                    <th class="p-2 text-center">إجراء السداد</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-800 text-slate-300">
-                  ${(cnt.installments || []).map(inst => `
-                    <tr>
-                      <td class="p-2 font-bold text-white">القسط #${inst.number}</td>
-                      <td class="p-2 text-slate-300">${inst.dueDate}</td>
-                      <td class="p-2 font-black text-amber-300">${inst.amount.toLocaleString()} ج</td>
-                      <td class="p-2">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${inst.status === 'مدفوع' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">
-                          ${inst.status}
-                        </span>
-                      </td>
-                      <td class="p-2 text-center">
-                        ${inst.status !== 'مدفوع' ? `
-                          <button onclick="openCollectInstallmentModal('${cnt.id}', ${inst.number}, ${inst.amount})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold shadow">
-                            تحصيل يدوي 💰
-                          </button>
-                        ` : `<span class="text-[10px] text-slate-400">سُدد: ${inst.paidDate}</span>`}
-                      </td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            </div>
-
-            <div class="flex justify-end gap-2 pt-1">
-              <button onclick="openChooseWhatsAppModal('${cnt.id}')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow">
-                <i class="fa-brands fa-whatsapp text-sm"></i> إرسال كشف هذه الفاتورة
-              </button>
-            </div>
-          </div>
-        `;
+      contracts.forEach(c => {
+        grandTotal += c.totalWithInterest;
+        grandPaid += c.paidAmount;
+        grandRemaining += c.remainingAmount;
       });
 
       document.getElementById('cpModalGrandTotal').innerText = `${grandTotal.toLocaleString()} ج.م`;
       document.getElementById('cpModalGrandPaid').innerText = `${grandPaid.toLocaleString()} ج.م`;
       document.getElementById('cpModalGrandRemaining').innerText = `${grandRemaining.toLocaleString()} ج.م`;
 
+      // تحديد الفاتورة المعروضة افتراضياً
+      activeInvoiceIdInProfile = preferredInvoiceId || contracts[0].id;
+
+      // بناء شريط التبويبات النظيف للفواتير
+      const tabsContainer = document.getElementById('cpModalInvoicesTabs');
+      tabsContainer.innerHTML = '';
+
+      contracts.forEach((cnt, idx) => {
+        const isActive = cnt.id === activeInvoiceIdInProfile;
+        tabsContainer.innerHTML += `
+          <button onclick="selectInvoiceTabInProfile('${cnt.id}')" class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${isActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800'}">
+            <span>فاتورة #${idx + 1}: ${cnt.deviceName}</span>
+            <span class="text-[10px] opacity-80">(${cnt.remainingAmount <= 0 ? 'خالصة ✔' : cnt.remainingAmount.toLocaleString() + ' ج متبقي'})</span>
+          </button>
+        `;
+      });
+
+      renderActiveInvoiceDetailsInProfile();
       openModal('customerProfileModal');
+    }
+
+    function selectInvoiceTabInProfile(invoiceId) {
+      activeInvoiceIdInProfile = invoiceId;
+      openCustomerProfileModal(activeCustomerPhoneForProfile, invoiceId);
+    }
+
+    // عرض الفاتورة المختارة وحدها ببيانات النسبة والمدة وجدول الأقساط النظيف
+    function renderActiveInvoiceDetailsInProfile() {
+      const contracts = getStoredContracts();
+      const cnt = contracts.find(c => c.id === activeInvoiceIdInProfile);
+      const container = document.getElementById('cpModalSelectedInvoiceContainer');
+
+      if (!cnt) {
+        container.innerHTML = '<p class="text-xs text-slate-500 text-center py-6">لم يتم العثور على الفاتورة المختارة.</p>';
+        return;
+      }
+
+      const isFullyPaid = cnt.remainingAmount <= 0;
+
+      container.innerHTML = `
+        <div class="bg-slate-900 border ${isFullyPaid ? 'border-emerald-500/40' : 'border-slate-800'} rounded-3xl p-4 space-y-3">
+          
+          <!-- تفاصيل شروط الفاتورة (النسبة والمده والمقدم) -->
+          <div class="bg-slate-950/70 p-3 rounded-2xl border border-slate-800 grid grid-cols-2 md:grid-cols-5 gap-2 text-center text-xs">
+            <div class="p-1.5">
+              <span class="text-[10px] text-slate-400 block font-semibold">سعر الكاش الأساسي</span>
+              <b class="text-white">${(cnt.cashPrice || 0).toLocaleString()} ج</b>
+            </div>
+            <div class="p-1.5">
+              <span class="text-[10px] text-blue-400 block font-semibold">نسبة الفائدة المعتمدة</span>
+              <b class="text-blue-300 font-bold">${cnt.interestRate || 15}% سنوياً</b>
+            </div>
+            <div class="p-1.5">
+              <span class="text-[10px] text-purple-400 block font-semibold">مدة التقسيط</span>
+              <b class="text-purple-300 font-bold">${cnt.months || 12} شهر</b>
+            </div>
+            <div class="p-1.5">
+              <span class="text-[10px] text-emerald-400 block font-semibold">المقدم المدفوع</span>
+              <b class="text-emerald-300 font-bold">${(cnt.downPayment || 0).toLocaleString()} ج</b>
+            </div>
+            <div class="p-1.5">
+              <span class="text-[10px] text-cyan-400 block font-semibold">القسط الشهري</span>
+              <b class="text-cyan-300 font-black">${(cnt.monthlyAmount || 0).toLocaleString()} ج</b>
+            </div>
+          </div>
+
+          <!-- بطاقة موقف السداد لهذه الفاتورة -->
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 bg-slate-950/40 p-2.5 rounded-2xl border border-slate-800/80 text-xs">
+            <div>
+              <span class="text-slate-400">إجمالي الفاتورة بالفوائد: <b class="text-white">${cnt.totalWithInterest.toLocaleString()} ج</b></span> | 
+              <span class="text-emerald-400">المحصل: <b>${cnt.paidAmount.toLocaleString()} ج</b></span> | 
+              <span class="text-rose-400">المتبقي المطلوب: <b class="text-sm font-black">${cnt.remainingAmount.toLocaleString()} ج</b></span>
+            </div>
+            <button onclick="openChooseWhatsAppModal('${cnt.id}')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow">
+              <i class="fa-brands fa-whatsapp text-sm"></i> إرسال تقرير هذه الفاتورة
+            </button>
+          </div>
+
+          <!-- جدول الأقساط النظيف والواضح الخاص بهذه الفاتورة -->
+          <div class="overflow-x-auto border border-slate-800 rounded-2xl max-h-56 custom-scrollbar">
+            <table class="w-full text-right text-xs">
+              <thead class="bg-slate-950 text-slate-400 sticky top-0 border-b border-slate-800">
+                <tr>
+                  <th class="p-2">رقم القسط</th>
+                  <th class="p-2">تاريخ الاستحقاق</th>
+                  <th class="p-2">المبلغ المطلوب</th>
+                  <th class="p-2">الحالة</th>
+                  <th class="p-2 text-center">إجراء السداد</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800 text-slate-300">
+                ${(cnt.installments || []).map(inst => `
+                  <tr>
+                    <td class="p-2 font-bold text-white">القسط #${inst.number}</td>
+                    <td class="p-2 text-slate-300">${inst.dueDate}</td>
+                    <td class="p-2 font-black text-amber-300">
+                      ${inst.amount.toLocaleString()} ج.م
+                      ${inst.rolloverNote ? `<span class="block text-[9px] text-amber-400 font-normal">${inst.rolloverNote}</span>` : ''}
+                    </td>
+                    <td class="p-2">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold ${inst.status === 'مدفوع' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">
+                        ${inst.status}
+                      </span>
+                    </td>
+                    <td class="p-2 text-center">
+                      ${inst.status !== 'مدفوع' ? `
+                        <button onclick="openCollectInstallmentModal('${cnt.id}', ${inst.number}, ${inst.amount})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold shadow">
+                          تحصيل يدوي 💰
+                        </button>
+                      ` : `<span class="text-[10px] text-slate-400">سُدد: ${inst.paidDate}</span>`}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      `;
     }
 
     function openNewSaleForThisCustomer() {
@@ -1398,9 +1438,9 @@
       setStoredContracts(contracts);
       closeModal('collectInstallmentModal');
 
-      // إذا كان ملف العميل مفتوحاً، يعاد تحديثه فوراً
+      // تحديث شاشة ملف العميل والشاشات الأخرى
       if (activeCustomerPhoneForProfile) {
-        openCustomerProfileModal(activeCustomerPhoneForProfile);
+        openCustomerProfileModal(activeCustomerPhoneForProfile, cnt.id);
       }
 
       renderDashboard();
@@ -2010,7 +2050,7 @@ ${breakdown.remainingText}
         const math = calculateInstallmentMath();
         const contracts = getStoredContracts();
 
-        // فحص هل العميل له كود مسبق برقم الهاتف
+        // استخدام نفس كود العميل إذا كان مسجلاً برقم الهاتف مسبقاً
         const existingClientContract = contracts.find(c => c.customerPhone.trim() === customerPhone.trim());
         let clientCodeToUse;
         if (existingClientContract && existingClientContract.clientCode) {
@@ -2084,7 +2124,7 @@ ${breakdown.remainingText}
         renderInventoryTable();
         renderInstallmentsTable();
 
-        alert(`تم بنجاح ربط الفاتورة بالعميل (${customerName}) تحت كود العميل (#${clientCodeToUse}).`);
+        alert(`تم بنجاح إضافة الفاتورة للعميل (${customerName}) تحت الكود (#${clientCodeToUse}).`);
       }
     }
 
