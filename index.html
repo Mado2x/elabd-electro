@@ -7,7 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-  <!-- مكتبة قراءة الباركود والسيريال عبر الكاميرا -->
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script>
     tailwind.config = {
@@ -87,6 +86,11 @@
         <i class="fa-solid fa-receipt w-4 text-center text-amber-400"></i>
         <span>فواتير وعقود البيع</span>
       </button>
+
+      <button onclick="switchView('expenses')" id="nav-expenses" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition">
+        <i class="fa-solid fa-money-bill-transfer w-4 text-center text-rose-400"></i>
+        <span>المصاريف والشحن والهوالك</span>
+      </button>
     </nav>
   </aside>
 
@@ -114,11 +118,9 @@
   <main class="flex-1 p-3 md:p-6 max-w-6xl w-full mx-auto overflow-y-auto">
 
     <!-- ========================================== -->
-    <!-- VIEW 1: الصفحة الرئيسية والموقف المالي + فحص الباركود السريع -->
+    <!-- VIEW 1: الصفحة الرئيسية والموقف المالي -->
     <!-- ========================================== -->
     <section id="view-dashboard" class="space-y-4">
-      
-      <!-- كارت الموقف المالي الشامل + أزرار الإجراء السريع -->
       <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-[#111726] to-blue-950/80 border border-blue-500/30 p-5 shadow-2xl">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
           <div>
@@ -133,7 +135,6 @@
           </div>
           
           <div class="flex items-center gap-2 w-full md:w-auto">
-            <!-- زر كاميرا الاستعلام السريع بالباركود في الصفحة الرئيسية -->
             <button onclick="openBarcodeScanner('home_inquiry')" class="flex-1 md:flex-none px-3.5 py-2.5 bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white border border-cyan-500/40 rounded-xl text-xs font-bold shadow-lg flex items-center justify-center gap-1.5 transition">
               <i class="fa-solid fa-barcode text-sm"></i>
               <span>📷 فحص باركود جهاز</span>
@@ -145,46 +146,36 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 pt-3 border-t border-slate-800/80">
+        <!-- كروت المؤشرات المالية تشمل المصاريف وصافي الربح بعد الخصم -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-2.5 pt-3 border-t border-slate-800/80">
           <div class="bg-slate-900/90 border border-emerald-500/30 p-3 rounded-2xl relative overflow-hidden">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-[10px] text-emerald-400 font-bold">خزينة المعرض (المحصل)</span>
-              <i class="fa-solid fa-wallet text-emerald-400 text-xs"></i>
-            </div>
-            <p class="text-base md:text-lg font-black text-emerald-300" id="dashCashCollectedVal">0 ج.م</p>
-            <span class="text-[9px] text-slate-400 block mt-0.5">كاش ومقدمات وأقساط</span>
+            <span class="text-[10px] text-emerald-400 font-bold block">خزينة المعرض (المحصل)</span>
+            <p class="text-base font-black text-emerald-300 mt-1" id="dashCashCollectedVal">0 ج.م</p>
           </div>
 
           <div class="bg-slate-900/90 border border-amber-500/30 p-3 rounded-2xl relative overflow-hidden">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-[10px] text-amber-400 font-bold">أقساط بالخارج (لنا)</span>
-              <i class="fa-solid fa-hand-holding-dollar text-amber-400 text-xs"></i>
-            </div>
-            <p class="text-base md:text-lg font-black text-amber-300" id="dashInstallmentsRemainingVal">0 ج.م</p>
-            <span class="text-[9px] text-slate-400 block mt-0.5">مستحقات عند العملاء</span>
+            <span class="text-[10px] text-amber-400 font-bold block">أقساط بالخارج (لنا)</span>
+            <p class="text-base font-black text-amber-300 mt-1" id="dashInstallmentsRemainingVal">0 ج.م</p>
           </div>
 
           <div class="bg-slate-900/90 border border-rose-500/30 p-3 rounded-2xl relative overflow-hidden">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-[10px] text-rose-400 font-bold">ديون للموردين (علينا)</span>
-              <i class="fa-solid fa-truck-field text-rose-400 text-xs"></i>
-            </div>
-            <p class="text-base md:text-lg font-black text-rose-300" id="dashSuppliersDebtsVal">0 ج.م</p>
-            <span class="text-[9px] text-slate-400 block mt-0.5">التزامات شركات الأجهزة</span>
+            <span class="text-[10px] text-rose-400 font-bold block">ديون للموردين (علينا)</span>
+            <p class="text-base font-black text-rose-300 mt-1" id="dashSuppliersDebtsVal">0 ج.م</p>
           </div>
 
-          <div class="bg-slate-900/90 border border-purple-500/30 p-3 rounded-2xl relative overflow-hidden">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-[10px] text-purple-400 font-bold">صافي الأرباح المحققة</span>
-              <i class="fa-solid fa-coins text-purple-400 text-xs"></i>
-            </div>
-            <p class="text-base md:text-lg font-black text-purple-300" id="dashNetProfitVal">0 ج.م</p>
-            <span class="text-[9px] text-slate-400 block mt-0.5">فارق الشراء والفوائد</span>
+          <div class="bg-slate-900/90 border border-rose-400/30 p-3 rounded-2xl relative overflow-hidden">
+            <span class="text-[10px] text-rose-300 font-bold block">المصاريف والشحن والهوالك</span>
+            <p class="text-base font-black text-rose-300 mt-1" id="dashTotalExpensesVal">0 ج.م</p>
+          </div>
+
+          <div class="bg-slate-900/90 border border-purple-500/30 p-3 rounded-2xl relative overflow-hidden col-span-2 md:col-span-1">
+            <span class="text-[10px] text-purple-400 font-bold block">صافي الربح (بعد المصاريف)</span>
+            <p class="text-base font-black text-purple-300 mt-1" id="dashNetProfitVal">0 ج.م</p>
           </div>
         </div>
       </div>
 
-      <!-- تقرير مبيعات الشهر وسحب الأجهزة مع الفلتر اليدوي -->
+      <!-- تقرير مبيعات الشهر -->
       <div class="bg-[#111726] border border-slate-800 rounded-3xl p-4 shadow-xl space-y-3">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-slate-800/80 pb-3">
           <div>
@@ -194,22 +185,20 @@
             </h4>
             <p class="text-[10px] text-slate-400 mt-0.5">اختر الشهر لمشاهدة إحصائيات السحب والأجهزة الأكثر مبيعاً فيه</p>
           </div>
-          
           <div class="flex items-center gap-2 w-full md:w-auto">
             <span class="text-xs text-slate-400 font-semibold whitespace-nowrap">اختر الشهر:</span>
             <input type="month" id="selectedReportMonthInput" onchange="renderDashboard()" class="bg-[#090d16] border border-blue-500/40 rounded-xl px-3 py-1.5 text-xs text-white font-bold focus:outline-none focus:border-blue-400">
           </div>
         </div>
-
         <div id="topSellingReportContainer" class="space-y-2.5"></div>
       </div>
 
-      <!-- جدول الأقساط المستحقة للتحصيل الفوري -->
+      <!-- جدول الأقساط المستحقة للتحصيل -->
       <div class="bg-[#111726] border border-slate-800 rounded-3xl p-4 shadow-xl">
         <div class="flex justify-between items-center mb-3">
           <h4 class="font-bold text-sm text-white flex items-center gap-2">
             <i class="fa-solid fa-bell text-amber-400"></i>
-            الأقساط المستحقة للتحصيل الفوري (مسمّعة من كافة الفواتير)
+            الأقساط المستحقة للتحصيل الفوري
           </h4>
           <span class="text-[11px] text-slate-400" id="dueCountBadge">0 عميل مستحق</span>
         </div>
@@ -231,7 +220,7 @@
     </section>
 
     <!-- ========================================== -->
-    <!-- VIEW 2: الموردين والمشتريات -->
+    <!-- VIEW 2: الموردين والمشتريات (سلة الفاتورة المجمعة) -->
     <!-- ========================================== -->
     <section id="view-suppliers" class="hidden space-y-4">
       <div class="bg-gradient-to-r from-purple-950/60 via-slate-900 to-[#111726] border border-purple-500/40 p-4 rounded-3xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3 shadow-xl">
@@ -266,18 +255,18 @@
     </section>
 
     <!-- ========================================== -->
-    <!-- VIEW 3: سجل وإدارة الأقساط -->
+    <!-- VIEW 3: سجل وإدارة الأقساط والعملاء والضامن -->
     <!-- ========================================== -->
     <section id="view-installments" class="hidden space-y-4">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-[#111726] p-4 rounded-3xl border border-slate-800">
         <div>
           <h3 class="text-base font-bold text-white flex items-center gap-2">
             <i class="fa-solid fa-calendar-check text-emerald-400"></i>
-            سجل متابعة الأقساط وملفات العملاء
+            سجل متابعة الأقساط وملفات العملاء والضامنين
           </h3>
-          <p class="text-xs text-slate-400 mt-0.5">اضغط على اسم العميل لفتح ملفه واستعراض فواتيره وإدارتها وتعديلها</p>
+          <p class="text-xs text-slate-400 mt-0.5">اضغط على اسم العميل لفتح ملفه واستعراض بطاقته وبيانات الضامن وفواتيره</p>
         </div>
-        <input type="text" id="searchInstallmentInput" oninput="renderInstallmentsTable()" placeholder="ابحث باسم العميل أو رقم الهاتف أو الكود..." class="bg-[#090d16] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white w-full md:w-72">
+        <input type="text" id="searchInstallmentInput" oninput="renderInstallmentsTable()" placeholder="ابحث باسم العميل أو رقم الهاتف أو البطاقة أو الكود..." class="bg-[#090d16] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white w-full md:w-72">
       </div>
 
       <div class="bg-[#111726] border border-slate-800 rounded-3xl p-4 shadow-xl">
@@ -286,7 +275,8 @@
             <thead class="bg-slate-900 text-slate-400 border-b border-slate-800">
               <tr>
                 <th class="p-2.5 text-center">كود</th>
-                <th class="p-2.5">اسم العميل (اضغط لعرض الفواتير)</th>
+                <th class="p-2.5">اسم العميل ورقم بطاقته</th>
+                <th class="p-2.5">الضامن ورقم هاتفه</th>
                 <th class="p-2.5 text-center text-cyan-400">الفواتير</th>
                 <th class="p-2.5 text-white font-bold">إجمالي الحساب</th>
                 <th class="p-2.5 text-emerald-400 font-bold">المحصل</th>
@@ -350,7 +340,7 @@
                 <th class="p-2.5">رقم الفاتورة</th>
                 <th class="p-2.5">التاريخ</th>
                 <th class="p-2.5">العميل</th>
-                <th class="p-2.5">الجهاز المباع</th>
+                <th class="p-2.5">الأصناف المباعة</th>
                 <th class="p-2.5">نوع العملية</th>
                 <th class="p-2.5 font-bold text-white">إجمالي القيمة</th>
                 <th class="p-2.5 text-emerald-400">المدفوع فوراً</th>
@@ -358,6 +348,42 @@
               </tr>
             </thead>
             <tbody id="salesInvoicesTableBody" class="divide-y divide-slate-800 text-slate-300"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 6: المصاريف الخارجية والشحن والهوالك -->
+    <!-- ========================================== -->
+    <section id="view-expenses" class="hidden space-y-4">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-[#111726] p-4 rounded-3xl border border-slate-800">
+        <div>
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-money-bill-transfer text-rose-400"></i>
+            سجل المصاريف الخارجية والنقل والهوالك
+          </h3>
+          <p class="text-xs text-slate-400 mt-0.5">تسجيل المصاريف اليومية وتخصم تلقائياً من صافي أرباح المعرض</p>
+        </div>
+        <button onclick="openModal('addExpenseModal')" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5">
+          <i class="fa-solid fa-plus"></i> تسجيل مصروف جديد
+        </button>
+      </div>
+
+      <div class="bg-[#111726] border border-slate-800 rounded-3xl p-4 shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-right text-xs">
+            <thead class="bg-slate-900 text-slate-400 border-b border-slate-800">
+              <tr>
+                <th class="p-2.5">التاريخ</th>
+                <th class="p-2.5">بند المصروف</th>
+                <th class="p-2.5">النوع / التصنيف</th>
+                <th class="p-2.5 text-rose-300 font-bold">المبلغ (ج.م)</th>
+                <th class="p-2.5">ملاحظات وبيان</th>
+                <th class="p-2.5 text-center">حذف</th>
+              </tr>
+            </thead>
+            <tbody id="expensesTableBody" class="divide-y divide-slate-800 text-slate-300"></tbody>
           </table>
         </div>
       </div>
@@ -387,11 +413,59 @@
       <i class="fa-solid fa-receipt text-base"></i>
       <span class="text-[10px]">المبيعات</span>
     </button>
+    <button onclick="switchView('expenses')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-rose-400 focus:text-rose-400">
+      <i class="fa-solid fa-money-bill-transfer text-base"></i>
+      <span class="text-[10px]">المصاريف</span>
+    </button>
   </nav>
 
   <!-- ========================================== -->
   <!-- MODALS المنظومة -->
   <!-- ========================================== -->
+
+  <!-- MODAL: إضافة مصروف جديد -->
+  <div id="addExpenseModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[#111726] border border-slate-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-money-bill-wave text-rose-400"></i> تسجيل مصروف خارجي
+        </h3>
+        <button onclick="closeModal('addExpenseModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="text-xs space-y-2.5">
+        <div>
+          <label class="block text-slate-300 mb-1">بند المصروف</label>
+          <input type="text" id="expenseTitleInput" placeholder="مثال: شحن بضاعة من المخزن / نقل أجهزة" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-1">نوع المصروف</label>
+          <select id="expenseCategorySelect" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
+            <option value="نقل وشحن">نقل وشحن بضاعة</option>
+            <option value="مصاريف شخصية وبوفيه">مصاريف شخصية وبوفيه للمعرض</option>
+            <option value="هوالك وتوالف أجهزة">هوالك وتوالف أجهزة</option>
+            <option value="إيجار وكهرباء وخدمات">إيجار وكهرباء وخدمات</option>
+            <option value="أخرى">أخرى</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-rose-400 mb-1 font-bold">المبلغ المدفوع (ج.م)</label>
+          <input type="number" id="expenseAmountInput" min="1" placeholder="مثال: 500" class="w-full bg-[#090d16] border border-rose-500/50 rounded-xl p-2.5 text-white font-bold text-base text-center">
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-1">تاريخ الصرف</label>
+          <input type="date" id="expenseDateInput" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-1">ملاحظات وبيان</label>
+          <input type="text" id="expenseNotesInput" placeholder="تفاصيل إضافية..." class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
+        </div>
+      </div>
+      <div class="flex gap-2 pt-2 border-t border-slate-800">
+        <button onclick="handleSaveExpense()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-xl text-xs shadow">حفظ وخصم من الأرباح</button>
+        <button onclick="closeModal('addExpenseModal')" class="px-4 bg-slate-800 text-slate-300 rounded-xl text-xs">إلغاء</button>
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL: نافذة ماسح الكاميرا للباركود والسيريال نمبر 📷 -->
   <div id="barcodeScannerModal" class="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4 hidden">
@@ -420,7 +494,7 @@
     </div>
   </div>
 
-  <!-- MODAL: بطاقة نتيجة فحص الباركود والاستعلام السريع من الصفحة الرئيسية 🔍 -->
+  <!-- MODAL: بطاقة نتيجة فحص الباركود والاستعلام السريع 🔍 -->
   <div id="deviceInquiryModal" class="fixed inset-0 bg-black/85 z-[60] flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-cyan-500/50 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -430,11 +504,7 @@
         </h3>
         <button onclick="closeModal('deviceInquiryModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-
-      <div id="deviceInquiryResultContent" class="space-y-3 text-xs">
-        <!-- يمتلئ آلياً عبر الجافاسكريبت -->
-      </div>
-
+      <div id="deviceInquiryResultContent" class="space-y-3 text-xs"></div>
       <div class="flex gap-2 pt-2 border-t border-slate-800">
         <button onclick="proceedToSellInquiredDevice()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs shadow flex items-center justify-center gap-1.5 transition">
           <i class="fa-solid fa-cart-plus"></i> بيع هذا الجهاز الآن
@@ -444,7 +514,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ملف العميل المطور -->
+  <!-- MODAL: ملف العميل المطور الشامل للبطاقة والضامن -->
   <div id="customerProfileModal" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-3 md:p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-3xl rounded-3xl p-5 shadow-2xl flex flex-col max-h-[92vh]">
       <div class="flex justify-between items-start border-b border-slate-800 pb-3">
@@ -455,8 +525,12 @@
           </div>
           <p class="text-xs text-slate-400 mt-1">
             الهاتف: <a id="cpModalCustomerPhoneLink" href="" class="text-emerald-400 font-mono underline"></a> | 
-            عدد الفواتير المسجلة: <b class="text-white" id="cpModalInvoicesCount">0</b> فواتير
+            بطاقة العميل: <b class="text-slate-300 font-mono" id="cpModalNationalId">--</b>
           </p>
+          <div class="mt-1.5 p-2 bg-slate-900 rounded-xl border border-slate-800 text-[11px] text-slate-300">
+            <span class="text-amber-400 font-bold"><i class="fa-solid fa-shield-halved"></i> بيانات الضامن:</span>
+            <span id="cpModalGuarantorDetails">--</span>
+          </div>
         </div>
         <button onclick="closeModal('customerProfileModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
@@ -488,7 +562,288 @@
     </div>
   </div>
 
-  <!-- MODAL: تعديل الفاتورة بالكامل بعد الحفظ ✏️ -->
+  <!-- MODAL: إضافة مورد جديد -->
+  <div id="addNewSupplierProfileModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[#111726] border border-slate-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-user-plus text-purple-400"></i> إضافة مورد جديد
+        </h3>
+        <button onclick="closeModal('addNewSupplierProfileModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="text-xs space-y-2.5">
+        <div>
+          <label class="block text-slate-300 mb-1">اسم المورد / الشركة</label>
+          <input type="text" id="newSupNameInput" placeholder="مثال: شركة العربي جروب" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-1">رقم الهاتف / الواتساب</label>
+          <input type="tel" id="newSupPhoneInput" placeholder="010xxxxxxxx" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-1">عنوان المورد أو المخزن</label>
+          <input type="text" id="newSupAddressInput" placeholder="مثال: مخازن بنها" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
+        </div>
+      </div>
+      <div class="flex gap-2 pt-2 border-t border-slate-800">
+        <button onclick="handleCreateSupplierProfile()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl text-xs shadow">حفظ المورد</button>
+        <button onclick="closeModal('addNewSupplierProfileModal')" class="px-4 bg-slate-800 text-slate-300 rounded-xl text-xs">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: سلة توريد أصناف مجمعة من مورد (Multi-Item Shipment Cart) -->
+  <div id="addSupplierShipmentModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-3 md:p-4 hidden">
+    <div class="bg-[#111726] border border-purple-500/40 w-full max-w-2xl rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-boxes-packing text-purple-400"></i> فاتورة توريد أصناف مجمعة من: <span id="shipmentSupplierName" class="text-purple-300 font-bold"></span>
+        </h3>
+        <button onclick="closeModal('addSupplierShipmentModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="text-xs space-y-3">
+        <!-- إضافة بند صنف إلى سلة التوريد -->
+        <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 space-y-2">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div>
+              <label class="block text-slate-300 mb-1">اسم الصنف والموديل</label>
+              <input type="text" id="shipItemNameInput" placeholder="مثال: ثلاجة شارب 16 قدم" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
+            </div>
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label class="block text-slate-300">باركود الصنف</label>
+                <button type="button" onclick="openBarcodeScanner('shipItemBarcodeInput')" class="text-[10px] text-purple-400 hover:underline">مسح بالكاميرا 📷</button>
+              </div>
+              <input type="text" id="shipItemBarcodeInput" placeholder="كود الصنف..." class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-mono">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-slate-300 mb-1">العدد (القطع)</label>
+              <input type="number" id="shipItemQtyInput" value="5" min="1" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold">
+            </div>
+            <div>
+              <label class="block text-slate-300 mb-1">سعر شراء القطعة (ج.م)</label>
+              <input type="number" id="shipItemPriceInput" value="10000" min="1" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold">
+            </div>
+          </div>
+
+          <button type="button" onclick="addItemToSupplierCart()" class="w-full py-2 bg-purple-600/30 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/40 rounded-xl font-bold transition">
+            + إضافة الصنف لفاتورة التوريد
+          </button>
+        </div>
+
+        <!-- جدول سلة أصناف التوريد -->
+        <div class="border border-slate-800 rounded-2xl overflow-x-auto">
+          <table class="w-full text-right text-xs">
+            <thead class="bg-slate-900 text-slate-400 border-b border-slate-800">
+              <tr>
+                <th class="p-2">الصنف</th>
+                <th class="p-2">الباركود</th>
+                <th class="p-2 text-center">العدد</th>
+                <th class="p-2">سعر القطعة</th>
+                <th class="p-2">الإجمالي</th>
+                <th class="p-2 text-center">حذف</th>
+              </tr>
+            </thead>
+            <tbody id="supplierCartTbody" class="divide-y divide-slate-800 text-slate-300"></tbody>
+          </table>
+        </div>
+
+        <div class="p-3 bg-slate-900 rounded-2xl border border-slate-800 flex justify-between items-center text-xs">
+          <span class="text-slate-400">إجمالي فاتورة التوريد بالكامل:</span>
+          <b class="text-base text-purple-300 font-black" id="supplierCartGrandTotal">0 ج.م</b>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-emerald-400 mb-1 font-bold">المسدد للمورد الآن نقداً</label>
+            <input type="number" id="supplierCartPaidInput" value="0" min="0" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold">
+          </div>
+          <div>
+            <label class="block text-slate-300 mb-1">تاريخ الفاتورة</label>
+            <input type="date" id="supplierCartDateInput" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2 border-t border-slate-800">
+        <button onclick="handleSaveMultiItemSupplierInvoice()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl text-xs shadow">
+          اعتماد فاتورة التوريد وإدخال الأصناف للمخزن
+        </button>
+        <button onclick="closeModal('addSupplierShipmentModal')" class="px-4 bg-slate-800 text-slate-300 rounded-xl text-xs">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: فاتورة وعقد بيع جديد (مع سلة مشتريات وبحث فوري وبيانات الضامن) -->
+  <div id="newSaleModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-3 md:p-4 hidden">
+    <div class="bg-[#111726] border border-slate-700 w-full max-w-2xl rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-file-invoice-dollar text-blue-400"></i>
+          إنشاء فاتورة بيع جديدة (سلة أجهزة مجمعة)
+        </h3>
+        <button onclick="closeModal('newSaleModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="text-xs space-y-3">
+        <!-- بيانات العميل والبطاقة -->
+        <div class="p-3 bg-slate-900/60 rounded-2xl border border-slate-800 space-y-2">
+          <span class="text-blue-400 font-bold block text-[11px]"><i class="fa-solid fa-user"></i> بيانات العميل الأساسية:</span>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div>
+              <label class="block text-slate-400 mb-1">اسم العميل</label>
+              <input type="text" id="saleCustomerName" placeholder="مثال: محمد السيد" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">رقم الهاتف (للواتساب)</label>
+              <input type="tel" id="saleCustomerPhone" placeholder="010xxxxxxxx" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">الرقم القومي للعميل (14 رقم)</label>
+              <input type="text" id="saleCustomerNationalId" placeholder="الرقم القومي للبطاقة..." class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-mono">
+            </div>
+          </div>
+        </div>
+
+        <!-- بيانات الضامن (مهمة للتقسيط) -->
+        <div class="p-3 bg-slate-900/60 rounded-2xl border border-slate-800 space-y-2">
+          <span class="text-amber-400 font-bold block text-[11px]"><i class="fa-solid fa-shield-halved"></i> بيانات الضامن (للتقسيط والضمانات):</span>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div>
+              <label class="block text-slate-400 mb-1">اسم الضامن</label>
+              <input type="text" id="saleGuarantorName" placeholder="مثال: أحمد عبد الله" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">رقم هاتف الضامن</label>
+              <input type="tel" id="saleGuarantorPhone" placeholder="011xxxxxxxx" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">الرقم القومي للضامن</label>
+              <input type="text" id="saleGuarantorNationalId" placeholder="رقم بطاقة الضامن..." class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-mono">
+            </div>
+          </div>
+        </div>
+
+        <!-- سلة الأجهزة المباعة مع بحث مباشر وسريع من أول حرف -->
+        <div class="p-3 bg-slate-900/80 rounded-2xl border border-slate-800 space-y-2.5">
+          <div class="flex justify-between items-center">
+            <span class="text-cyan-400 font-bold text-[11px]"><i class="fa-solid fa-cart-shopping"></i> سلة الأجهزة (أضف أكثر من جهاز للفاتورة):</span>
+            <button type="button" onclick="openBarcodeScanner('sale_barcode_detect')" class="text-[10px] text-cyan-300 hover:underline">
+              مسح باركود لإضافة جهاز 📷
+            </button>
+          </div>
+
+          <!-- خانة البحث الفوري مع أول حرف -->
+          <div class="relative">
+            <input type="text" id="saleProductLiveSearch" oninput="filterSaleProductsLiveSearch()" placeholder="🔍 ابدأ بكتابة أول حرف من اسم الجهاز للبحث الفوري..." class="w-full bg-[#090d16] border border-cyan-500/50 rounded-xl p-2 text-white text-xs">
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+            <div class="md:col-span-2">
+              <label class="block text-slate-400 mb-1">اختر الجهاز من النتائج</label>
+              <select id="saleDeviceSelect" onchange="autoFillDevicePrice()" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white"></select>
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">العدد</label>
+              <input type="number" id="saleItemQtyInput" value="1" min="1" oninput="handleSaleItemCalc()" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold text-center">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">سعر القطعة كاش</label>
+              <input type="number" id="saleItemPriceInput" oninput="handleSaleItemCalc()" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold text-center">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-slate-400 mb-1">السيريال نمبر لهذا الجهاز</label>
+            <input type="text" id="saleItemSerialInput" placeholder="اكتب أو امسح السيريال..." class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-mono">
+          </div>
+
+          <button type="button" onclick="addItemToSaleCart()" class="w-full py-2 bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/40 rounded-xl font-bold transition">
+            + إضافة الجهاز إلى سلة الفاتورة
+          </button>
+        </div>
+
+        <!-- جدول سلة الفاتورة -->
+        <div class="border border-slate-800 rounded-2xl overflow-x-auto">
+          <table class="w-full text-right text-xs">
+            <thead class="bg-slate-900 text-slate-400 border-b border-slate-800">
+              <tr>
+                <th class="p-2">الجهاز</th>
+                <th class="p-2">السيريال</th>
+                <th class="p-2 text-center">العدد</th>
+                <th class="p-2">سعر القطعة</th>
+                <th class="p-2">الإجمالي</th>
+                <th class="p-2 text-center">حذف</th>
+              </tr>
+            </thead>
+            <tbody id="saleCartTbody" class="divide-y divide-slate-800 text-slate-300"></tbody>
+          </table>
+        </div>
+
+        <div class="p-2.5 bg-slate-950 rounded-xl border border-emerald-500/30 flex justify-between items-center text-xs">
+          <span class="text-slate-400">إجمالي الأجهزة بالسلة:</span>
+          <b class="text-base text-emerald-400 font-black" id="saleCartGrandTotalDisplay">0 ج.م</b>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 mb-1 font-semibold">نظام البيع</label>
+          <select id="saleTypeSelect" onchange="toggleInstallmentFields()" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white font-bold">
+            <option value="installment">بيع بالتقسيط</option>
+            <option value="cash">بيع كاش (دفع فوري)</option>
+          </select>
+        </div>
+
+        <!-- حقول التقسيط الذكية محسوبة على كامل السلة -->
+        <div id="installmentFieldsBox" class="space-y-2.5 bg-slate-900/80 p-3 rounded-2xl border border-blue-500/30">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-slate-300 mb-1">المقدم المدفوع (ج.م)</label>
+              <input type="number" id="instDownPayment" oninput="calculateInstallmentMath()" value="3000" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold">
+            </div>
+            <div>
+              <label class="block text-slate-300 mb-1">مدة التقسيط (شهور)</label>
+              <input type="number" id="instMonths" oninput="calculateInstallmentMath()" value="12" min="1" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-slate-300 mb-1">نسبة الفائدة السنوية (%)</label>
+              <input type="number" id="instInterestRate" oninput="calculateInstallmentMath()" value="15" min="0" step="0.5" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold">
+            </div>
+            <div>
+              <label class="block text-slate-300 mb-1">تاريخ أول قسط</label>
+              <input type="date" id="instStartDate" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
+            </div>
+          </div>
+
+          <div class="p-2.5 bg-blue-950/40 rounded-xl border border-blue-500/40 flex justify-between items-center text-xs">
+            <div>
+              <span class="text-slate-400 block text-[10px]">إجمالي العقد بالفوائد:</span>
+              <b class="text-white font-bold" id="instCalculatedTotal">0 ج.م</b>
+            </div>
+            <div class="text-left">
+              <span class="text-emerald-400 block text-[10px] font-bold">القسط الشهري المطلوب:</span>
+              <b class="text-emerald-400 text-sm font-black" id="instCalculatedMonthly">0 ج.م</b>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2 border-t border-slate-800">
+        <button onclick="handleSaveSaleInvoice()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-xs shadow-lg shadow-blue-600/30">
+          حفظ الفاتورة وخصم الأجهزة من رصيد المخزن
+        </button>
+        <button onclick="closeModal('newSaleModal')" class="px-4 bg-slate-800 text-slate-300 rounded-xl text-xs">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: تعديل الفاتورة ✏️ -->
   <div id="editSaleInvoiceModal" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-amber-500/40 w-full max-w-lg rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -532,12 +887,7 @@
         </div>
 
         <div>
-          <div class="flex justify-between items-center mb-1">
-            <label class="block text-slate-300 font-semibold">السيريال نمبر للأجهزة</label>
-            <button type="button" onclick="openBarcodeScanner('editSerialInput')" class="px-2 py-0.5 rounded-lg bg-cyan-600/20 text-cyan-400 hover:bg-cyan-600 hover:text-white border border-cyan-500/30 text-[10px] font-bold flex items-center gap-1 transition">
-              <i class="fa-solid fa-camera"></i> مسح بالكاميرا 📷
-            </button>
-          </div>
+          <label class="block text-slate-300 mb-1 font-semibold">السيريال نمبر</label>
           <input type="text" id="editSerialInput" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white font-mono">
         </div>
 
@@ -556,7 +906,6 @@
               <input type="number" id="editMonthsInput" oninput="calculateEditInvoiceMath()" min="1" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold">
             </div>
           </div>
-
           <div class="p-2.5 bg-blue-950/40 rounded-xl border border-blue-500/40 flex justify-between items-center text-xs">
             <div>
               <span class="text-slate-400 block text-[10px]">إجمالي العقد بالفوائد:</span>
@@ -690,214 +1039,15 @@
     </div>
   </div>
 
-  <!-- MODAL: إضافة مورد جديد -->
-  <div id="addNewSupplierProfileModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-[#111726] border border-slate-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-user-plus text-purple-400"></i> إضافة مورد جديد
-        </h3>
-        <button onclick="closeModal('addNewSupplierProfileModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="text-xs space-y-2.5">
-        <div>
-          <label class="block text-slate-300 mb-1">اسم المورد / الشركة</label>
-          <input type="text" id="newSupNameInput" placeholder="مثال: شركة العربي جروب" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
-        </div>
-        <div>
-          <label class="block text-slate-300 mb-1">رقم الهاتف / الواتساب</label>
-          <input type="tel" id="newSupPhoneInput" placeholder="010xxxxxxxx" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
-        </div>
-        <div>
-          <label class="block text-slate-300 mb-1">عنوان المورد أو المخزن</label>
-          <input type="text" id="newSupAddressInput" placeholder="مثال: مخازن بنها" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
-        </div>
-      </div>
-      <div class="flex gap-2 pt-2 border-t border-slate-800">
-        <button onclick="handleCreateSupplierProfile()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl text-xs shadow">حفظ المورد</button>
-        <button onclick="closeModal('addNewSupplierProfileModal')" class="px-4 bg-slate-800 text-slate-300 rounded-xl text-xs">إلغاء</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: إضافة شحنة توريد أصناف لهذا المورد (مع باركود الصنف) -->
-  <div id="addSupplierShipmentModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-[#111726] border border-slate-700 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-box-open text-purple-400"></i> تسجيل أصناف واردة من: <span id="shipmentSupplierName" class="text-purple-300 font-bold"></span>
-        </h3>
-        <button onclick="closeModal('addSupplierShipmentModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="text-xs space-y-2.5">
-        <div>
-          <label class="block text-slate-300 mb-1">اسم الصنف والموديل (يسمّع بالمخزن فوراً)</label>
-          <input type="text" id="shipmentItemName" placeholder="مثال: غسالة توشيبا 10 كيلو نصف أوتوماتيك" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
-        </div>
-
-        <!-- خانة باركود الصنف عند التوريد -->
-        <div>
-          <div class="flex justify-between items-center mb-1">
-            <label class="block text-slate-300 font-semibold">باركود الصنف / كود الكرتونة</label>
-            <button type="button" onclick="openBarcodeScanner('shipmentBarcode')" class="px-2 py-0.5 rounded-lg bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white border border-purple-500/30 text-[10px] font-bold flex items-center gap-1 transition">
-              <i class="fa-solid fa-camera"></i> مسح باركود الكرتونة 📷
-            </button>
-          </div>
-          <input type="text" id="shipmentBarcode" placeholder="امسح باركود المصنع أو اكتب كود الصنف..." class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-mono">
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-slate-300 mb-1">الكمية (عدد القطع)</label>
-            <input type="number" id="shipmentQty" oninput="calculateShipmentTotal()" value="5" min="1" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold">
-          </div>
-          <div>
-            <label class="block text-slate-300 mb-1">سعر شراء القطعة (ج.م)</label>
-            <input type="number" id="shipmentUnitPrice" oninput="calculateShipmentTotal()" value="9500" min="1" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
-          </div>
-        </div>
-        <div class="p-2.5 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center">
-          <span class="text-slate-400">إجمالي فاتورة التوريدة:</span>
-          <b class="text-sm text-purple-300 font-bold" id="shipmentTotalDisplay">47,500 ج.م</b>
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-slate-300 mb-1 text-emerald-400 font-semibold">المسدد للمورد الآن</label>
-            <input type="number" id="shipmentPaidAmount" value="20000" min="0" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold">
-          </div>
-          <div>
-            <label class="block text-slate-300 mb-1">تاريخ التوريد</label>
-            <input type="date" id="shipmentDateInput" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
-          </div>
-        </div>
-      </div>
-      <div class="flex gap-2 pt-2 border-t border-slate-800">
-        <button onclick="handleSaveSupplierShipment()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl text-xs shadow">إضافة الفاتورة وزيادة المخزن فوراً</button>
-        <button onclick="closeModal('addSupplierShipmentModal')" class="px-4 bg-slate-800 text-slate-300 rounded-xl text-xs">إلغاء</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: فاتورة وعقد بيع جديد (مع قارئ الكاميرا للسيريال والباركود) -->
-  <div id="newSaleModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-[#111726] border border-slate-700 w-full max-w-lg rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-file-invoice-dollar text-blue-400"></i>
-          إنشاء فاتورة بيع جديدة
-        </h3>
-        <button onclick="closeModal('newSaleModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-
-      <div class="text-xs space-y-3">
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-slate-300 mb-1 font-semibold">اسم العميل</label>
-            <input type="text" id="saleCustomerName" placeholder="مثال: محمد السيد" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
-          </div>
-          <div>
-            <label class="block text-slate-300 mb-1 font-semibold">رقم الهاتف (للواتساب)</label>
-            <input type="tel" id="saleCustomerPhone" placeholder="010xxxxxxxx" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white">
-          </div>
-        </div>
-
-        <div>
-          <div class="flex justify-between items-center mb-1">
-            <label class="block text-slate-300 font-semibold">اختر الجهاز من المخزن</label>
-            <!-- زر مسح باركود الكرتونة للتعرف التلقائي على الجهاز وملء السعر -->
-            <button type="button" onclick="openBarcodeScanner('sale_barcode_detect')" class="px-2 py-0.5 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/30 text-[10px] font-bold flex items-center gap-1 transition">
-              <i class="fa-solid fa-barcode"></i> مسح باركود الجهاز لتنزيل بياناته 📷
-            </button>
-          </div>
-          <select id="saleDeviceSelect" onchange="autoFillDevicePrice()" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white"></select>
-        </div>
-
-        <div class="grid grid-cols-3 gap-2 bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800">
-          <div>
-            <label class="block text-cyan-400 mb-1 font-bold">عدد القطع المباعة</label>
-            <input type="number" id="saleQuantityInput" oninput="handleQuantityOrPriceChange()" value="1" min="1" class="w-full bg-[#090d16] border-2 border-cyan-500/60 rounded-xl p-2 text-white font-black text-center text-sm">
-          </div>
-          <div>
-            <label class="block text-slate-400 mb-1 font-semibold">سعر القطعة (ج.م)</label>
-            <input type="number" id="saleUnitCashPriceInput" oninput="handleQuantityOrPriceChange()" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-slate-200 font-bold text-center">
-          </div>
-          <div>
-            <label class="block text-emerald-400 mb-1 font-bold">إجمالي الكاش (ج.م)</label>
-            <input type="number" id="saleCashPriceInput" readonly class="w-full bg-slate-950 border border-emerald-500/40 rounded-xl p-2 text-emerald-400 font-black text-center text-sm">
-          </div>
-        </div>
-
-        <div>
-          <div class="flex justify-between items-center mb-1">
-            <label class="block text-slate-300 font-semibold">السيريال نمبر للأجهزة المباعة (للضمان)</label>
-            <button type="button" onclick="openBarcodeScanner('saleSerialInput')" class="px-2 py-0.5 rounded-lg bg-cyan-600/20 text-cyan-400 hover:bg-cyan-600 hover:text-white border border-cyan-500/30 text-[10px] font-bold flex items-center gap-1 transition">
-              <i class="fa-solid fa-camera"></i> مسح السيريال بالكاميرا 📷
-            </button>
-          </div>
-          <input type="text" id="saleSerialInput" placeholder="اكتب أو امسح السيريال بالكاميرا..." class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white font-mono">
-        </div>
-
-        <div>
-          <label class="block text-slate-300 mb-1 font-semibold">نظام البيع</label>
-          <select id="saleTypeSelect" onchange="toggleInstallmentFields()" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white font-bold">
-            <option value="installment">بيع بالتقسيط</option>
-            <option value="cash">بيع كاش (دفع فوري)</option>
-          </select>
-        </div>
-
-        <div id="installmentFieldsBox" class="space-y-2.5 bg-slate-900/80 p-3 rounded-2xl border border-blue-500/30">
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-slate-300 mb-1">المقدم المدفوع (ج.م)</label>
-              <input type="number" id="instDownPayment" oninput="calculateInstallmentMath()" value="3500" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold">
-            </div>
-            <div>
-              <label class="block text-slate-300 mb-1">مدة التقسيط (شهور)</label>
-              <input type="number" id="instMonths" oninput="calculateInstallmentMath()" value="12" min="1" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-slate-300 mb-1">نسبة الفائدة السنوية (%)</label>
-              <input type="number" id="instInterestRate" oninput="calculateInstallmentMath()" value="15" min="0" step="0.5" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white font-bold">
-            </div>
-            <div>
-              <label class="block text-slate-300 mb-1">تاريخ أول قسط</label>
-              <input type="date" id="instStartDate" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2 text-white">
-            </div>
-          </div>
-
-          <div class="p-2.5 bg-blue-950/40 rounded-xl border border-blue-500/40 flex justify-between items-center text-xs">
-            <div>
-              <span class="text-slate-400 block text-[10px]">إجمالي العقد بالفوائد:</span>
-              <b class="text-white font-bold" id="instCalculatedTotal">0 ج.م</b>
-            </div>
-            <div class="text-left">
-              <span class="text-emerald-400 block text-[10px] font-bold">القسط الشهري المطلوب:</span>
-              <b class="text-emerald-400 text-sm font-black" id="instCalculatedMonthly">0 ج.م</b>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex gap-2 pt-2 border-t border-slate-800">
-        <button onclick="handleSaveSaleInvoice()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-xs shadow-lg shadow-blue-600/30">
-          حفظ الفاتورة وخصم الكمية من رصيد المخزن
-        </button>
-        <button onclick="closeModal('newSaleModal')" class="px-4 bg-slate-800 text-slate-300 rounded-xl text-xs">إلغاء</button>
-      </div>
-    </div>
-  </div>
-
   <!-- ========================================== -->
   <!-- المنطق البرمجي الكامل (JAVASCRIPT) -->
   <!-- ========================================== -->
   <script>
     const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_detailed_suppliers_v3';
     const STORAGE_KEY_SELLING_PRICES = 'elabd_selling_prices_v3';
-    const STORAGE_KEY_SALES = 'elabd_sales_v3';
-    const STORAGE_KEY_CONTRACTS = 'elabd_contracts_v11';
+    const STORAGE_KEY_SALES = 'elabd_sales_v4';
+    const STORAGE_KEY_CONTRACTS = 'elabd_contracts_v12';
+    const STORAGE_KEY_EXPENSES = 'elabd_expenses_v1';
     const STORAGE_KEY_CURRENT_TAB = 'elabd_current_tab';
 
     const defaultSuppliersData = [
@@ -937,8 +1087,12 @@
         invoiceDate: '2026-08-01',
         customerName: 'محمود عبد الفتاح',
         customerPhone: '01012345678',
+        nationalId: '29704141234567',
+        guarantorName: 'إبراهيم السيد علي',
+        guarantorPhone: '01123456789',
+        guarantorNationalId: '29508129876543',
         items: [
-          { name: 'غسالة إل جي 9 كيلو فول أوتوماتيك', qty: 1, unitPrice: 23500, total: 23500 }
+          { name: 'غسالة إل جي 9 كيلو فول أوتوماتيك', qty: 1, unitPrice: 23500, total: 23500, serial: 'SN-LG9K-9921' }
         ],
         deviceName: 'غسالة إل جي 9 كيلو فول أوتوماتيك (عدد 1)',
         rawDeviceName: 'غسالة إل جي 9 كيلو فول أوتوماتيك',
@@ -959,59 +1113,6 @@
           { number: 3, dueDate: '2026-10-01', amount: 1917, status: 'مستحق', paidDate: null, paidActual: 0 },
           { number: 4, dueDate: '2026-11-01', amount: 1917, status: 'قادم', paidDate: null, paidActual: 0 }
         ]
-      },
-      {
-        clientCode: 1,
-        id: 'CNT-103',
-        invoiceDate: '2026-10-05',
-        customerName: 'محمود عبد الفتاح',
-        customerPhone: '01012345678',
-        items: [
-          { name: 'ميكروويف شارب 25 لتر بالشواية', qty: 2, unitPrice: 6500, total: 13000 }
-        ],
-        deviceName: 'ميكروويف شارب 25 لتر بالشواية (عدد 2)',
-        rawDeviceName: 'ميكروويف شارب 25 لتر بالشواية',
-        serialNumber: 'SN-SHARP25-4411, SN-SHARP25-4412',
-        quantity: 2,
-        cashPrice: 13000,
-        downPayment: 3000,
-        months: 6,
-        interestRate: 10,
-        totalWithInterest: 14000,
-        monthlyAmount: 1833,
-        paidAmount: 3000,
-        remainingAmount: 11000,
-        startDate: '2026-10-05',
-        installments: [
-          { number: 1, dueDate: '2026-10-25', amount: 1833, status: 'قادم', paidDate: null, paidActual: 0 },
-          { number: 2, dueDate: '2026-11-25', amount: 1833, status: 'قادم', paidDate: null, paidActual: 0 }
-        ]
-      },
-      {
-        clientCode: 2,
-        id: 'CNT-102',
-        invoiceDate: '2026-09-15',
-        customerName: 'سيد إبراهيم خليل',
-        customerPhone: '01198765432',
-        items: [
-          { name: 'شاشة سامسونج 55 بوصة سمارت 4K', qty: 1, unitPrice: 17800, total: 17800 }
-        ],
-        deviceName: 'شاشة سامسونج 55 بوصة سمارت 4K (عدد 1)',
-        rawDeviceName: 'شاشة سامسونج 55 بوصة سمارت 4K',
-        serialNumber: 'SN-SAM55-8812',
-        quantity: 1,
-        cashPrice: 17800,
-        downPayment: 3800,
-        months: 10,
-        interestRate: 12,
-        totalWithInterest: 19480,
-        monthlyAmount: 1568,
-        paidAmount: 3800,
-        remainingAmount: 15680,
-        startDate: '2026-09-15',
-        installments: [
-          { number: 1, dueDate: '2026-10-15', amount: 1568, status: 'قادم', paidDate: null, paidActual: 0 }
-        ]
       }
     ];
 
@@ -1021,6 +1122,7 @@
         date: '2026-08-01',
         customerName: 'محمود عبد الفتاح',
         customerPhone: '01012345678',
+        nationalId: '29704141234567',
         deviceName: 'غسالة إل جي 9 كيلو فول أوتوماتيك (عدد 1)',
         rawDeviceName: 'غسالة إل جي 9 كيلو فول أوتوماتيك',
         serialNumber: 'SN-LG9K-9921',
@@ -1030,53 +1132,17 @@
         totalPrice: 26500,
         paidImmediately: 3500,
         contractId: 'CNT-101'
-      },
-      {
-        id: 'INV-502',
-        date: '2026-09-15',
-        customerName: 'سيد إبراهيم خليل',
-        customerPhone: '01198765432',
-        deviceName: 'شاشة سامسونج 55 بوصة سمارت 4K (عدد 1)',
-        rawDeviceName: 'شاشة سامسونج 55 بوصة سمارت 4K',
-        serialNumber: 'SN-SAM55-8812',
-        type: 'تقسيط',
-        quantity: 1,
-        unitPrice: 17800,
-        totalPrice: 19480,
-        paidImmediately: 3800,
-        contractId: 'CNT-102'
-      },
-      {
-        id: 'INV-503',
-        date: '2026-10-05',
-        customerName: 'محمود عبد الفتاح',
-        customerPhone: '01012345678',
-        deviceName: 'ميكروويف شارب 25 لتر بالشواية (عدد 2)',
-        rawDeviceName: 'ميكروويف شارب 25 لتر بالشواية',
-        serialNumber: 'SN-SHARP25-4411, SN-SHARP25-4412',
-        type: 'تقسيط',
-        quantity: 2,
-        unitPrice: 6500,
-        totalPrice: 14000,
-        paidImmediately: 3000,
-        contractId: 'CNT-103'
-      },
-      {
-        id: 'INV-504',
-        date: '2026-10-06',
-        customerName: 'طارق الدسوقي',
-        customerPhone: '01223344556',
-        deviceName: 'شاشة سامسونج 55 بوصة سمارت 4K (عدد 1)',
-        rawDeviceName: 'شاشة سامسونج 55 بوصة سمارت 4K',
-        serialNumber: 'SN-SAM55-9011',
-        type: 'كاش',
-        quantity: 1,
-        unitPrice: 17800,
-        totalPrice: 17800,
-        paidImmediately: 17800,
-        contractId: null
       }
     ];
+
+    const defaultExpenses = [
+      { id: 'EXP-1', date: '2026-10-02', title: 'شحن ونقل شاشات من الميناء', category: 'نقل وشحن', amount: 850, notes: 'نولون سيارة نقل' },
+      { id: 'EXP-2', date: '2026-10-05', title: 'بوفيه وضيافة للمعرض', category: 'مصاريف شخصية وبوفيه', amount: 350, notes: 'مشروبات وضيافة عملاء' }
+    ];
+
+    // سلال المشتريات المؤقتة
+    let currentSupplierShipmentCart = [];
+    let currentSaleInvoiceCart = [];
 
     let selectedSupplierId = 'SUP-01';
     let currentCollectingContractId = null;
@@ -1124,6 +1190,14 @@
       localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(d));
     }
 
+    function getStoredExpenses() {
+      const d = localStorage.getItem(STORAGE_KEY_EXPENSES);
+      return d ? JSON.parse(d) : defaultExpenses;
+    }
+    function setStoredExpenses(d) {
+      localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(d));
+    }
+
     function calculateAllSuppliersTotalRemaining() {
       const suppliers = getDetailedSuppliers();
       let totalRemaining = 0;
@@ -1134,6 +1208,11 @@
         });
       });
       return totalRemaining;
+    }
+
+    function calculateTotalExpenses() {
+      const expenses = getStoredExpenses();
+      return expenses.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
     }
 
     function buildDynamicInventory() {
@@ -1183,6 +1262,9 @@
       const startDateInput = document.getElementById('instStartDate');
       if (startDateInput) startDateInput.value = today;
 
+      const expenseDate = document.getElementById('expenseDateInput');
+      if (expenseDate) expenseDate.value = today;
+
       const currentYearMonth = today.substring(0, 7);
       const reportMonthInput = document.getElementById('selectedReportMonthInput');
       if (reportMonthInput && !reportMonthInput.value) {
@@ -1210,7 +1292,7 @@
 
       localStorage.setItem(STORAGE_KEY_CURRENT_TAB, viewName);
 
-      ['dashboard', 'suppliers', 'installments', 'inventory', 'sales'].forEach(v => {
+      ['dashboard', 'suppliers', 'installments', 'inventory', 'sales', 'expenses'].forEach(v => {
         const section = document.getElementById(`view-${v}`);
         if (section) section.classList.add('hidden');
         const navBtn = document.getElementById(`nav-${v}`);
@@ -1232,13 +1314,14 @@
       if (viewName === 'installments') renderInstallmentsTable();
       if (viewName === 'inventory') renderInventoryTable();
       if (viewName === 'sales') renderSalesTable();
+      if (viewName === 'expenses') renderExpensesTable();
     }
 
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
     // ==========================================
-    // 0. تشغيل ماسح الكاميرا الذكي المتعدد المهام 📷
+    // 0. تشغيل ماسح الكاميرا الذكي 📷
     // ==========================================
     function openBarcodeScanner(targetMode) {
       currentTargetInputIdForScanner = targetMode;
@@ -1248,7 +1331,7 @@
       if (targetMode === 'home_inquiry') {
         instruction.innerText = "وجّه الكاميرا على باركود الجهاز لعرض كافة بياناته وأسعاره من المخزن فوراً.";
       } else if (targetMode === 'sale_barcode_detect') {
-        instruction.innerText = "امسح باركود كرتونة الجهاز للتعرف عليه وملء الفاتورة تلقائياً.";
+        instruction.innerText = "امسح باركود كرتونة الجهاز لإضافته تلقائياً إلى سلة الفاتورة.";
       } else {
         instruction.innerText = "وجّه كاميرا الهاتف على الباركود أو السيريال الملصق على الكرتونة مباشرة.";
       }
@@ -1272,7 +1355,6 @@
     function handleBarcodeScannedSuccessfully(scannedCode) {
       const codeClean = scannedCode.trim();
 
-      // تشغيل نغمة Beep خفيفة
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = audioCtx.createOscillator();
@@ -1285,19 +1367,16 @@
 
       closeBarcodeScanner();
 
-      // السيناريو 1: فحص واستعلام من الصفحة الرئيسية
       if (currentTargetInputIdForScanner === 'home_inquiry') {
         executeDeviceInquiryByBarcode(codeClean);
         return;
       }
 
-      // السيناريو 2: التعرف التلقائي على الجهاز عند البيع بمسح الباركود
       if (currentTargetInputIdForScanner === 'sale_barcode_detect') {
         executeAutoSelectDeviceForSaleByBarcode(codeClean);
         return;
       }
 
-      // السيناريو 3: كتابة السيريال/الباركود في خانة إدخال محددة
       const inputElem = document.getElementById(currentTargetInputIdForScanner);
       if (inputElem) {
         if (inputElem.value && inputElem.value.trim().length > 0) {
@@ -1320,7 +1399,6 @@
       closeModal('barcodeScannerModal');
     }
 
-    // استعلام سريع وعرض تفاصيل الجهاز بالكامل من الصفحة الرئيسية
     function executeDeviceInquiryByBarcode(barcode) {
       const inventory = buildDynamicInventory();
       const matchedItem = inventory.find(i => 
@@ -1337,7 +1415,6 @@
             <i class="fa-solid fa-triangle-exclamation text-rose-400 text-xl"></i>
             <h4 class="font-bold text-white text-sm">الجهاز غير موجود بالمخزن!</h4>
             <p class="text-[11px] text-slate-400">الباركود المفحوص: <span class="font-mono text-rose-300">${barcode}</span></p>
-            <p class="text-[10px] text-slate-500">تأكد من تسجيل الصنف وتوريده من قسم الموردين أولاً.</p>
           </div>
         `;
       } else {
@@ -1352,28 +1429,21 @@
               <h4 class="text-base font-black text-white mt-0.5">${matchedItem.name}</h4>
               <p class="text-xs text-slate-400 mt-0.5">المورد: <b class="text-purple-300">${matchedItem.supplierName}</b></p>
             </div>
-
             <div class="grid grid-cols-2 gap-2 text-center">
               <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
-                <span class="text-[10px] text-slate-400 block font-semibold">الرصيد المتوفر بالمخزن</span>
+                <span class="text-[10px] text-slate-400 block font-semibold">الرصيد بالمخزن</span>
                 <b class="text-base font-black ${isOutOfStock ? 'text-rose-400' : 'text-emerald-400'}">
                   ${isOutOfStock ? 'نفذت الكمية ❌' : matchedItem.currentQty + ' أجهزة متوفرة'}
                 </b>
               </div>
               <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
-                <span class="text-[10px] text-emerald-400 block font-semibold">سعر البيع الكاش المعتمد</span>
+                <span class="text-[10px] text-emerald-400 block font-semibold">سعر الكاش</span>
                 <b class="text-base font-black text-white">${matchedItem.cashPrice.toLocaleString()} ج.م</b>
               </div>
-            </div>
-
-            <div class="p-2 bg-slate-950/70 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
-              <span class="text-slate-400">سعر الشراء: <b class="text-slate-300">${matchedItem.buyPrice.toLocaleString()} ج</b></span>
-              <span class="text-emerald-400">هامش الربح المتوقع: <b>+${profitMargin.toLocaleString()} ج</b></span>
             </div>
           </div>
         `;
       }
-
       openModal('deviceInquiryModal');
     }
 
@@ -1381,7 +1451,6 @@
       if (!lastInquiredDeviceObject) return;
       closeModal('deviceInquiryModal');
       openModal('newSaleModal');
-
       const select = document.getElementById('saleDeviceSelect');
       if (select) {
         select.value = lastInquiredDeviceObject.itemId;
@@ -1389,7 +1458,6 @@
       }
     }
 
-    // التعرف التلقائي عند مسح باركود الكرتونة في شاشة البيع
     function executeAutoSelectDeviceForSaleByBarcode(barcode) {
       const inventory = buildDynamicInventory();
       const matched = inventory.find(i => 
@@ -1403,27 +1471,26 @@
           select.value = matched.itemId;
           autoFillDevicePrice();
         }
-        alert(`تم بنجاح التعرف على الجهاز: (${matched.name}) وتعبئة أسعاره من المخزن.`);
+        alert(`تم التعرف على (${matched.name}) وتنزيله بقائمة الفاتورة.`);
       } else {
         alert(`لم يتم العثور على جهاز بهذا الباركود (${barcode}) في المخزن.`);
       }
     }
 
     // ==========================================
-    // 1. لوحة الإحصائيات
+    // 1. لوحة الإحصائيات (تخصم المصاريف وتظهر صافي الربح الحقيقي)
     // ==========================================
     function renderDashboard() {
       const sales = getStoredSales();
       const contracts = getStoredContracts();
       const inventory = buildDynamicInventory();
-
       const selectedMonthVal = document.getElementById('selectedReportMonthInput').value || new Date().toISOString().substring(0, 7);
 
       let totalSalesVal = 0;
       let cashCollectedVal = 0;
       let installmentsRemainingVal = 0;
       let overdueInstallmentsVal = 0;
-      let netProfitVal = 0;
+      let grossProfitVal = 0;
 
       const salesCountMap = {};
       let filteredMonthPiecesCount = 0;
@@ -1435,7 +1502,7 @@
         const qtySold = parseInt(s.quantity) || 1;
         const invItem = inventory.find(d => s.deviceName.includes(d.name) || d.name === s.rawDeviceName);
         if (invItem) {
-          netProfitVal += Math.max(0, s.totalPrice - (invItem.buyPrice * qtySold));
+          grossProfitVal += Math.max(0, s.totalPrice - (invItem.buyPrice * qtySold));
         }
 
         if (s.date && s.date.startsWith(selectedMonthVal)) {
@@ -1449,16 +1516,20 @@
         installmentsRemainingVal += cnt.remainingAmount;
       });
 
+      const totalExpensesVal = calculateTotalExpenses();
+      const netProfitVal = Math.max(0, grossProfitVal - totalExpensesVal);
       const suppliersDebtTotal = calculateAllSuppliersTotalRemaining();
 
       document.getElementById('dashTotalSalesVal').innerText = `${totalSalesVal.toLocaleString()} ج.م`;
       document.getElementById('dashCashCollectedVal').innerText = `${cashCollectedVal.toLocaleString()} ج.م`;
       document.getElementById('dashInstallmentsRemainingVal').innerText = `${installmentsRemainingVal.toLocaleString()} ج.م`;
       document.getElementById('dashSuppliersDebtsVal').innerText = `${suppliersDebtTotal.toLocaleString()} ج.م`;
+      document.getElementById('dashTotalExpensesVal').innerText = `${totalExpensesVal.toLocaleString()} ج.م`;
       document.getElementById('dashNetProfitVal').innerText = `${netProfitVal.toLocaleString()} ج.م`;
 
       renderTopSellingProductsReport(salesCountMap, filteredMonthPiecesCount, selectedMonthVal);
 
+      // الأقساط المستحقة
       const dueTableBody = document.getElementById('dueInstallmentsTableBody');
       dueTableBody.innerHTML = '';
       let dueCount = 0;
@@ -1477,10 +1548,7 @@
                   <td class="p-2.5 font-bold text-white">${cnt.customerName}<br><span class="text-[10px] text-slate-400">${cnt.customerPhone}</span></td>
                   <td class="p-2.5">${cnt.deviceName}</td>
                   <td class="p-2.5 font-bold text-rose-400">${inst.dueDate}</td>
-                  <td class="p-2.5 font-black text-amber-300">
-                    ${remainingOnInst.toLocaleString()} ج.م
-                    ${inst.paidActual > 0 ? `<span class="block text-[9px] text-emerald-400 font-normal">(سدد منها ${inst.paidActual.toLocaleString()} ج)</span>` : ''}
-                  </td>
+                  <td class="p-2.5 font-black text-amber-300">${remainingOnInst.toLocaleString()} ج.م</td>
                   <td class="p-2.5 text-center space-x-1 space-x-reverse">
                     <button onclick="openCollectInstallmentModal('${cnt.id}', ${inst.number})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow">
                       تحصيل الآن 💰
@@ -1497,7 +1565,7 @@
       });
 
       if (dueCount === 0) {
-        dueTableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">لا توجد أقساط مستحقة التحصيل خلال شهر (${selectedMonthVal})، جميع الأقساط مسددة 👏</td></tr>`;
+        dueTableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">لا توجد أقساط مستحقة التحصيل خلال شهر (${selectedMonthVal}) 👏</td></tr>`;
       }
 
       document.getElementById('dueCountBadge').innerText = `${dueCount} أقساط مستحقة بالشهر`;
@@ -1545,7 +1613,516 @@
     }
 
     // ==========================================
-    // 2. سجل الأقساط وملفات العملاء المجمعة
+    // 2. سجل المصاريف الخارجية
+    // ==========================================
+    function renderExpensesTable() {
+      const expenses = getStoredExpenses();
+      const tbody = document.getElementById('expensesTableBody');
+      tbody.innerHTML = '';
+
+      if (expenses.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-500">لا توجد مصاريف مسجلة حتى الآن.</td></tr>';
+        return;
+      }
+
+      expenses.forEach(exp => {
+        tbody.innerHTML += `
+          <tr>
+            <td class="p-2.5 text-slate-400">${exp.date}</td>
+            <td class="p-2.5 font-bold text-white">${exp.title}</td>
+            <td class="p-2.5"><span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 text-[10px] font-bold">${exp.category}</span></td>
+            <td class="p-2.5 text-rose-400 font-black">${parseFloat(exp.amount).toLocaleString()} ج.م</td>
+            <td class="p-2.5 text-slate-400">${exp.notes || '--'}</td>
+            <td class="p-2.5 text-center">
+              <button onclick="deleteExpense('${exp.id}')" class="text-rose-400 hover:text-rose-300 p-1 text-xs">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function handleSaveExpense() {
+      const title = document.getElementById('expenseTitleInput').value.trim();
+      const category = document.getElementById('expenseCategorySelect').value;
+      const amount = parseFloat(document.getElementById('expenseAmountInput').value);
+      const date = document.getElementById('expenseDateInput').value || new Date().toISOString().split('T')[0];
+      const notes = document.getElementById('expenseNotesInput').value.trim();
+
+      if (!title || isNaN(amount) || amount <= 0) {
+        alert('يرجى ملء بند المصروف والمبلغ بشكل صحيح.');
+        return;
+      }
+
+      const expenses = getStoredExpenses();
+      expenses.unshift({
+        id: 'EXP-' + Date.now(),
+        date,
+        title,
+        category,
+        amount,
+        notes
+      });
+
+      setStoredExpenses(expenses);
+      closeModal('addExpenseModal');
+
+      document.getElementById('expenseTitleInput').value = '';
+      document.getElementById('expenseAmountInput').value = '';
+      document.getElementById('expenseNotesInput').value = '';
+
+      renderExpensesTable();
+      renderDashboard();
+      alert(`تم تسجيل المصروف بقيمة ${amount.toLocaleString()} ج.م وخصمه من صافي الأرباح.`);
+    }
+
+    function deleteExpense(expId) {
+      if (confirm('هل أنت متأكد من حذف هذا المصروف؟')) {
+        let expenses = getStoredExpenses();
+        expenses = expenses.filter(e => e.id !== expId);
+        setStoredExpenses(expenses);
+        renderExpensesTable();
+        renderDashboard();
+      }
+    }
+
+    // ==========================================
+    // 3. سلة التوريد المجمعة للموردين (Multi-Item Shipment)
+    // ==========================================
+    function openAddShipmentModal(supId) {
+      const suppliers = getDetailedSuppliers();
+      const sup = suppliers.find(s => s.id === supId);
+      if (!sup) return;
+
+      document.getElementById('shipmentSupplierName').innerText = sup.name;
+      document.getElementById('supplierCartDateInput').value = new Date().toISOString().split('T')[0];
+      currentSupplierShipmentCart = [];
+      renderSupplierCartTbody();
+      openModal('addSupplierShipmentModal');
+    }
+
+    function addItemToSupplierCart() {
+      const name = document.getElementById('shipItemNameInput').value.trim();
+      const barcode = document.getElementById('shipItemBarcodeInput').value.trim() || ('BAR-' + Date.now().toString().slice(-6));
+      const qty = parseInt(document.getElementById('shipItemQtyInput').value) || 1;
+      const price = parseFloat(document.getElementById('shipItemPriceInput').value) || 0;
+
+      if (!name || price <= 0) {
+        alert('يرجى كتابة اسم الصنف وسعر الشراء.');
+        return;
+      }
+
+      currentSupplierShipmentCart.push({
+        name,
+        barcode,
+        qty,
+        unitPrice: price,
+        total: qty * price
+      });
+
+      document.getElementById('shipItemNameInput').value = '';
+      document.getElementById('shipItemBarcodeInput').value = '';
+      document.getElementById('shipItemQtyInput').value = '5';
+
+      renderSupplierCartTbody();
+    }
+
+    function renderSupplierCartTbody() {
+      const tbody = document.getElementById('supplierCartTbody');
+      tbody.innerHTML = '';
+      let grandTotal = 0;
+
+      currentSupplierShipmentCart.forEach((item, idx) => {
+        grandTotal += item.total;
+        tbody.innerHTML += `
+          <tr>
+            <td class="p-2 font-bold text-white">${item.name}</td>
+            <td class="p-2 font-mono text-cyan-300 text-xs">${item.barcode}</td>
+            <td class="p-2 text-center font-bold text-cyan-400">${item.qty}</td>
+            <td class="p-2 text-slate-300">${item.unitPrice.toLocaleString()} ج</td>
+            <td class="p-2 font-bold text-white">${item.total.toLocaleString()} ج</td>
+            <td class="p-2 text-center">
+              <button onclick="removeSupplierCartItem(${idx})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-xmark"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+
+      if (currentSupplierShipmentCart.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">السلة فارغة. أضف الأصناف أعلاه.</td></tr>';
+      }
+
+      document.getElementById('supplierCartGrandTotal').innerText = `${grandTotal.toLocaleString()} ج.م`;
+    }
+
+    function removeSupplierCartItem(idx) {
+      currentSupplierShipmentCart.splice(idx, 1);
+      renderSupplierCartTbody();
+    }
+
+    function handleSaveMultiItemSupplierInvoice() {
+      if (currentSupplierShipmentCart.length === 0) {
+        alert('يرجى إضافة صنف واحد على الأقل لفاتورة التوريد.');
+        return;
+      }
+
+      const suppliers = getDetailedSuppliers();
+      const sup = suppliers.find(s => s.id === selectedSupplierId);
+      if (!sup) return;
+
+      const paid = parseFloat(document.getElementById('supplierCartPaidInput').value) || 0;
+      const date = document.getElementById('supplierCartDateInput').value || new Date().toISOString().split('T')[0];
+      const sellingPrices = getSellingPrices();
+
+      let invoiceTotal = 0;
+      currentSupplierShipmentCart.forEach(it => invoiceTotal += it.total);
+
+      // توزيع المدفوع على الأصناف
+      let remainingPaidToDistribute = paid;
+
+      if (!sup.items) sup.items = [];
+
+      currentSupplierShipmentCart.forEach(it => {
+        const itemPaid = Math.min(it.total, remainingPaidToDistribute);
+        remainingPaidToDistribute = Math.max(0, remainingPaidToDistribute - itemPaid);
+
+        sup.items.unshift({
+          id: 'ITM-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+          barcode: it.barcode,
+          date,
+          name: it.name,
+          qty: it.qty,
+          unitPrice: it.unitPrice,
+          total: it.total,
+          paid: itemPaid,
+          remaining: Math.max(0, it.total - itemPaid)
+        });
+
+        if (!sellingPrices[it.name]) {
+          sellingPrices[it.name] = Math.round(it.unitPrice * 1.2);
+        }
+      });
+
+      setSellingPrices(sellingPrices);
+      setDetailedSuppliers(suppliers);
+      closeModal('addSupplierShipmentModal');
+
+      renderSuppliersTable();
+      populateDeviceSelects();
+      renderDashboard();
+      alert(`تم بنجاح حفظ فاتورة التوريد المجمعة بإجمالي ${invoiceTotal.toLocaleString()} ج.م وترحيلها للمخزن.`);
+    }
+
+    // ==========================================
+    // 4. سلة البيع المجمعة والبحث الفوري من أول حرف
+    // ==========================================
+    function filterSaleProductsLiveSearch() {
+      const searchTxt = document.getElementById('saleProductLiveSearch').value.trim().toLowerCase();
+      populateDeviceSelects(searchTxt);
+    }
+
+    function populateDeviceSelects(filterTxt = '') {
+      const inventory = buildDynamicInventory();
+      const select = document.getElementById('saleDeviceSelect');
+      if (!select) return;
+      select.innerHTML = '<option value="">-- اختر الجهاز من المخزن --</option>';
+
+      const filtered = inventory.filter(dev => 
+        !filterTxt || dev.name.toLowerCase().includes(filterTxt) || (dev.barcode && dev.barcode.toLowerCase().includes(filterTxt))
+      );
+
+      filtered.forEach(dev => {
+        const disabled = dev.currentQty <= 0 ? 'disabled' : '';
+        select.innerHTML += `
+          <option value="${dev.itemId}" data-name="${dev.name}" data-price="${dev.cashPrice}" data-maxqty="${dev.currentQty}" data-barcode="${dev.barcode}" ${disabled}>
+            ${dev.name} [المتوفر: ${dev.currentQty}] - ${dev.cashPrice.toLocaleString()} ج.م
+          </option>
+        `;
+      });
+
+      if (filtered.length > 0) {
+        select.selectedIndex = 1;
+        autoFillDevicePrice();
+      }
+    }
+
+    function autoFillDevicePrice() {
+      const select = document.getElementById('saleDeviceSelect');
+      const selectedOption = select.options[select.selectedIndex];
+      if (selectedOption && selectedOption.value) {
+        const unitPrice = parseFloat(selectedOption.getAttribute('data-price')) || 0;
+        const maxQty = parseInt(selectedOption.getAttribute('data-maxqty')) || 1;
+
+        document.getElementById('saleItemPriceInput').value = unitPrice;
+        const qtyInput = document.getElementById('saleItemQtyInput');
+        qtyInput.max = maxQty;
+        qtyInput.value = 1;
+      }
+    }
+
+    function handleSaleItemCalc() {
+      // إمكانية التعديل السريع
+    }
+
+    function addItemToSaleCart() {
+      const select = document.getElementById('saleDeviceSelect');
+      const selectedOption = select.options[select.selectedIndex];
+      if (!selectedOption || !selectedOption.value) {
+        alert('يرجى اختيار جهاز لإضافته للسلة.');
+        return;
+      }
+
+      const name = selectedOption.getAttribute('data-name');
+      const unitPrice = parseFloat(document.getElementById('saleItemPriceInput').value) || 0;
+      const qty = parseInt(document.getElementById('saleItemQtyInput').value) || 1;
+      const serial = document.getElementById('saleItemSerialInput').value.trim() || 'SN-AUTO';
+      const maxQty = parseInt(selectedOption.getAttribute('data-maxqty')) || 1;
+
+      if (qty > maxQty) {
+        alert(`الكمية المطلوبة (${qty}) تتجاوز الرصيد المتوفر بالمخزن (${maxQty}).`);
+        return;
+      }
+
+      currentSaleInvoiceCart.push({
+        itemId: selectedOption.value,
+        name,
+        qty,
+        unitPrice,
+        total: qty * unitPrice,
+        serial
+      });
+
+      document.getElementById('saleItemSerialInput').value = '';
+      renderSaleCartTbody();
+    }
+
+    function renderSaleCartTbody() {
+      const tbody = document.getElementById('saleCartTbody');
+      tbody.innerHTML = '';
+      let grandTotal = 0;
+
+      currentSaleInvoiceCart.forEach((item, idx) => {
+        grandTotal += item.total;
+        tbody.innerHTML += `
+          <tr>
+            <td class="p-2 font-bold text-white">${item.name}</td>
+            <td class="p-2 font-mono text-cyan-300 text-xs">${item.serial}</td>
+            <td class="p-2 text-center font-bold text-cyan-400">${item.qty}</td>
+            <td class="p-2 text-slate-300">${item.unitPrice.toLocaleString()} ج</td>
+            <td class="p-2 font-bold text-white">${item.total.toLocaleString()} ج</td>
+            <td class="p-2 text-center">
+              <button onclick="removeSaleCartItem(${idx})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-xmark"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+
+      if (currentSaleInvoiceCart.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">السلة فارغة. اختر أجهزة لإضافتها للفاتورة.</td></tr>';
+      }
+
+      document.getElementById('saleCartGrandTotalDisplay').innerText = `${grandTotal.toLocaleString()} ج.م`;
+      calculateInstallmentMath();
+    }
+
+    function removeSaleCartItem(idx) {
+      currentSaleInvoiceCart.splice(idx, 1);
+      renderSaleCartTbody();
+    }
+
+    function toggleInstallmentFields() {
+      const type = document.getElementById('saleTypeSelect').value;
+      const isInst = type === 'installment';
+      document.getElementById('installmentFieldsBox').classList.toggle('hidden', !isInst);
+      if (isInst) calculateInstallmentMath();
+    }
+
+    function calculateInstallmentMath() {
+      let cashTotal = 0;
+      currentSaleInvoiceCart.forEach(it => cashTotal += it.total);
+
+      const downPayment = parseFloat(document.getElementById('instDownPayment').value) || 0;
+      const months = parseInt(document.getElementById('instMonths').value) || 12;
+      const interestRate = parseFloat(document.getElementById('instInterestRate').value) || 0;
+
+      const remainingBase = Math.max(0, cashTotal - downPayment);
+      const interestAmount = remainingBase * (interestRate / 100) * (months / 12);
+      const totalRemainingWithInterest = remainingBase + interestAmount;
+      const grandTotalContract = downPayment + totalRemainingWithInterest;
+      const monthlyAmount = months > 0 ? Math.round(totalRemainingWithInterest / months) : 0;
+
+      document.getElementById('instCalculatedTotal').innerText = `${Math.round(grandTotalContract).toLocaleString()} ج.م`;
+      document.getElementById('instCalculatedMonthly').innerText = `${monthlyAmount.toLocaleString()} ج / شهر`;
+
+      return {
+        cashPrice: cashTotal,
+        downPayment,
+        months,
+        interestRate,
+        grandTotalContract: Math.round(grandTotalContract),
+        monthlyAmount,
+        totalRemainingWithInterest: Math.round(totalRemainingWithInterest)
+      };
+    }
+
+    function handleSaveSaleInvoice() {
+      if (currentSaleInvoiceCart.length === 0) {
+        alert('يرجى إضافة جهاز واحد على الأقل إلى سلة الفاتورة.');
+        return;
+      }
+
+      const customerName = document.getElementById('saleCustomerName').value.trim();
+      const customerPhone = document.getElementById('saleCustomerPhone').value.trim();
+      const nationalId = document.getElementById('saleCustomerNationalId').value.trim() || '--';
+      const guarantorName = document.getElementById('saleGuarantorName').value.trim() || '--';
+      const guarantorPhone = document.getElementById('saleGuarantorPhone').value.trim() || '--';
+      const guarantorNationalId = document.getElementById('saleGuarantorNationalId').value.trim() || '--';
+      const saleType = document.getElementById('saleTypeSelect').value;
+
+      if (!customerName || !customerPhone) {
+        alert('يرجى كتابة اسم العميل ورقم الهاتف.');
+        return;
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      const sales = getStoredSales();
+      const newInvoiceId = 'INV-' + (sales.length + 501);
+
+      // تجهيز اسم وعدد وسيريال الأجهزة في السلة
+      const deviceNamesCombined = currentSaleInvoiceCart.map(i => `${i.name} (عدد ${i.qty})`).join(' + ');
+      const serialsCombined = currentSaleInvoiceCart.map(i => i.serial).join(', ');
+      let totalQty = 0;
+      let totalCashPrice = 0;
+      currentSaleInvoiceCart.forEach(i => { totalQty += i.qty; totalCashPrice += i.total; });
+
+      if (saleType === 'cash') {
+        sales.unshift({
+          id: newInvoiceId,
+          date: today,
+          customerName,
+          customerPhone,
+          nationalId,
+          guarantorName,
+          guarantorPhone,
+          guarantorNationalId,
+          deviceName: deviceNamesCombined,
+          rawDeviceName: currentSaleInvoiceCart[0].name,
+          serialNumber: serialsCombined,
+          type: 'كاش',
+          quantity: totalQty,
+          unitPrice: totalCashPrice / totalQty,
+          totalPrice: totalCashPrice,
+          paidImmediately: totalCashPrice,
+          contractId: null
+        });
+
+        setStoredSales(sales);
+        closeModal('newSaleModal');
+        currentSaleInvoiceCart = [];
+        renderSaleCartTbody();
+        populateDeviceSelects();
+        renderDashboard();
+        renderInventoryTable();
+        renderSalesTable();
+        alert(`تم حفظ فاتورة البيع الكاش (${newInvoiceId}) بنجاح وخصم الأجهزة من المخزن.`);
+      } else {
+        const math = calculateInstallmentMath();
+        const contracts = getStoredContracts();
+
+        const existingClientContract = contracts.find(c => c.customerPhone.trim() === customerPhone.trim());
+        let clientCodeToUse;
+        if (existingClientContract && existingClientContract.clientCode) {
+          clientCodeToUse = existingClientContract.clientCode;
+        } else {
+          clientCodeToUse = contracts.length > 0 ? (Math.max(...contracts.map(c => c.clientCode || 0)) + 1) : 1;
+        }
+
+        const contractId = 'CNT-' + (contracts.length + 101);
+        const startDateStr = document.getElementById('instStartDate').value || today;
+
+        const installmentsList = [];
+        let currentMonthDate = new Date(startDateStr);
+
+        for (let i = 1; i <= math.months; i++) {
+          const dueDateStr = currentMonthDate.toISOString().split('T')[0];
+          installmentsList.push({
+            number: i,
+            dueDate: dueDateStr,
+            amount: math.monthlyAmount,
+            status: 'قادم',
+            paidDate: null,
+            paidActual: 0
+          });
+          currentMonthDate.setMonth(currentMonthDate.getMonth() + 1);
+        }
+
+        const newContract = {
+          clientCode: clientCodeToUse,
+          id: contractId,
+          invoiceDate: today,
+          customerName,
+          customerPhone,
+          nationalId,
+          guarantorName,
+          guarantorPhone,
+          guarantorNationalId,
+          items: currentSaleInvoiceCart,
+          deviceName: deviceNamesCombined,
+          rawDeviceName: currentSaleInvoiceCart[0].name,
+          serialNumber: serialsCombined,
+          quantity: totalQty,
+          cashPrice: math.cashPrice,
+          downPayment: math.downPayment,
+          months: math.months,
+          interestRate: math.interestRate,
+          totalWithInterest: math.grandTotalContract,
+          monthlyAmount: math.monthlyAmount,
+          paidAmount: math.downPayment,
+          remainingAmount: math.totalRemainingWithInterest,
+          startDate: startDateStr,
+          installments: installmentsList
+        };
+
+        contracts.unshift(newContract);
+        setStoredContracts(contracts);
+
+        sales.unshift({
+          id: newInvoiceId,
+          date: today,
+          customerName,
+          customerPhone,
+          nationalId,
+          guarantorName,
+          guarantorPhone,
+          guarantorNationalId,
+          deviceName: deviceNamesCombined,
+          rawDeviceName: currentSaleInvoiceCart[0].name,
+          serialNumber: serialsCombined,
+          type: 'تقسيط',
+          quantity: totalQty,
+          unitPrice: math.cashPrice / totalQty,
+          totalPrice: math.grandTotalContract,
+          paidImmediately: math.downPayment,
+          contractId: contractId
+        });
+
+        setStoredSales(sales);
+        closeModal('newSaleModal');
+        currentSaleInvoiceCart = [];
+        renderSaleCartTbody();
+        populateDeviceSelects();
+        renderDashboard();
+        renderInventoryTable();
+        renderInstallmentsTable();
+        renderSalesTable();
+
+        alert(`تم بنجاح حفظ فاتورة التقسيط للعميل (${customerName}) تحت الكود (#${clientCodeToUse}).`);
+      }
+    }
+
+    // ==========================================
+    // 5. سجل الأقساط وملفات العملاء المجمعة
     // ==========================================
     function renderInstallmentsTable() {
       const contracts = getStoredContracts();
@@ -1562,6 +2139,9 @@
             clientCode: cnt.clientCode || (idx + 1),
             customerName: cnt.customerName,
             customerPhone: phone,
+            nationalId: cnt.nationalId || '--',
+            guarantorName: cnt.guarantorName || '--',
+            guarantorPhone: cnt.guarantorPhone || '--',
             invoices: [],
             totalGrand: 0,
             totalPaid: 0,
@@ -1577,11 +2157,13 @@
       const clientsList = Object.values(clientsMap).filter(cl => 
         cl.clientCode.toString().includes(search) ||
         cl.customerName.toLowerCase().includes(search) || 
-        cl.customerPhone.includes(search)
+        cl.customerPhone.includes(search) ||
+        cl.nationalId.includes(search) ||
+        cl.guarantorName.toLowerCase().includes(search)
       );
 
       if (clientsList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-500">لا يوجد عملاء مطابقين للبحث.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-slate-500">لا يوجد عملاء مطابقين للبحث.</td></tr>';
         return;
       }
 
@@ -1594,7 +2176,11 @@
                 <i class="fa-solid fa-folder-open text-amber-400 text-xs"></i>
                 <span class="underline decoration-slate-700 underline-offset-4">${cl.customerName}</span>
               </span>
-              <span class="text-[10px] text-slate-400 font-normal block mt-0.5">${cl.customerPhone}</span>
+              <span class="text-[10px] text-slate-400 font-normal block mt-0.5">بطاقة: ${cl.nationalId}</span>
+            </td>
+            <td class="p-2.5">
+              <b class="text-slate-200 text-xs">${cl.guarantorName}</b>
+              <span class="text-[10px] text-slate-400 block">${cl.guarantorPhone}</span>
             </td>
             <td class="p-2.5 text-center font-bold text-cyan-300">
               <span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300">${cl.invoices.length} فواتير</span>
@@ -1627,7 +2213,9 @@
       document.getElementById('cpModalCustomerName').innerText = firstCnt.customerName;
       document.getElementById('cpModalCustomerPhoneLink').innerText = firstCnt.customerPhone;
       document.getElementById('cpModalCustomerPhoneLink').href = `tel:${firstCnt.customerPhone}`;
-      document.getElementById('cpModalInvoicesCount').innerText = contracts.length;
+      document.getElementById('cpModalNationalId').innerText = firstCnt.nationalId || '--';
+
+      document.getElementById('cpModalGuarantorDetails').innerHTML = `الاسم: <b>${firstCnt.guarantorName || '--'}</b> | الهاتف: <b>${firstCnt.guarantorPhone || '--'}</b> | الرقم القومي: <b>${firstCnt.guarantorNationalId || '--'}</b>`;
 
       let grandTotal = 0;
       let grandPaid = 0;
@@ -1681,14 +2269,13 @@
 
       container.innerHTML = `
         <div class="bg-slate-900 border ${isFullyPaid ? 'border-emerald-500/40' : 'border-slate-800'} rounded-3xl p-4 space-y-3">
-          
           <div class="bg-slate-950/70 p-3 rounded-2xl border border-slate-800 grid grid-cols-2 md:grid-cols-5 gap-2 text-center text-xs">
             <div class="p-1.5">
               <span class="text-[10px] text-slate-400 block font-semibold">سعر الكاش الإجمالي</span>
               <b class="text-white">${(cnt.cashPrice || 0).toLocaleString()} ج</b>
             </div>
             <div class="p-1.5">
-              <span class="text-[10px] text-blue-400 block font-semibold">نسبة الفائدة المعتمدة</span>
+              <span class="text-[10px] text-blue-400 block font-semibold">نسبة الفائدة</span>
               <b class="text-blue-300 font-bold">${cnt.interestRate || 15}% سنوياً</b>
             </div>
             <div class="p-1.5">
@@ -1766,7 +2353,6 @@
               </tbody>
             </table>
           </div>
-
         </div>
       `;
     }
@@ -1778,12 +2364,16 @@
         closeModal('customerProfileModal');
         document.getElementById('saleCustomerName').value = contracts[0].customerName;
         document.getElementById('saleCustomerPhone').value = contracts[0].customerPhone;
+        document.getElementById('saleCustomerNationalId').value = contracts[0].nationalId || '';
+        document.getElementById('saleGuarantorName').value = contracts[0].guarantorName || '';
+        document.getElementById('saleGuarantorPhone').value = contracts[0].guarantorPhone || '';
+        document.getElementById('saleGuarantorNationalId').value = contracts[0].guarantorNationalId || '';
         openModal('newSaleModal');
       }
     }
 
     // ==========================================
-    // 3. التحصيل المرن
+    // 6. التحصيل المرن وتعديل الفواتير
     // ==========================================
     function openCollectInstallmentModal(contractId, installmentNumber) {
       currentCollectingContractId = contractId;
@@ -1901,9 +2491,6 @@
       alert(`تم بنجاح تسجيل تحصيل مبلغ ${paidVal.toLocaleString()} ج.م للعميل (${cnt.customerName}).`);
     }
 
-    // ==========================================
-    // 4. محرك تعديل الفواتير بعد الحفظ ✏️
-    // ==========================================
     function openEditInvoiceModal(identifier) {
       const sales = getStoredSales();
       const contracts = getStoredContracts();
@@ -2055,7 +2642,6 @@
 
       setStoredContracts(contracts);
       setStoredSales(sales);
-
       closeModal('editSaleInvoiceModal');
 
       if (activeCustomerPhoneForProfile) {
@@ -2066,12 +2652,11 @@
       renderInstallmentsTable();
       renderSalesTable();
       renderInventoryTable();
-
       alert('تم بنجاح تعديل الفاتورة وحفظ التغييرات وتسوية حساب الأقساط والمخزن.');
     }
 
     // ==========================================
-    // 5. محرك رسائل الواتساب
+    // 7. محرك رسائل الواتساب
     // ==========================================
     function openChooseWhatsAppModal(contractId) {
       const contracts = getStoredContracts();
@@ -2085,7 +2670,6 @@
 
     function buildDetailedInstallmentsBreakdown(contract) {
       const arabicNumbers = ["الأول", "الثاني", "الثالث", "الرابع", "الخامس", "السادس", "السابع", "الثامن", "التاسع", "العاشر", "الحادي عشر", "الثاني عشر", "الثالث عشر", "الرابع عشر", "الخامس عشر"];
-      
       const paidLines = [];
       const remainingLines = [];
 
@@ -2136,7 +2720,7 @@
         message = 
 `مرحباً بك أستاذ ${c.customerName} المحترم 🌸
 تحية طيبة من إدارة (معرض أولاد العبد للأجهزة الكهربائية والمنزلية) 🏢
-كود العميل: #${c.clientCode || 1} | الجهاز: ${c.deviceName}
+كود العميل: #${c.clientCode || 1} | الأجهزة: ${c.deviceName}
 
 نود تذكير سيادتكم ببيان الأقساط وموقف الحساب:
 ━━━━━━━━━━━━━━━━━━━
@@ -2150,46 +2734,41 @@ ${breakdown.remainingText}
 ⚠️ القسط المستحق للتحصيل حالياً: ${breakdown.currentDueAmount.toLocaleString()} ج.م
 
 شاكرين لتعاملكم وحرصكم الدائم على الالتزام بمواعيد السداد 🤝`;
-
       } else if (templateType === 'formal') {
         message = 
 `عناية العميل المحترم / ${c.customerName} 
 كود العميل: #${c.clientCode || 1} 
 إشعار استحقاق قسط - معرض أولاد العبد للأجهزة الكهربائية ⚠️
-الجهاز: ${c.deviceName}
+الأجهزة: ${c.deviceName}
 
-نلفت انتباه سيادتكم إلى ضرورة سداد القسط المستحق طرفكم، وبيان الحساب كالتالي:
+نلفت انتباه سيادتكم إلى ضرورة سداد القسط المستحق طرفكم:
 ━━━━━━━━━━━━━━━━━━━
-🟢 الأقساط المسددة حتى الآن (${breakdown.totalPaid.toLocaleString()} ج.م):
+🟢 المسدد (${breakdown.totalPaid.toLocaleString()} ج.م):
 ${breakdown.paidText}
 
-🔴 الأقساط المتبقية طرفكم (${breakdown.totalRemaining.toLocaleString()} ج.م):
+🔴 المتبقي (${breakdown.totalRemaining.toLocaleString()} ج.م):
 ${breakdown.remainingText}
 ━━━━━━━━━━━━━━━━━━━
-⚠️ المبلغ المطلوب إيداعه وسداده فوراً: ${breakdown.currentDueAmount.toLocaleString()} ج.م
-💰 صافي المديونية المتبقية: ${breakdown.totalRemaining.toLocaleString()} ج.م
+⚠️ المطلوب سداده فوراً: ${breakdown.currentDueAmount.toLocaleString()} ج.م
+💰 صافي المديونية: ${breakdown.totalRemaining.toLocaleString()} ج.م
 
-برجاء التكرم بالسداد اليوم بالمعرض لتسوية الدفعة وتجنب تراكم الأقساط القادمة.`;
-
+برجاء التكرم بالسداد اليوم بالمعرض لتسوية الدفعة وتجنب تراكم الأقساط.`;
       } else if (templateType === 'urgent') {
         message = 
 `🛑 إنذار رسمي بالسداد - إدارة الشؤون والحسابات
 معرض أولاد العبد للأجهزة الكهربائية والمنزلية 🏢
 
 إلى السيد / ${c.customerName} (كود: #${c.clientCode || 1})
-بخصوص عقد الشراء لجهاز: ${c.deviceName}
+الضامن: ${c.guarantorName || 'المسجل بالعقد'} (${c.guarantorPhone || ''})
+بخصوص عقد الشراء للأجهزة: ${c.deviceName}
 
-نظراً لمرور فترة الاستحقاق وتأخر سداد القسط الشهري، نرفق لسيادتكم سجل السداد المسجل بالنظام:
+نظراً لتأخر سداد القسط، نرفق لسيادتكم سجل السداد:
 ━━━━━━━━━━━━━━━━━━━
-🟢 المسدد طرفنا (${breakdown.totalPaid.toLocaleString()} ج.م):
-${breakdown.paidText}
+🟢 المسدد: ${breakdown.totalPaid.toLocaleString()} ج.م
+🔴 المتبقي المستحق: ${breakdown.totalRemaining.toLocaleString()} ج.م
+⚠️ القسط المتأخر المطلوب فوراً: ${breakdown.currentDueAmount.toLocaleString()} ج.م
 
-🔴 المتبقي المستحق (${breakdown.totalRemaining.toLocaleString()} ج.م):
-${breakdown.remainingText}
-━━━━━━━━━━━━━━━━━━━
-⚠️ القسط المتأخر المطلوب سداده فوراً: ${breakdown.currentDueAmount.toLocaleString()} ج.م
-
-نرجو التوجه لإدارة المعرض والتسوية خلال 48 ساعة من تاريخ هذه الرسالة، وذلك لتفادي وقف التسهيلات والبدء في الإجراءات القانونية المترتبة على بنود العقد.`;
+نرجو التوجه لإدارة المعرض والتسوية خلال 48 ساعة من تاريخ هذه الرسالة، وذلك لتفادي وقف التسهيلات واتخاذ الإجراءات القانونية تجاه العميل والضامن.`;
       }
 
       closeModal('chooseWhatsAppTemplateModal');
@@ -2197,7 +2776,7 @@ ${breakdown.remainingText}
     }
 
     // ==========================================
-    // 6. الموردين والمشتريات
+    // 8. الموردين والمخزن والمبيعات
     // ==========================================
     function renderSuppliersTable() {
       const suppliers = getDetailedSuppliers();
@@ -2277,13 +2856,14 @@ ${breakdown.remainingText}
           <tr>
             <td class="p-2.5 text-slate-400">${it.date}</td>
             <td class="p-2.5 font-bold text-white">${it.name}</td>
+            <td class="p-2.5 font-mono text-cyan-300 text-xs">${it.barcode || '--'}</td>
             <td class="p-2.5 text-center font-black text-cyan-400">${it.qty}</td>
             <td class="p-2.5 text-slate-300">${it.unitPrice.toLocaleString()} ج</td>
             <td class="p-2.5 font-bold text-white">${it.total.toLocaleString()} ج</td>
             <td class="p-2.5 font-bold text-emerald-400">${it.paid.toLocaleString()} ج</td>
             <td class="p-2.5 font-bold text-rose-400">${it.remaining.toLocaleString()} ج</td>
             <td class="p-2.5 text-center">
-              <button onclick="deleteSupplierItem('${sup.id}', '${it.id}')" class="text-rose-400 hover:text-rose-300 text-xs p-1" title="حذف هذه التوريدة وتحديث المخزن">
+              <button onclick="deleteSupplierItem('${sup.id}', '${it.id}')" class="text-rose-400 hover:text-rose-300 text-xs p-1" title="حذف الصنف">
                 <i class="fa-solid fa-trash-can"></i>
               </button>
             </td>
@@ -2300,14 +2880,11 @@ ${breakdown.remainingText}
               <h3 class="text-base font-black text-white">${sup.name}</h3>
               <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">كود: ${sup.id}</span>
             </div>
-            <p class="text-xs text-slate-400 mt-1">
-              هاتف: <a href="tel:${sup.phone}" class="text-blue-400 underline">${sup.phone}</a> | 
-              عنوان: <span class="text-slate-300">${sup.address || 'غير محدد'}</span>
-            </p>
+            <p class="text-xs text-slate-400 mt-1">هاتف: <a href="tel:${sup.phone}" class="text-blue-400 underline">${sup.phone}</a> | عنوان: ${sup.address || 'غير محدد'}</p>
           </div>
           <div class="flex gap-2 w-full md:w-auto">
             <button onclick="openAddShipmentModal('${sup.id}')" class="flex-1 md:flex-none px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1.5">
-              <i class="fa-solid fa-plus"></i> توريدة أصناف جديدة
+              <i class="fa-solid fa-boxes-packing"></i> تنزيل فاتورة توريد كاملة
             </button>
             <button onclick="paySupplierPrompt('${sup.id}')" class="flex-1 md:flex-none px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1.5">
               <i class="fa-solid fa-hand-holding-dollar"></i> سداد دفعة
@@ -2336,6 +2913,7 @@ ${breakdown.remainingText}
               <tr>
                 <th class="p-2.5">التاريخ</th>
                 <th class="p-2.5">الصنف والموديل</th>
+                <th class="p-2.5">الباركود</th>
                 <th class="p-2.5 text-center text-cyan-400">العدد</th>
                 <th class="p-2.5">سعر القطعة</th>
                 <th class="p-2.5 text-white font-bold">الإجمالي</th>
@@ -2345,11 +2923,11 @@ ${breakdown.remainingText}
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-800 text-slate-300">
-              ${rowsHtml || '<tr><td colspan="8" class="p-6 text-center text-slate-500">لا توجد أصناف موردة مسجلة لهذا المورد. سجل أول توريدة بالأعلى ليتم ترحيلها للمخزن فوراً.</td></tr>'}
+              ${rowsHtml || '<tr><td colspan="9" class="p-6 text-center text-slate-500">لا توجد أصناف موردة مسجلة لهذا المورد.</td></tr>'}
             </tbody>
             <tfoot class="bg-slate-900 font-bold border-t-2 border-slate-700 text-white">
               <tr>
-                <td colspan="2" class="p-2.5 text-right">إجمالي جميع القطع والتوريدات:</td>
+                <td colspan="3" class="p-2.5 text-right">إجمالي جميع القطع والتوريدات:</td>
                 <td class="p-2.5 text-center text-cyan-400 text-sm font-black">${totalPieces}</td>
                 <td>--</td>
                 <td class="p-2.5 text-white text-sm font-black">${grandTotal.toLocaleString()} ج</td>
@@ -2394,74 +2972,6 @@ ${breakdown.remainingText}
       renderSuppliersTable();
       populateDeviceSelects();
       alert(`تم إضافة المورد (${name}) بنجاح.`);
-    }
-
-    function openAddShipmentModal(supId) {
-      const suppliers = getDetailedSuppliers();
-      const sup = suppliers.find(s => s.id === supId);
-      if (!sup) return;
-
-      document.getElementById('shipmentSupplierName').innerText = sup.name;
-      document.getElementById('shipmentDateInput').value = new Date().toISOString().split('T')[0];
-      calculateShipmentTotal();
-      openModal('addSupplierShipmentModal');
-    }
-
-    function calculateShipmentTotal() {
-      const qty = parseFloat(document.getElementById('shipmentQty').value) || 0;
-      const price = parseFloat(document.getElementById('shipmentUnitPrice').value) || 0;
-      const total = qty * price;
-      document.getElementById('shipmentTotalDisplay').innerText = `${total.toLocaleString()} ج.م`;
-    }
-
-    function handleSaveSupplierShipment() {
-      const suppliers = getDetailedSuppliers();
-      const sup = suppliers.find(s => s.id === selectedSupplierId);
-      if (!sup) return;
-
-      const itemName = document.getElementById('shipmentItemName').value.trim();
-      const barcode = document.getElementById('shipmentBarcode').value.trim() || ('BAR-' + Date.now().toString().slice(-6));
-      const qty = parseInt(document.getElementById('shipmentQty').value);
-      const unitPrice = parseFloat(document.getElementById('shipmentUnitPrice').value);
-      const paid = parseFloat(document.getElementById('shipmentPaidAmount').value) || 0;
-      const date = document.getElementById('shipmentDateInput').value || new Date().toISOString().split('T')[0];
-
-      if (!itemName || isNaN(qty) || isNaN(unitPrice)) {
-        alert('يرجى ملء جميع بيانات الشحنة.');
-        return;
-      }
-
-      const total = qty * unitPrice;
-      const remaining = Math.max(0, total - paid);
-
-      if (!sup.items) sup.items = [];
-      sup.items.unshift({
-        id: 'ITM-' + Date.now(),
-        barcode,
-        date,
-        name: itemName,
-        qty,
-        unitPrice,
-        total,
-        paid,
-        remaining
-      });
-
-      const sellingPrices = getSellingPrices();
-      if (!sellingPrices[itemName]) {
-        sellingPrices[itemName] = Math.round(unitPrice * 1.2);
-        setSellingPrices(sellingPrices);
-      }
-
-      setDetailedSuppliers(suppliers);
-      closeModal('addSupplierShipmentModal');
-      document.getElementById('shipmentItemName').value = '';
-      document.getElementById('shipmentBarcode').value = '';
-      
-      renderSuppliersTable();
-      populateDeviceSelects();
-      renderDashboard();
-      alert(`تم تسجيل التوريدة بنجاح وحفظ الباركود (${barcode}) بالمخزن.`);
     }
 
     function deleteSupplierItem(supId, itemId) {
@@ -2511,22 +3021,13 @@ ${breakdown.remainingText}
       }
     }
 
-    // ==========================================
-    // 7. إدارة المخزن
-    // ==========================================
     function renderInventoryTable() {
       const inventory = buildDynamicInventory();
       const tbody = document.getElementById('inventoryTableBody');
       tbody.innerHTML = '';
 
       if (inventory.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="7" class="p-8 text-center text-slate-500">
-              المخزن فارغ حالياً. لإضافة بضاعة للمخزن، توجه إلى قسم <b>"الموردين والمشتريات"</b> وسجل توريدة جديدة من أحد الموردين وستظهر هنا فوراً.
-            </td>
-          </tr>
-        `;
+        tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-500">المخزن فارغ حالياً.</td></tr>`;
         return;
       }
 
@@ -2537,17 +3038,13 @@ ${breakdown.remainingText}
             <td class="p-2.5 font-bold text-white">${item.name}</td>
             <td class="p-2.5 font-mono text-cyan-300 text-xs">${item.barcode || '--'}</td>
             <td class="p-2.5 text-purple-300 font-semibold">${item.supplierName}</td>
-            <td class="p-2.5 text-center font-black text-base ${isLow ? 'text-rose-400' : 'text-emerald-400'}">
-              ${item.currentQty}
-            </td>
+            <td class="p-2.5 text-center font-black text-base ${isLow ? 'text-rose-400' : 'text-emerald-400'}">${item.currentQty}</td>
             <td class="p-2.5 text-slate-300">${item.buyPrice.toLocaleString()} ج</td>
             <td class="p-2.5 font-bold text-emerald-400">
               <input type="number" id="cash_price_input_${item.itemId}" value="${item.cashPrice}" class="w-24 bg-[#090d16] border border-slate-700 rounded-lg p-1 text-white text-xs font-bold text-center">
             </td>
             <td class="p-2.5 text-center">
-              <button onclick="updateItemSellingPrice('${item.name}', '${item.itemId}')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow">
-                تحديث
-              </button>
+              <button onclick="updateItemSellingPrice('${item.name}', '${item.itemId}')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow">تحديث</button>
             </td>
           </tr>
         `;
@@ -2568,224 +3065,9 @@ ${breakdown.remainingText}
 
       populateDeviceSelects();
       renderInventoryTable();
-      alert(`تم اعتماد وتحديث سعر البيع الكاش لصنف (${itemName}) إلى ${newPrice.toLocaleString()} ج.م.`);
+      alert(`تم تحديث سعر البيع الكاش لصنف (${itemName}) إلى ${newPrice.toLocaleString()} ج.م.`);
     }
 
-    function populateDeviceSelects() {
-      const inventory = buildDynamicInventory();
-      const select = document.getElementById('saleDeviceSelect');
-      if (!select) return;
-      select.innerHTML = '<option value="">-- اختر الجهاز المطلوب من المخزن --</option>';
-
-      inventory.forEach(dev => {
-        const disabled = dev.currentQty <= 0 ? 'disabled' : '';
-        select.innerHTML += `
-          <option value="${dev.itemId}" data-name="${dev.name}" data-price="${dev.cashPrice}" data-maxqty="${dev.currentQty}" data-barcode="${dev.barcode}" ${disabled}>
-            ${dev.name} [المتوفر: ${dev.currentQty}] - ${dev.cashPrice.toLocaleString()} ج.م
-          </option>
-        `;
-      });
-    }
-
-    function autoFillDevicePrice() {
-      const select = document.getElementById('saleDeviceSelect');
-      const selectedOption = select.options[select.selectedIndex];
-      if (selectedOption && selectedOption.value) {
-        const unitPrice = parseFloat(selectedOption.getAttribute('data-price')) || 0;
-        const maxQty = parseInt(selectedOption.getAttribute('data-maxqty')) || 1;
-
-        document.getElementById('saleUnitCashPriceInput').value = unitPrice;
-        
-        const qtyInput = document.getElementById('saleQuantityInput');
-        qtyInput.max = maxQty;
-        if (parseInt(qtyInput.value) > maxQty) qtyInput.value = maxQty;
-        if (!qtyInput.value || parseInt(qtyInput.value) < 1) qtyInput.value = 1;
-
-        handleQuantityOrPriceChange();
-      }
-    }
-
-    function handleQuantityOrPriceChange() {
-      const unitPrice = parseFloat(document.getElementById('saleUnitCashPriceInput').value) || 0;
-      const qty = parseInt(document.getElementById('saleQuantityInput').value) || 1;
-      const totalCash = unitPrice * qty;
-
-      document.getElementById('saleCashPriceInput').value = totalCash;
-      calculateInstallmentMath();
-    }
-
-    // ==========================================
-    // 8. محرك البيع الجديد
-    // ==========================================
-    function toggleInstallmentFields() {
-      const type = document.getElementById('saleTypeSelect').value;
-      const isInst = type === 'installment';
-      document.getElementById('installmentFieldsBox').classList.toggle('hidden', !isInst);
-      if (isInst) calculateInstallmentMath();
-    }
-
-    function calculateInstallmentMath() {
-      const cashPrice = parseFloat(document.getElementById('saleCashPriceInput').value) || 0;
-      const downPayment = parseFloat(document.getElementById('instDownPayment').value) || 0;
-      const months = parseInt(document.getElementById('instMonths').value) || 12;
-      const interestRate = parseFloat(document.getElementById('instInterestRate').value) || 0;
-
-      const remainingBase = Math.max(0, cashPrice - downPayment);
-      const interestAmount = remainingBase * (interestRate / 100) * (months / 12);
-      const totalRemainingWithInterest = remainingBase + interestAmount;
-      const grandTotalContract = downPayment + totalRemainingWithInterest;
-      const monthlyAmount = months > 0 ? Math.round(totalRemainingWithInterest / months) : 0;
-
-      document.getElementById('instCalculatedTotal').innerText = `${Math.round(grandTotalContract).toLocaleString()} ج.م`;
-      document.getElementById('instCalculatedMonthly').innerText = `${monthlyAmount.toLocaleString()} ج / شهر`;
-
-      return {
-        cashPrice,
-        downPayment,
-        months,
-        interestRate,
-        grandTotalContract: Math.round(grandTotalContract),
-        monthlyAmount,
-        totalRemainingWithInterest: Math.round(totalRemainingWithInterest)
-      };
-    }
-
-    function handleSaveSaleInvoice() {
-      const customerName = document.getElementById('saleCustomerName').value.trim();
-      const customerPhone = document.getElementById('saleCustomerPhone').value.trim();
-      const select = document.getElementById('saleDeviceSelect');
-      const selectedOption = select.options[select.selectedIndex];
-      const serialNumber = document.getElementById('saleSerialInput').value.trim() || 'SN-UNKNOWN';
-      const saleType = document.getElementById('saleTypeSelect').value;
-      const quantity = parseInt(document.getElementById('saleQuantityInput').value) || 1;
-
-      if (!customerName || !customerPhone || !selectedOption || !selectedOption.value) {
-        alert('يرجى كتابة اسم العميل، الهاتف، واختيار الجهاز.');
-        return;
-      }
-
-      const rawDeviceName = selectedOption.getAttribute('data-name');
-      const deviceDisplayName = `${rawDeviceName} (عدد ${quantity})`;
-      const today = new Date().toISOString().split('T')[0];
-      const sales = getStoredSales();
-      const newInvoiceId = 'INV-' + (sales.length + 501);
-
-      if (saleType === 'cash') {
-        const cashPrice = parseFloat(document.getElementById('saleCashPriceInput').value);
-
-        sales.unshift({
-          id: newInvoiceId,
-          date: today,
-          customerName,
-          customerPhone,
-          deviceName: deviceDisplayName,
-          rawDeviceName: rawDeviceName,
-          serialNumber,
-          type: 'كاش',
-          quantity: quantity,
-          unitPrice: cashPrice / quantity,
-          totalPrice: cashPrice,
-          paidImmediately: cashPrice,
-          contractId: null
-        });
-
-        setStoredSales(sales);
-        closeModal('newSaleModal');
-        populateDeviceSelects();
-        renderDashboard();
-        renderInventoryTable();
-        renderSalesTable();
-        alert(`تم حفظ فاتورة البيع الكاش (${newInvoiceId}) لـ ${quantity} قطع بقيمة ${cashPrice.toLocaleString()} ج.م وخصمها من المخزن.`);
-      } else {
-        const math = calculateInstallmentMath();
-        const contracts = getStoredContracts();
-
-        const existingClientContract = contracts.find(c => c.customerPhone.trim() === customerPhone.trim());
-        let clientCodeToUse;
-        if (existingClientContract && existingClientContract.clientCode) {
-          clientCodeToUse = existingClientContract.clientCode;
-        } else {
-          clientCodeToUse = contracts.length > 0 ? (Math.max(...contracts.map(c => c.clientCode || 0)) + 1) : 1;
-        }
-
-        const contractId = 'CNT-' + (contracts.length + 101);
-        const startDateStr = document.getElementById('instStartDate').value || today;
-
-        const installmentsList = [];
-        let currentMonthDate = new Date(startDateStr);
-
-        for (let i = 1; i <= math.months; i++) {
-          const dueDateStr = currentMonthDate.toISOString().split('T')[0];
-          installmentsList.push({
-            number: i,
-            dueDate: dueDateStr,
-            amount: math.monthlyAmount,
-            status: 'قادم',
-            paidDate: null,
-            paidActual: 0
-          });
-          currentMonthDate.setMonth(currentMonthDate.getMonth() + 1);
-        }
-
-        const newContract = {
-          clientCode: clientCodeToUse,
-          id: contractId,
-          invoiceDate: today,
-          customerName,
-          customerPhone,
-          items: [
-            { name: rawDeviceName, qty: quantity, unitPrice: math.cashPrice / quantity, total: math.cashPrice }
-          ],
-          deviceName: deviceDisplayName,
-          rawDeviceName: rawDeviceName,
-          serialNumber,
-          quantity: quantity,
-          cashPrice: math.cashPrice,
-          downPayment: math.downPayment,
-          months: math.months,
-          interestRate: math.interestRate,
-          totalWithInterest: math.grandTotalContract,
-          monthlyAmount: math.monthlyAmount,
-          paidAmount: math.downPayment,
-          remainingAmount: math.totalRemainingWithInterest,
-          startDate: startDateStr,
-          installments: installmentsList
-        };
-
-        contracts.unshift(newContract);
-        setStoredContracts(contracts);
-
-        sales.unshift({
-          id: newInvoiceId,
-          date: today,
-          customerName,
-          customerPhone,
-          deviceName: deviceDisplayName,
-          rawDeviceName: rawDeviceName,
-          serialNumber,
-          type: 'تقسيط',
-          quantity: quantity,
-          unitPrice: math.cashPrice / quantity,
-          totalPrice: math.grandTotalContract,
-          paidImmediately: math.downPayment,
-          contractId: contractId
-        });
-
-        setStoredSales(sales);
-        closeModal('newSaleModal');
-        populateDeviceSelects();
-        renderDashboard();
-        renderInventoryTable();
-        renderInstallmentsTable();
-        renderSalesTable();
-
-        alert(`تم بنجاح إضافة الفاتورة لـ (${quantity} قطع) للعميل (${customerName}) تحت الكود (#${clientCodeToUse}).`);
-      }
-    }
-
-    // ==========================================
-    // 9. سجل فواتير المبيعات
-    // ==========================================
     function renderSalesTable() {
       const sales = getStoredSales();
       const tbody = document.getElementById('salesInvoicesTableBody');
@@ -2797,7 +3079,7 @@ ${breakdown.remainingText}
             <td class="p-2.5 font-bold text-white">#${s.id}</td>
             <td class="p-2.5 text-slate-400">${s.date}</td>
             <td class="p-2.5">${s.customerName}<br><span class="text-[10px] text-slate-400">${s.customerPhone}</span></td>
-            <td class="p-2.5">${s.deviceName}<br><span class="text-[10px] text-blue-400">سيريال: ${s.serialNumber}</span></td>
+            <td class="p-2.5">${s.deviceName}<br><span class="text-[10px] text-blue-400 font-mono">سيريال: ${s.serialNumber}</span></td>
             <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.type === 'كاش' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400'}">${s.type}</span></td>
             <td class="p-2.5 font-bold text-white">${s.totalPrice.toLocaleString()} ج.م</td>
             <td class="p-2.5 font-bold text-emerald-400">${s.paidImmediately.toLocaleString()} ج.م</td>
