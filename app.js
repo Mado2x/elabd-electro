@@ -89,7 +89,10 @@ const defaultSales = [
     unitPrice: 23500,
     totalPrice: 26500,
     paidImmediately: 3500,
-    contractId: 'CNT-101'
+    contractId: 'CNT-101',
+    items: [
+      { name: 'غسالة إل جي 9 كيلو فول أوتوماتيك', qty: 1, unitPrice: 23500, total: 23500, serial: 'SN-LG9K-9921' }
+    ]
   }
 ];
 
@@ -115,7 +118,7 @@ let currentTargetInputIdForScanner = null;
 let lastInquiredDeviceObject = null;
 
 // ==========================================
-// دوال الذاكرة المحلية
+// دوال التخزين المحلي
 // ==========================================
 function getDetailedSuppliers() {
   try {
@@ -260,7 +263,7 @@ function buildDynamicInventory() {
 }
 
 // ==========================================
-// التهيئة والتنقل
+// التنقل والواجهة
 // ==========================================
 window.addEventListener('DOMContentLoaded', () => {
   getDetailedSuppliers();
@@ -337,6 +340,33 @@ function openModal(id) {
 function closeModal(id) { 
   const el = document.getElementById(id);
   if (el) el.classList.add('hidden'); 
+}
+
+// ==========================================
+// دالة مساعدة لتفكيك سلة الأصناف بدقة
+// ==========================================
+function parseItemsFromRecord(record) {
+  if (record.items && Array.isArray(record.items) && record.items.length > 0) {
+    return record.items;
+  }
+  const str = record.deviceName || '';
+  const parts = str.split('+');
+  return parts.map(part => {
+    const clean = part.trim();
+    const matchQty = clean.match(/\(عدد\s*(\d+)\)/);
+    const qty = matchQty ? parseInt(matchQty[1]) : 1;
+    const name = clean.replace(/\(عدد\s*\d+\)/, '').trim();
+    const totalCash = (record.cashPrice || record.totalPrice || 0);
+    const totalCount = (record.quantity || 1);
+    const unitPrice = Math.round(totalCash / totalCount);
+    return {
+      name: name || clean,
+      qty: qty,
+      unitPrice: unitPrice,
+      total: unitPrice * qty,
+      serial: record.serialNumber || 'SN-AUTO'
+    };
+  });
 }
 
 // ==========================================
@@ -477,7 +507,8 @@ function openCustomerProfileModal(phone, preferredInvoiceId = null) {
     tabsContainer.innerHTML = '';
     contracts.forEach((cnt, idx) => {
       const isActive = cnt.id === activeInvoiceIdInProfile;
-      const itemCount = (cnt.items && cnt.items.length) ? cnt.items.length : 1;
+      const parsed = parseItemsFromRecord(cnt);
+      const itemCount = parsed.length;
       tabsContainer.innerHTML += `
         <button onclick="selectInvoiceTabInProfile('${cnt.id}')" class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${isActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800'}">
           <span>فاتورة #${idx + 1} (${itemCount} أصناف)</span>
@@ -509,29 +540,7 @@ function renderActiveInvoiceDetailsInProfile() {
   }
 
   const isFullyPaid = cnt.remainingAmount <= 0;
-
-  // تجهيز عناصر سلة المشتريات
-  let purchasedItems = [];
-  if (cnt.items && Array.isArray(cnt.items) && cnt.items.length > 0) {
-    purchasedItems = cnt.items;
-  } else {
-    // دعم الفواتير المسجلة قديماً وتفكيكها لصفوف
-    const splitParts = (cnt.deviceName || '').split('+');
-    purchasedItems = splitParts.map(part => {
-      const cleanPart = part.trim();
-      const matchQty = cleanPart.match(/\(عدد\s*(\d+)\)/);
-      const qty = matchQty ? parseInt(matchQty[1]) : 1;
-      const name = cleanPart.replace(/\(عدد\s*\d+\)/, '').trim();
-      const unitPrice = cnt.cashPrice / (cnt.quantity || 1);
-      return {
-        name: name || cleanPart,
-        qty: qty,
-        unitPrice: Math.round(unitPrice),
-        total: Math.round(unitPrice * qty),
-        serial: cnt.serialNumber || 'SN-AUTO'
-      };
-    });
-  }
+  const purchasedItems = parseItemsFromRecord(cnt);
 
   const itemsTableRows = purchasedItems.map(item => `
     <tr class="hover:bg-slate-950/40 transition">
@@ -660,6 +669,68 @@ function renderActiveInvoiceDetailsInProfile() {
   `;
 }
 
+// عرض نافذة فواتير المبيعات (كاش أو قسط) المنظمة
+function viewSingleInvoiceDetails(saleId) {
+  const sales = getStoredSales();
+  const sale = sales.find(s => s.id === saleId);
+  if (!sale) return;
+
+  const idElem = document.getElementById('vsimInvoiceId');
+  if (idElem) idElem.innerText = `#${sale.id}`;
+
+  const metaElem = document.getElementById('vsimClientMeta');
+  if (metaElem) metaElem.innerText = `العميل: ${sale.customerName} | الهاتف: ${sale.customerPhone} | النوع: ${sale.type}`;
+
+  const grandElem = document.getElementById('vsimGrandTotal');
+  if (grandElem) grandElem.innerText = `${(sale.totalPrice || 0).toLocaleString()} ج.م`;
+
+  const items = parseItemsFromRecord(sale);
+  const tbody = document.getElementById('vsimItemsTbody');
+  if (tbody) {
+    tbody.innerHTML = items.map(it => `
+      <tr>
+        <td class="p-2 text-center font-bold text-cyan-400">${it.qty}</td>
+        <td class="p-2 font-bold text-white">${it.name}</td>
+        <td class="p-2 font-mono text-[11px] text-blue-300">${it.serial || sale.serialNumber || '--'}</td>
+        <td class="p-2 text-slate-300">${(it.unitPrice || 0).toLocaleString()} ج.م</td>
+        <td class="p-2 font-bold text-emerald-400">${(it.total || (it.qty * it.unitPrice) || 0).toLocaleString()} ج.م</td>
+      </tr>
+    `).join('');
+  }
+
+  openModal('viewSingleInvoiceModal');
+}
+
+// تعديل جدول المبيعات لإضافة زر فتح الفاتورة المنظمة
+function renderSalesTable() {
+  const sales = getStoredSales();
+  const tbody = document.getElementById('salesInvoicesTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  sales.forEach(s => {
+    tbody.innerHTML += `
+      <tr>
+        <td class="p-2.5 font-bold text-white cursor-pointer hover:text-blue-400" onclick="viewSingleInvoiceDetails('${s.id}')">#${s.id}</td>
+        <td class="p-2.5 text-slate-400">${s.date}</td>
+        <td class="p-2.5">${s.customerName}<br><span class="text-[10px] text-slate-400">${s.customerPhone}</span></td>
+        <td class="p-2.5 cursor-pointer hover:underline" onclick="viewSingleInvoiceDetails('${s.id}')">${s.deviceName}</td>
+        <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.type === 'كاش' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400'}">${s.type}</span></td>
+        <td class="p-2.5 font-bold text-white">${s.totalPrice.toLocaleString()} ج.م</td>
+        <td class="p-2.5 font-bold text-emerald-400">${s.paidImmediately.toLocaleString()} ج.م</td>
+        <td class="p-2.5 text-center space-x-1 space-x-reverse">
+          <button onclick="viewSingleInvoiceDetails('${s.id}')" class="px-2 py-1 bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/30 rounded-lg text-xs font-bold transition">
+            عرض الفاتورة 📄
+          </button>
+          <button onclick="openEditInvoiceModal('${s.id}')" class="px-2 py-1 bg-amber-600/20 hover:bg-amber-600 text-amber-300 hover:text-white border border-amber-500/30 rounded-lg text-xs font-bold transition">
+            تعديل ✏️
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
 function openNewSaleForThisCustomer() {
   if (!activeCustomerPhoneForProfile) return;
   const contracts = getStoredContracts().filter(c => c.customerPhone.trim() === activeCustomerPhoneForProfile.trim());
@@ -688,7 +759,7 @@ function openNewSaleForThisCustomer() {
 }
 
 // ==========================================
-// التحصيل المرن وتعديل الفواتير
+// التحصيل المرن
 // ==========================================
 function openCollectInstallmentModal(contractId, installmentNumber) {
   currentCollectingContractId = contractId;
@@ -819,6 +890,9 @@ function confirmCollectInstallment() {
   alert(`تم بنجاح تسجيل تحصيل مبلغ ${paidVal.toLocaleString()} ج.م للعميل (${cnt.customerName}).`);
 }
 
+// ==========================================
+// تعديل الفواتير بعد الحفظ ✏️
+// ==========================================
 function openEditInvoiceModal(identifier) {
   const sales = getStoredSales();
   const contracts = getStoredContracts();
