@@ -5,7 +5,7 @@ const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_detailed_suppliers_v3';
 const STORAGE_KEY_SELLING_PRICES = 'elabd_selling_prices_v3';
 const STORAGE_KEY_SALES = 'elabd_sales_v4';
 const STORAGE_KEY_CONTRACTS = 'elabd_contracts_v12';
-const STORAGE_KEY_EXPENSES = 'elabd_expenses_v1';
+const STORAGE_KEY_EXPENSES = 'elabd_expenses_v2';
 const STORAGE_KEY_CURRENT_TAB = 'elabd_current_tab';
 
 const defaultSuppliersData = [
@@ -177,7 +177,10 @@ function setStoredSales(d) {
 function getStoredExpenses() {
   try {
     const d = localStorage.getItem(STORAGE_KEY_EXPENSES);
-    if (d) return JSON.parse(d);
+    if (d) {
+      const parsed = JSON.parse(d);
+      if (Array.isArray(parsed)) return parsed;
+    }
   } catch (e) {}
   localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(defaultExpenses));
   return defaultExpenses;
@@ -327,8 +330,106 @@ function switchView(viewName) {
   if (viewName === 'expenses') renderExpensesTable();
 }
 
-function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function openModal(id) { 
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('hidden'); 
+}
+function closeModal(id) { 
+  const el = document.getElementById(id);
+  if (el) el.classList.add('hidden'); 
+}
+
+// ==========================================
+// إدارة المصاريف الخارجية والشحن والهوالك
+// ==========================================
+function renderExpensesTable() {
+  const expenses = getStoredExpenses();
+  const tbody = document.getElementById('expensesTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (!expenses || expenses.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-500">لا توجد مصاريف مسجلة حتى الآن. اضغط على "تسجيل مصروف جديد" لإضافة أول مصروف.</td></tr>';
+    return;
+  }
+
+  expenses.forEach(exp => {
+    const amt = parseFloat(exp.amount) || 0;
+    tbody.innerHTML += `
+      <tr class="hover:bg-slate-900/60 transition">
+        <td class="p-2.5 text-slate-400 font-mono">${exp.date || '--'}</td>
+        <td class="p-2.5 font-bold text-white">${exp.title || '--'}</td>
+        <td class="p-2.5"><span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 text-[10px] font-bold border border-rose-500/30">${exp.category || 'عام'}</span></td>
+        <td class="p-2.5 text-rose-400 font-black text-sm">${amt.toLocaleString()} ج.م</td>
+        <td class="p-2.5 text-slate-400">${exp.notes || '--'}</td>
+        <td class="p-2.5 text-center">
+          <button onclick="deleteExpense('${exp.id}')" class="text-rose-400 hover:text-rose-300 p-1 text-xs" title="حذف المصروف">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function handleSaveExpense() {
+  const titleInput = document.getElementById('expenseTitleInput');
+  const catInput = document.getElementById('expenseCategorySelect');
+  const amtInput = document.getElementById('expenseAmountInput');
+  const dateInput = document.getElementById('expenseDateInput');
+  const notesInput = document.getElementById('expenseNotesInput');
+
+  if (!titleInput || !amtInput) return;
+
+  const title = titleInput.value.trim();
+  const category = catInput ? catInput.value : 'أخرى';
+  const amount = parseFloat(amtInput.value);
+  const date = (dateInput && dateInput.value) ? dateInput.value : new Date().toISOString().split('T')[0];
+  const notes = notesInput ? notesInput.value.trim() : '';
+
+  if (!title) {
+    alert('يرجى كتابة بند المصروف (مثل: نقل أجهزة أو نولون).');
+    return;
+  }
+
+  if (isNaN(amount) || amount <= 0) {
+    alert('يرجى إدخال مبلغ صحيح أكبر من الصفر.');
+    return;
+  }
+
+  const expenses = getStoredExpenses();
+  const newExp = {
+    id: 'EXP-' + Date.now(),
+    date,
+    title,
+    category,
+    amount,
+    notes
+  };
+
+  expenses.unshift(newExp);
+  setStoredExpenses(expenses);
+
+  closeModal('addExpenseModal');
+
+  titleInput.value = '';
+  amtInput.value = '';
+  if (notesInput) notesInput.value = '';
+
+  renderExpensesTable();
+  renderDashboard();
+  alert(`تم بنجاح تسجيل مصروف (${title}) بمبلغ ${amount.toLocaleString()} ج.م وخصمه من صافي الربح.`);
+}
+
+function deleteExpense(expId) {
+  if (confirm('هل أنت متأكد من حذف هذا المصروف؟')) {
+    let expenses = getStoredExpenses();
+    expenses = expenses.filter(e => e.id !== expId);
+    setStoredExpenses(expenses);
+    renderExpensesTable();
+    renderDashboard();
+  }
+}
 
 // ==========================================
 // ماسح الكاميرا
@@ -338,12 +439,14 @@ function openBarcodeScanner(targetMode) {
   openModal('barcodeScannerModal');
 
   const instruction = document.getElementById('scannerInstructionText');
-  if (targetMode === 'home_inquiry') {
-    instruction.innerText = "وجّه الكاميرا على باركود الجهاز لعرض كافة بياناته وأسعاره من المخزن فوراً.";
-  } else if (targetMode === 'sale_barcode_detect') {
-    instruction.innerText = "امسح باركود كرتونة الجهاز لإضافته تلقائياً إلى سلة الفاتورة.";
-  } else {
-    instruction.innerText = "وجّه كاميرا الهاتف على الباركود أو السيريال الملصق على الكرتونة مباشرة.";
+  if (instruction) {
+    if (targetMode === 'home_inquiry') {
+      instruction.innerText = "وجّه الكاميرا على باركود الجهاز لعرض كافة بياناته وأسعاره من المخزن فوراً.";
+    } else if (targetMode === 'sale_barcode_detect') {
+      instruction.innerText = "امسح باركود كرتونة الجهاز لإضافته تلقائياً إلى سلة الفاتورة.";
+    } else {
+      instruction.innerText = "وجّه كاميرا الهاتف على الباركود أو السيريال الملصق على الكرتونة مباشرة.";
+    }
   }
 
   const config = { fps: 15, qrbox: { width: 250, height: 160 } };
@@ -406,6 +509,7 @@ function executeDeviceInquiryByBarcode(barcode) {
   );
 
   const content = document.getElementById('deviceInquiryResultContent');
+  if (!content) return;
 
   if (!matchedItem) {
     lastInquiredDeviceObject = null;
@@ -482,7 +586,8 @@ function renderDashboard() {
   const sales = getStoredSales();
   const contracts = getStoredContracts();
   const inventory = buildDynamicInventory();
-  const selectedMonthVal = document.getElementById('selectedReportMonthInput').value || new Date().toISOString().substring(0, 7);
+  const monthInput = document.getElementById('selectedReportMonthInput');
+  const selectedMonthVal = (monthInput && monthInput.value) ? monthInput.value : new Date().toISOString().substring(0, 7);
 
   let totalSalesVal = 0;
   let cashCollectedVal = 0;
@@ -494,13 +599,13 @@ function renderDashboard() {
   let filteredMonthPiecesCount = 0;
 
   sales.forEach(s => {
-    totalSalesVal += s.totalPrice;
-    cashCollectedVal += s.paidImmediately;
+    totalSalesVal += (parseFloat(s.totalPrice) || 0);
+    cashCollectedVal += (parseFloat(s.paidImmediately) || 0);
 
     const qtySold = parseInt(s.quantity) || 1;
     const invItem = inventory.find(d => s.deviceName.includes(d.name) || d.name === s.rawDeviceName);
     if (invItem) {
-      grossProfitVal += Math.max(0, s.totalPrice - (invItem.buyPrice * qtySold));
+      grossProfitVal += Math.max(0, (parseFloat(s.totalPrice) || 0) - (invItem.buyPrice * qtySold));
     }
 
     if (s.date && s.date.startsWith(selectedMonthVal)) {
@@ -511,23 +616,35 @@ function renderDashboard() {
   });
 
   contracts.forEach(cnt => {
-    installmentsRemainingVal += cnt.remainingAmount;
+    installmentsRemainingVal += (parseFloat(cnt.remainingAmount) || 0);
   });
 
   const totalExpensesVal = calculateTotalExpenses();
   const netProfitVal = Math.max(0, grossProfitVal - totalExpensesVal);
   const suppliersDebtTotal = calculateAllSuppliersTotalRemaining();
 
-  document.getElementById('dashTotalSalesVal').innerText = `${totalSalesVal.toLocaleString()} ج.م`;
-  document.getElementById('dashCashCollectedVal').innerText = `${cashCollectedVal.toLocaleString()} ج.م`;
-  document.getElementById('dashInstallmentsRemainingVal').innerText = `${installmentsRemainingVal.toLocaleString()} ج.م`;
-  document.getElementById('dashSuppliersDebtsVal').innerText = `${suppliersDebtTotal.toLocaleString()} ج.م`;
-  document.getElementById('dashTotalExpensesVal').innerText = `${totalExpensesVal.toLocaleString()} ج.م`;
-  document.getElementById('dashNetProfitVal').innerText = `${netProfitVal.toLocaleString()} ج.م`;
+  const elTotalSales = document.getElementById('dashTotalSalesVal');
+  if (elTotalSales) elTotalSales.innerText = `${totalSalesVal.toLocaleString()} ج.م`;
+
+  const elCash = document.getElementById('dashCashCollectedVal');
+  if (elCash) elCash.innerText = `${cashCollectedVal.toLocaleString()} ج.م`;
+
+  const elInstRem = document.getElementById('dashInstallmentsRemainingVal');
+  if (elInstRem) elInstRem.innerText = `${installmentsRemainingVal.toLocaleString()} ج.م`;
+
+  const elSupDebts = document.getElementById('dashSuppliersDebtsVal');
+  if (elSupDebts) elSupDebts.innerText = `${suppliersDebtTotal.toLocaleString()} ج.م`;
+
+  const elExpenses = document.getElementById('dashTotalExpensesVal');
+  if (elExpenses) elExpenses.innerText = `${totalExpensesVal.toLocaleString()} ج.م`;
+
+  const elNetProfit = document.getElementById('dashNetProfitVal');
+  if (elNetProfit) elNetProfit.innerText = `${netProfitVal.toLocaleString()} ج.م`;
 
   renderTopSellingProductsReport(salesCountMap, filteredMonthPiecesCount, selectedMonthVal);
 
   const dueTableBody = document.getElementById('dueInstallmentsTableBody');
+  if (!dueTableBody) return;
   dueTableBody.innerHTML = '';
   let dueCount = 0;
 
@@ -568,11 +685,13 @@ function renderDashboard() {
     dueTableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">لا توجد أقساط مستحقة التحصيل خلال شهر (${selectedMonthVal}) 👏</td></tr>`;
   }
 
-  document.getElementById('dueCountBadge').innerText = `${dueCount} أقساط مستحقة بالشهر`;
+  const badgeElem = document.getElementById('dueCountBadge');
+  if (badgeElem) badgeElem.innerText = `${dueCount} أقساط مستحقة بالشهر`;
 }
 
 function renderTopSellingProductsReport(salesCountMap, totalPiecesCount, selectedMonth) {
   const container = document.getElementById('topSellingReportContainer');
+  if (!container) return;
   container.innerHTML = '';
 
   const sortedProducts = Object.keys(salesCountMap).map(name => ({
@@ -659,13 +778,18 @@ function getAnnualReportData(year) {
 }
 
 function renderAnnualReportsView() {
-  const year = document.getElementById('annualReportYearSelect').value || '2026';
-  const searchTxt = (document.getElementById('annualReportSearchInput').value || '').trim().toLowerCase();
+  const yearSelect = document.getElementById('annualReportYearSelect');
+  const year = yearSelect ? yearSelect.value : '2026';
+  const searchInput = document.getElementById('annualReportSearchInput');
+  const searchTxt = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
   const reportData = getAnnualReportData(year);
 
-  document.getElementById('annualTotalRevenueVal').innerText = `${reportData.totalAnnualRevenue.toLocaleString()} ج.م`;
-  document.getElementById('annualTotalPiecesVal').innerText = `${reportData.totalAnnualPieces.toLocaleString()} قطعة`;
+  const elRev = document.getElementById('annualTotalRevenueVal');
+  if (elRev) elRev.innerText = `${reportData.totalAnnualRevenue.toLocaleString()} ج.م`;
+
+  const elPieces = document.getElementById('annualTotalPiecesVal');
+  if (elPieces) elPieces.innerText = `${reportData.totalAnnualPieces.toLocaleString()} قطعة`;
 
   let topProduct = '--';
   let maxProdPieces = 0;
@@ -675,7 +799,8 @@ function renderAnnualReportsView() {
       topProduct = `${p.name} (${p.totalPieces} قطعة)`;
     }
   });
-  document.getElementById('annualTopProductVal').innerText = topProduct;
+  const elTopProd = document.getElementById('annualTopProductVal');
+  if (elTopProd) elTopProd.innerText = topProduct;
 
   const monthNames = ["", "شهر 1 (يناير)", "شهر 2 (فبراير)", "شهر 3 (مارس)", "شهر 4 (أبريل)", "شهر 5 (مايو)", "شهر 6 (يونيو)", "شهر 7 (يوليو)", "شهر 8 (أغسطس)", "شهر 9 (سبتمبر)", "شهر 10 (أكتوبر)", "شهر 11 (نوفمبر)", "شهر 12 (ديسمبر)"];
   let bestMonthNum = 1;
@@ -686,16 +811,19 @@ function renderAnnualReportsView() {
       bestMonthNum = m;
     }
   }
-  document.getElementById('annualBestMonthVal').innerText = maxMonthPieces > 0 ? `${monthNames[bestMonthNum]} (${maxMonthPieces} قطعة)` : 'لا توجد مبيعات';
+  const elBestMonth = document.getElementById('annualBestMonthVal');
+  if (elBestMonth) elBestMonth.innerText = maxMonthPieces > 0 ? `${monthNames[bestMonthNum]} (${maxMonthPieces} قطعة)` : 'لا توجد مبيعات';
 
   const tbody = document.getElementById('annualReportTableBody');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
   const filteredProducts = reportData.products.filter(p => !searchTxt || p.name.toLowerCase().includes(searchTxt));
 
   if (filteredProducts.length === 0) {
     tbody.innerHTML = `<tr><td colspan="15" class="p-8 text-center text-slate-500">لا توجد مبيعات مسجلة في سنة ${year} مطابقة للبحث.</td></tr>`;
-    document.getElementById('annualReportTableFoot').innerHTML = '';
+    const foot = document.getElementById('annualReportTableFoot');
+    if (foot) foot.innerHTML = '';
     return;
   }
 
@@ -725,18 +853,22 @@ function renderAnnualReportsView() {
     footerMonthsHtml += `<td class="p-2 text-indigo-300 font-black">${reportData.monthTotals[m] > 0 ? reportData.monthTotals[m] : '-'}</td>`;
   }
 
-  document.getElementById('annualReportTableFoot').innerHTML = `
-    <tr>
-      <td class="p-2.5 text-right font-black text-white sticky right-0 bg-slate-900 border-l border-slate-800">إجمالي قطع الشهر:</td>
-      ${footerMonthsHtml}
-      <td class="p-2.5 font-black text-cyan-300 text-sm">${reportData.totalAnnualPieces} قطعة</td>
-      <td class="p-2.5 font-black text-emerald-300 text-sm">${reportData.totalAnnualRevenue.toLocaleString()} ج</td>
-    </tr>
-  `;
+  const foot = document.getElementById('annualReportTableFoot');
+  if (foot) {
+    foot.innerHTML = `
+      <tr>
+        <td class="p-2.5 text-right font-black text-white sticky right-0 bg-slate-900 border-l border-slate-800">إجمالي قطع الشهر:</td>
+        ${footerMonthsHtml}
+        <td class="p-2.5 font-black text-cyan-300 text-sm">${reportData.totalAnnualPieces} قطعة</td>
+        <td class="p-2.5 font-black text-emerald-300 text-sm">${reportData.totalAnnualRevenue.toLocaleString()} ج</td>
+      </tr>
+    `;
+  }
 }
 
 function exportAnnualReportToExcel() {
-  const year = document.getElementById('annualReportYearSelect').value || '2026';
+  const yearSelect = document.getElementById('annualReportYearSelect');
+  const year = yearSelect ? yearSelect.value : '2026';
   const reportData = getAnnualReportData(year);
 
   const excelRows = reportData.products.map(p => ({
@@ -942,9 +1074,15 @@ function renderSelectedSupplierDetails() {
 }
 
 function handleCreateSupplierProfile() {
-  const name = document.getElementById('newSupNameInput').value.trim();
-  const phone = document.getElementById('newSupPhoneInput').value.trim();
-  const address = document.getElementById('newSupAddressInput').value.trim();
+  const nameInput = document.getElementById('newSupNameInput');
+  const phoneInput = document.getElementById('newSupPhoneInput');
+  const addrInput = document.getElementById('newSupAddressInput');
+
+  if (!nameInput || !phoneInput) return;
+
+  const name = nameInput.value.trim();
+  const phone = phoneInput.value.trim();
+  const address = addrInput ? addrInput.value.trim() : '';
 
   if (!name || !phone) {
     alert('يرجى إدخال اسم المورد ورقم الهاتف على الأقل.');
@@ -965,9 +1103,9 @@ function handleCreateSupplierProfile() {
   selectedSupplierId = newSup.id;
 
   closeModal('addNewSupplierProfileModal');
-  document.getElementById('newSupNameInput').value = '';
-  document.getElementById('newSupPhoneInput').value = '';
-  document.getElementById('newSupAddressInput').value = '';
+  nameInput.value = '';
+  phoneInput.value = '';
+  if (addrInput) addrInput.value = '';
 
   renderSuppliersTable();
   populateDeviceSelects();
@@ -1057,6 +1195,7 @@ function renderInventoryTable() {
 
 function updateItemSellingPrice(itemName, itemId) {
   const input = document.getElementById(`cash_price_input_${itemId}`);
+  if (!input) return;
   const newPrice = parseFloat(input.value);
   if (isNaN(newPrice) || newPrice <= 0) {
     alert('يرجى إدخال سعر بيع كاش صحيح.');
@@ -1109,18 +1248,29 @@ function openAddShipmentModal(supId) {
   const sup = suppliers.find(s => s.id === supId);
   if (!sup) return;
 
-  document.getElementById('shipmentSupplierName').innerText = sup.name;
-  document.getElementById('supplierCartDateInput').value = new Date().toISOString().split('T')[0];
+  const lbl = document.getElementById('shipmentSupplierName');
+  if (lbl) lbl.innerText = sup.name;
+
+  const dt = document.getElementById('supplierCartDateInput');
+  if (dt) dt.value = new Date().toISOString().split('T')[0];
+
   currentSupplierShipmentCart = [];
   renderSupplierCartTbody();
   openModal('addSupplierShipmentModal');
 }
 
 function addItemToSupplierCart() {
-  const name = document.getElementById('shipItemNameInput').value.trim();
-  const barcode = document.getElementById('shipItemBarcodeInput').value.trim() || ('BAR-' + Date.now().toString().slice(-6));
-  const qty = parseInt(document.getElementById('shipItemQtyInput').value) || 1;
-  const price = parseFloat(document.getElementById('shipItemPriceInput').value) || 0;
+  const nameInput = document.getElementById('shipItemNameInput');
+  const barInput = document.getElementById('shipItemBarcodeInput');
+  const qtyInput = document.getElementById('shipItemQtyInput');
+  const priceInput = document.getElementById('shipItemPriceInput');
+
+  if (!nameInput || !priceInput) return;
+
+  const name = nameInput.value.trim();
+  const barcode = (barInput && barInput.value.trim()) ? barInput.value.trim() : ('BAR-' + Date.now().toString().slice(-6));
+  const qty = (qtyInput && parseInt(qtyInput.value)) ? parseInt(qtyInput.value) : 1;
+  const price = parseFloat(priceInput.value) || 0;
 
   if (!name || price <= 0) {
     alert('يرجى كتابة اسم الصنف وسعر الشراء.');
@@ -1135,15 +1285,16 @@ function addItemToSupplierCart() {
     total: qty * price
   });
 
-  document.getElementById('shipItemNameInput').value = '';
-  document.getElementById('shipItemBarcodeInput').value = '';
-  document.getElementById('shipItemQtyInput').value = '5';
+  nameInput.value = '';
+  if (barInput) barInput.value = '';
+  if (qtyInput) qtyInput.value = '5';
 
   renderSupplierCartTbody();
 }
 
 function renderSupplierCartTbody() {
   const tbody = document.getElementById('supplierCartTbody');
+  if (!tbody) return;
   tbody.innerHTML = '';
   let grandTotal = 0;
 
@@ -1167,7 +1318,8 @@ function renderSupplierCartTbody() {
     tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">السلة فارغة. أضف الأصناف أعلاه.</td></tr>';
   }
 
-  document.getElementById('supplierCartGrandTotal').innerText = `${grandTotal.toLocaleString()} ج.م`;
+  const grandElem = document.getElementById('supplierCartGrandTotal');
+  if (grandElem) grandElem.innerText = `${grandTotal.toLocaleString()} ج.م`;
 }
 
 function removeSupplierCartItem(idx) {
@@ -1185,8 +1337,11 @@ function handleSaveMultiItemSupplierInvoice() {
   const sup = suppliers.find(s => s.id === selectedSupplierId);
   if (!sup) return;
 
-  const paid = parseFloat(document.getElementById('supplierCartPaidInput').value) || 0;
-  const date = document.getElementById('supplierCartDateInput').value || new Date().toISOString().split('T')[0];
+  const paidInput = document.getElementById('supplierCartPaidInput');
+  const paid = paidInput ? (parseFloat(paidInput.value) || 0) : 0;
+
+  const dateInput = document.getElementById('supplierCartDateInput');
+  const date = (dateInput && dateInput.value) ? dateInput.value : new Date().toISOString().split('T')[0];
   const sellingPrices = getSellingPrices();
 
   let invoiceTotal = 0;
@@ -1231,7 +1386,8 @@ function handleSaveMultiItemSupplierInvoice() {
 // سلة البيع المجمعة والبحث
 // ==========================================
 function filterSaleProductsLiveSearch() {
-  const searchTxt = document.getElementById('saleProductLiveSearch').value.trim().toLowerCase();
+  const searchInput = document.getElementById('saleProductLiveSearch');
+  const searchTxt = searchInput ? searchInput.value.trim().toLowerCase() : '';
   populateDeviceSelects(searchTxt);
 }
 
@@ -1262,20 +1418,26 @@ function populateDeviceSelects(filterTxt = '') {
 
 function autoFillDevicePrice() {
   const select = document.getElementById('saleDeviceSelect');
+  if (!select) return;
   const selectedOption = select.options[select.selectedIndex];
   if (selectedOption && selectedOption.value) {
     const unitPrice = parseFloat(selectedOption.getAttribute('data-price')) || 0;
     const maxQty = parseInt(selectedOption.getAttribute('data-maxqty')) || 1;
 
-    document.getElementById('saleItemPriceInput').value = unitPrice;
+    const prInput = document.getElementById('saleItemPriceInput');
+    if (prInput) prInput.value = unitPrice;
+
     const qtyInput = document.getElementById('saleItemQtyInput');
-    qtyInput.max = maxQty;
-    qtyInput.value = 1;
+    if (qtyInput) {
+      qtyInput.max = maxQty;
+      qtyInput.value = 1;
+    }
   }
 }
 
 function addItemToSaleCart() {
   const select = document.getElementById('saleDeviceSelect');
+  if (!select) return;
   const selectedOption = select.options[select.selectedIndex];
   if (!selectedOption || !selectedOption.value) {
     alert('يرجى اختيار جهاز لإضافته للسلة.');
@@ -1283,9 +1445,14 @@ function addItemToSaleCart() {
   }
 
   const name = selectedOption.getAttribute('data-name');
-  const unitPrice = parseFloat(document.getElementById('saleItemPriceInput').value) || 0;
-  const qty = parseInt(document.getElementById('saleItemQtyInput').value) || 1;
-  const serial = document.getElementById('saleItemSerialInput').value.trim() || 'SN-AUTO';
+  const prInput = document.getElementById('saleItemPriceInput');
+  const unitPrice = prInput ? (parseFloat(prInput.value) || 0) : 0;
+
+  const qtyInput = document.getElementById('saleItemQtyInput');
+  const qty = qtyInput ? (parseInt(qtyInput.value) || 1) : 1;
+
+  const serInput = document.getElementById('saleItemSerialInput');
+  const serial = (serInput && serInput.value.trim()) ? serInput.value.trim() : 'SN-AUTO';
   const maxQty = parseInt(selectedOption.getAttribute('data-maxqty')) || 1;
 
   if (qty > maxQty) {
@@ -1302,12 +1469,13 @@ function addItemToSaleCart() {
     serial
   });
 
-  document.getElementById('saleItemSerialInput').value = '';
+  if (serInput) serInput.value = '';
   renderSaleCartTbody();
 }
 
 function renderSaleCartTbody() {
   const tbody = document.getElementById('saleCartTbody');
+  if (!tbody) return;
   tbody.innerHTML = '';
   let grandTotal = 0;
 
@@ -1331,7 +1499,8 @@ function renderSaleCartTbody() {
     tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">السلة فارغة. اختر أجهزة لإضافتها للفاتورة.</td></tr>';
   }
 
-  document.getElementById('saleCartGrandTotalDisplay').innerText = `${grandTotal.toLocaleString()} ج.م`;
+  const grandDisplay = document.getElementById('saleCartGrandTotalDisplay');
+  if (grandDisplay) grandDisplay.innerText = `${grandTotal.toLocaleString()} ج.م`;
   calculateInstallmentMath();
 }
 
@@ -1341,9 +1510,13 @@ function removeSaleCartItem(idx) {
 }
 
 function toggleInstallmentFields() {
-  const type = document.getElementById('saleTypeSelect').value;
-  const isInst = type === 'installment';
-  document.getElementById('installmentFieldsBox').classList.toggle('hidden', !isInst);
+  const sel = document.getElementById('saleTypeSelect');
+  if (!sel) return;
+  const isInst = sel.value === 'installment';
+
+  const box = document.getElementById('installmentFieldsBox');
+  if (box) box.classList.toggle('hidden', !isInst);
+
   if (isInst) calculateInstallmentMath();
 }
 
@@ -1351,9 +1524,14 @@ function calculateInstallmentMath() {
   let cashTotal = 0;
   currentSaleInvoiceCart.forEach(it => cashTotal += it.total);
 
-  const downPayment = parseFloat(document.getElementById('instDownPayment').value) || 0;
-  const months = parseInt(document.getElementById('instMonths').value) || 12;
-  const interestRate = parseFloat(document.getElementById('instInterestRate').value) || 0;
+  const dpInput = document.getElementById('instDownPayment');
+  const downPayment = dpInput ? (parseFloat(dpInput.value) || 0) : 0;
+
+  const mInput = document.getElementById('instMonths');
+  const months = mInput ? (parseInt(mInput.value) || 12) : 12;
+
+  const irInput = document.getElementById('instInterestRate');
+  const interestRate = irInput ? (parseFloat(irInput.value) || 0) : 0;
 
   const remainingBase = Math.max(0, cashTotal - downPayment);
   const interestAmount = remainingBase * (interestRate / 100) * (months / 12);
@@ -1361,8 +1539,11 @@ function calculateInstallmentMath() {
   const grandTotalContract = downPayment + totalRemainingWithInterest;
   const monthlyAmount = months > 0 ? Math.round(totalRemainingWithInterest / months) : 0;
 
-  document.getElementById('instCalculatedTotal').innerText = `${Math.round(grandTotalContract).toLocaleString()} ج.م`;
-  document.getElementById('instCalculatedMonthly').innerText = `${monthlyAmount.toLocaleString()} ج / شهر`;
+  const totElem = document.getElementById('instCalculatedTotal');
+  if (totElem) totElem.innerText = `${Math.round(grandTotalContract).toLocaleString()} ج.م`;
+
+  const moElem = document.getElementById('instCalculatedMonthly');
+  if (moElem) moElem.innerText = `${monthlyAmount.toLocaleString()} ج / شهر`;
 
   return {
     cashPrice: cashTotal,
@@ -1381,13 +1562,28 @@ function handleSaveSaleInvoice() {
     return;
   }
 
-  const customerName = document.getElementById('saleCustomerName').value.trim();
-  const customerPhone = document.getElementById('saleCustomerPhone').value.trim();
-  const nationalId = document.getElementById('saleCustomerNationalId').value.trim() || '--';
-  const guarantorName = document.getElementById('saleGuarantorName').value.trim() || '--';
-  const guarantorPhone = document.getElementById('saleGuarantorPhone').value.trim() || '--';
-  const guarantorNationalId = document.getElementById('saleGuarantorNationalId').value.trim() || '--';
-  const saleType = document.getElementById('saleTypeSelect').value;
+  const nameInput = document.getElementById('saleCustomerName');
+  const phoneInput = document.getElementById('saleCustomerPhone');
+
+  if (!nameInput || !phoneInput) return;
+
+  const customerName = nameInput.value.trim();
+  const customerPhone = phoneInput.value.trim();
+
+  const natIdInput = document.getElementById('saleCustomerNationalId');
+  const nationalId = (natIdInput && natIdInput.value.trim()) ? natIdInput.value.trim() : '--';
+
+  const gNameInput = document.getElementById('saleGuarantorName');
+  const guarantorName = (gNameInput && gNameInput.value.trim()) ? gNameInput.value.trim() : '--';
+
+  const gPhoneInput = document.getElementById('saleGuarantorPhone');
+  const guarantorPhone = (gPhoneInput && gPhoneInput.value.trim()) ? gPhoneInput.value.trim() : '--';
+
+  const gNatIdInput = document.getElementById('saleGuarantorNationalId');
+  const guarantorNationalId = (gNatIdInput && gNatIdInput.value.trim()) ? gNatIdInput.value.trim() : '--';
+
+  const typeSelect = document.getElementById('saleTypeSelect');
+  const saleType = typeSelect ? typeSelect.value : 'installment';
 
   if (!customerName || !customerPhone) {
     alert('يرجى كتابة اسم العميل ورقم الهاتف.');
@@ -1447,7 +1643,8 @@ function handleSaveSaleInvoice() {
     }
 
     const contractId = 'CNT-' + (contracts.length + 101);
-    const startDateStr = document.getElementById('instStartDate').value || today;
+    const stDateInput = document.getElementById('instStartDate');
+    const startDateStr = (stDateInput && stDateInput.value) ? stDateInput.value : today;
 
     const installmentsList = [];
     let currentMonthDate = new Date(startDateStr);
@@ -1535,7 +1732,10 @@ function handleSaveSaleInvoice() {
 function renderInstallmentsTable() {
   const contracts = getStoredContracts();
   const tbody = document.getElementById('installmentsContractsTableBody');
-  const search = document.getElementById('searchInstallmentInput').value.trim().toLowerCase();
+  if (!tbody) return;
+
+  const searchInput = document.getElementById('searchInstallmentInput');
+  const search = searchInput ? searchInput.value.trim().toLowerCase() : '';
   tbody.innerHTML = '';
 
   const clientsMap = {};
@@ -1557,9 +1757,9 @@ function renderInstallmentsTable() {
       };
     }
     clientsMap[phone].invoices.push(cnt);
-    clientsMap[phone].totalGrand += cnt.totalWithInterest;
-    clientsMap[phone].totalPaid += cnt.paidAmount;
-    clientsMap[phone].totalRemaining += cnt.remainingAmount;
+    clientsMap[phone].totalGrand += (parseFloat(cnt.totalWithInterest) || 0);
+    clientsMap[phone].totalPaid += (parseFloat(cnt.paidAmount) || 0);
+    clientsMap[phone].totalRemaining += (parseFloat(cnt.remainingAmount) || 0);
   });
 
   const clientsList = Object.values(clientsMap).filter(cl => 
@@ -1617,42 +1817,60 @@ function openCustomerProfileModal(phone, preferredInvoiceId = null) {
   if (contracts.length === 0) return;
 
   const firstCnt = contracts[0];
-  document.getElementById('cpModalClientCode').innerText = `كود: #${firstCnt.clientCode || 1}`;
-  document.getElementById('cpModalCustomerName').innerText = firstCnt.customerName;
-  document.getElementById('cpModalCustomerPhoneLink').innerText = firstCnt.customerPhone;
-  document.getElementById('cpModalCustomerPhoneLink').href = `tel:${firstCnt.customerPhone}`;
-  document.getElementById('cpModalNationalId').innerText = firstCnt.nationalId || '--';
+  const elCode = document.getElementById('cpModalClientCode');
+  if (elCode) elCode.innerText = `كود: #${firstCnt.clientCode || 1}`;
 
-  document.getElementById('cpModalGuarantorDetails').innerHTML = `الاسم: <b>${firstCnt.guarantorName || '--'}</b> | الهاتف: <b>${firstCnt.guarantorPhone || '--'}</b> | الرقم القومي: <b>${firstCnt.guarantorNationalId || '--'}</b>`;
+  const elName = document.getElementById('cpModalCustomerName');
+  if (elName) elName.innerText = firstCnt.customerName;
+
+  const elPhLink = document.getElementById('cpModalCustomerPhoneLink');
+  if (elPhLink) {
+    elPhLink.innerText = firstCnt.customerPhone;
+    elPhLink.href = `tel:${firstCnt.customerPhone}`;
+  }
+
+  const elNat = document.getElementById('cpModalNationalId');
+  if (elNat) elNat.innerText = firstCnt.nationalId || '--';
+
+  const elG = document.getElementById('cpModalGuarantorDetails');
+  if (elG) {
+    elG.innerHTML = `الاسم: <b>${firstCnt.guarantorName || '--'}</b> | الهاتف: <b>${firstCnt.guarantorPhone || '--'}</b> | الرقم القومي: <b>${firstCnt.guarantorNationalId || '--'}</b>`;
+  }
 
   let grandTotal = 0;
   let grandPaid = 0;
   let grandRemaining = 0;
 
   contracts.forEach(c => {
-    grandTotal += c.totalWithInterest;
-    grandPaid += c.paidAmount;
-    grandRemaining += c.remainingAmount;
+    grandTotal += (parseFloat(c.totalWithInterest) || 0);
+    grandPaid += (parseFloat(c.paidAmount) || 0);
+    grandRemaining += (parseFloat(c.remainingAmount) || 0);
   });
 
-  document.getElementById('cpModalGrandTotal').innerText = `${grandTotal.toLocaleString()} ج.م`;
-  document.getElementById('cpModalGrandPaid').innerText = `${grandPaid.toLocaleString()} ج.م`;
-  document.getElementById('cpModalGrandRemaining').innerText = `${grandRemaining.toLocaleString()} ج.م`;
+  const elGT = document.getElementById('cpModalGrandTotal');
+  if (elGT) elGT.innerText = `${grandTotal.toLocaleString()} ج.م`;
+
+  const elGP = document.getElementById('cpModalGrandPaid');
+  if (elGP) elGP.innerText = `${grandPaid.toLocaleString()} ج.م`;
+
+  const elGR = document.getElementById('cpModalGrandRemaining');
+  if (elGR) elGR.innerText = `${grandRemaining.toLocaleString()} ج.م`;
 
   activeInvoiceIdInProfile = preferredInvoiceId || contracts[0].id;
 
   const tabsContainer = document.getElementById('cpModalInvoicesTabs');
-  tabsContainer.innerHTML = '';
-
-  contracts.forEach((cnt, idx) => {
-    const isActive = cnt.id === activeInvoiceIdInProfile;
-    tabsContainer.innerHTML += `
-      <button onclick="selectInvoiceTabInProfile('${cnt.id}')" class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${isActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800'}">
-        <span>فاتورة #${idx + 1}: ${cnt.deviceName}</span>
-        <span class="text-[10px] opacity-80">(${cnt.remainingAmount <= 0 ? 'خالصة ✔' : cnt.remainingAmount.toLocaleString() + ' ج متبقي'})</span>
-      </button>
-    `;
-  });
+  if (tabsContainer) {
+    tabsContainer.innerHTML = '';
+    contracts.forEach((cnt, idx) => {
+      const isActive = cnt.id === activeInvoiceIdInProfile;
+      tabsContainer.innerHTML += `
+        <button onclick="selectInvoiceTabInProfile('${cnt.id}')" class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${isActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800'}">
+          <span>فاتورة #${idx + 1}: ${cnt.deviceName}</span>
+          <span class="text-[10px] opacity-80">(${cnt.remainingAmount <= 0 ? 'خالصة ✔' : cnt.remainingAmount.toLocaleString() + ' ج متبقي'})</span>
+        </button>
+      `;
+    });
+  }
 
   renderActiveInvoiceDetailsInProfile();
   openModal('customerProfileModal');
@@ -1667,6 +1885,7 @@ function renderActiveInvoiceDetailsInProfile() {
   const contracts = getStoredContracts();
   const cnt = contracts.find(c => c.id === activeInvoiceIdInProfile);
   const container = document.getElementById('cpModalSelectedInvoiceContainer');
+  if (!container) return;
 
   if (!cnt) {
     container.innerHTML = '<p class="text-xs text-slate-500 text-center py-6">لم يتم العثور على الفاتورة المختارة.</p>';
@@ -1770,18 +1989,30 @@ function openNewSaleForThisCustomer() {
   const contracts = getStoredContracts().filter(c => c.customerPhone.trim() === activeCustomerPhoneForProfile.trim());
   if (contracts.length > 0) {
     closeModal('customerProfileModal');
-    document.getElementById('saleCustomerName').value = contracts[0].customerName;
-    document.getElementById('saleCustomerPhone').value = contracts[0].customerPhone;
-    document.getElementById('saleCustomerNationalId').value = contracts[0].nationalId || '';
-    document.getElementById('saleGuarantorName').value = contracts[0].guarantorName || '';
-    document.getElementById('saleGuarantorPhone').value = contracts[0].guarantorPhone || '';
-    document.getElementById('saleGuarantorNationalId').value = contracts[0].guarantorNationalId || '';
+    const nameIn = document.getElementById('saleCustomerName');
+    if (nameIn) nameIn.value = contracts[0].customerName;
+
+    const phoneIn = document.getElementById('saleCustomerPhone');
+    if (phoneIn) phoneIn.value = contracts[0].customerPhone;
+
+    const natIn = document.getElementById('saleCustomerNationalId');
+    if (natIn) natIn.value = contracts[0].nationalId || '';
+
+    const gN = document.getElementById('saleGuarantorName');
+    if (gN) gN.value = contracts[0].guarantorName || '';
+
+    const gP = document.getElementById('saleGuarantorPhone');
+    if (gP) gP.value = contracts[0].guarantorPhone || '';
+
+    const gNat = document.getElementById('saleGuarantorNationalId');
+    if (gNat) gNat.value = contracts[0].guarantorNationalId || '';
+
     openModal('newSaleModal');
   }
 }
 
 // ==========================================
-// التحصيل المرن وتعديل الفواتير
+// التحصيل المرن
 // ==========================================
 function openCollectInstallmentModal(contractId, installmentNumber) {
   currentCollectingContractId = contractId;
@@ -1798,46 +2029,58 @@ function openCollectInstallmentModal(contractId, installmentNumber) {
   const alreadyPaid = inst.paidActual || 0;
   currentCollectingRemainingAmount = Math.max(0, inst.amount - alreadyPaid);
 
-  document.getElementById('colModalCustomerName').innerText = cnt.customerName;
-  document.getElementById('colModalInstallmentDesc').innerText = `فاتورة (${cnt.deviceName}) - القسط رقم (#${installmentNumber})`;
-  document.getElementById('colModalFullAmount').innerText = `${currentCollectingFullAmount.toLocaleString()} ج.م`;
-  document.getElementById('colModalRequiredAmount').innerText = `${currentCollectingRemainingAmount.toLocaleString()} ج.م`;
-  
+  const cNameElem = document.getElementById('colModalCustomerName');
+  if (cNameElem) cNameElem.innerText = cnt.customerName;
+
+  const descElem = document.getElementById('colModalInstallmentDesc');
+  if (descElem) descElem.innerText = `فاتورة (${cnt.deviceName}) - القسط رقم (#${installmentNumber})`;
+
+  const fullElem = document.getElementById('colModalFullAmount');
+  if (fullElem) fullElem.innerText = `${currentCollectingFullAmount.toLocaleString()} ج.م`;
+
+  const reqElem = document.getElementById('colModalRequiredAmount');
+  if (reqElem) reqElem.innerText = `${currentCollectingRemainingAmount.toLocaleString()} ج.م`;
+
   const paidInput = document.getElementById('colModalPaidInput');
-  paidInput.value = currentCollectingRemainingAmount;
+  if (paidInput) paidInput.value = currentCollectingRemainingAmount;
 
   updateCollectModalPreview();
   openModal('collectInstallmentModal');
 }
 
 function updateCollectModalPreview() {
-  const paidVal = parseFloat(document.getElementById('colModalPaidInput').value) || 0;
+  const paidInput = document.getElementById('colModalPaidInput');
+  const paidVal = paidInput ? (parseFloat(paidInput.value) || 0) : 0;
   const diff = currentCollectingRemainingAmount - paidVal;
   const choiceBox = document.getElementById('colModalActionChoiceBox');
   const previewText = document.getElementById('colModalPreviewText');
 
   if (diff > 0) {
-    choiceBox.classList.remove('hidden');
-    const actionType = document.querySelector('input[name="partialActionType"]:checked').value;
+    if (choiceBox) choiceBox.classList.remove('hidden');
+    const checkedRadio = document.querySelector('input[name="partialActionType"]:checked');
+    const actionType = checkedRadio ? checkedRadio.value : 'keep_open';
 
-    if (actionType === 'keep_open') {
-      previewText.innerHTML = `سيتم سداد <b>${paidVal.toLocaleString()} ج.م</b> ويبقى هذا القسط مفتوحاً بمتبقي <b>${diff.toLocaleString()} ج.م</b> ليسدده العميل لاحقاً خلال الشهر.`;
-    } else {
-      previewText.innerHTML = `سيتم إغلاق القسط وترحيل عجز <b>${diff.toLocaleString()} ج.م</b> ليضاف تلقائياً على القسط القادم.`;
+    if (previewText) {
+      if (actionType === 'keep_open') {
+        previewText.innerHTML = `سيتم سداد <b>${paidVal.toLocaleString()} ج.م</b> ويبقى هذا القسط مفتوحاً بمتبقي <b>${diff.toLocaleString()} ج.م</b> ليسدده العميل لاحقاً خلال الشهر.`;
+      } else {
+        previewText.innerHTML = `سيتم إغلاق القسط وترحيل عجز <b>${diff.toLocaleString()} ج.م</b> ليضاف تلقائياً على القسط القادم.`;
+      }
     }
   } else if (diff === 0) {
-    choiceBox.classList.add('hidden');
-    previewText.innerHTML = `سيتم سداد كامل المتبقي من هذا القسط <b>(${paidVal.toLocaleString()} ج.م)</b> وإغلاقه كـ مدفوع بالكامل ✔.`;
+    if (choiceBox) choiceBox.classList.add('hidden');
+    if (previewText) previewText.innerHTML = `سيتم سداد كامل المتبقي من هذا القسط <b>(${paidVal.toLocaleString()} ج.م)</b> وإغلاقه كـ مدفوع بالكامل ✔.`;
   } else {
-    choiceBox.classList.add('hidden');
-    previewText.innerHTML = `المبلغ أكبر من المطلوب: سيتم خصم الزيادة <b>${Math.abs(diff).toLocaleString()} ج.م</b> من القسط القادم.`;
+    if (choiceBox) choiceBox.classList.add('hidden');
+    if (previewText) previewText.innerHTML = `المبلغ أكبر من المطلوب: سيتم خصم الزيادة <b>${Math.abs(diff).toLocaleString()} ج.م</b> من القسط القادم.`;
   }
 }
 
 function confirmCollectInstallment() {
   if (!currentCollectingContractId || !currentCollectingInstallmentNum) return;
 
-  const paidVal = parseFloat(document.getElementById('colModalPaidInput').value);
+  const paidInput = document.getElementById('colModalPaidInput');
+  const paidVal = paidInput ? parseFloat(paidInput.value) : 0;
   if (isNaN(paidVal) || paidVal <= 0) {
     alert('يرجى كتابة المبلغ المسدد بصورة صحيحة.');
     return;
@@ -1860,7 +2103,8 @@ function confirmCollectInstallment() {
     inst.status = 'مدفوع بالكامل';
     inst.paidDate = today;
   } else if (diff > 0) {
-    const actionType = document.querySelector('input[name="partialActionType"]:checked').value;
+    const checkedRadio = document.querySelector('input[name="partialActionType"]:checked');
+    const actionType = checkedRadio ? checkedRadio.value : 'keep_open';
     if (actionType === 'keep_open') {
       inst.status = 'مدفوع جزئياً';
       inst.paidDate = today;
@@ -1899,6 +2143,9 @@ function confirmCollectInstallment() {
   alert(`تم بنجاح تسجيل تحصيل مبلغ ${paidVal.toLocaleString()} ج.م للعميل (${cnt.customerName}).`);
 }
 
+// ==========================================
+// تعديل الفواتير بعد الحفظ ✏️
+// ==========================================
 function openEditInvoiceModal(identifier) {
   const sales = getStoredSales();
   const contracts = getStoredContracts();
@@ -1914,28 +2161,46 @@ function openEditInvoiceModal(identifier) {
   currentEditingInvoiceId = targetSale ? targetSale.id : targetContract.id;
   const isInstallment = (targetSale && targetSale.type === 'تقسيط') || !!targetContract;
 
-  document.getElementById('editInvoiceIdLabel').innerText = `#${targetSale ? targetSale.id : targetContract.id}`;
-  document.getElementById('editCustomerNameInput').value = targetSale ? targetSale.customerName : targetContract.customerName;
-  document.getElementById('editCustomerPhoneInput').value = targetSale ? targetSale.customerPhone : targetContract.customerPhone;
-  document.getElementById('editSerialInput').value = targetSale ? targetSale.serialNumber : targetContract.serialNumber;
+  const lbl = document.getElementById('editInvoiceIdLabel');
+  if (lbl) lbl.innerText = `#${targetSale ? targetSale.id : targetContract.id}`;
+
+  const nameIn = document.getElementById('editCustomerNameInput');
+  if (nameIn) nameIn.value = targetSale ? targetSale.customerName : targetContract.customerName;
+
+  const phoneIn = document.getElementById('editCustomerPhoneInput');
+  if (phoneIn) phoneIn.value = targetSale ? targetSale.customerPhone : targetContract.customerPhone;
+
+  const serIn = document.getElementById('editSerialInput');
+  if (serIn) serIn.value = targetSale ? targetSale.serialNumber : targetContract.serialNumber;
 
   const rawDevice = targetContract ? targetContract.rawDeviceName : (targetSale.rawDeviceName || targetSale.deviceName.split(' (عدد')[0]);
-  document.getElementById('editDeviceRawNameInput').value = rawDevice;
+  const rawDevIn = document.getElementById('editDeviceRawNameInput');
+  if (rawDevIn) rawDevIn.value = rawDevice;
 
   const qty = targetSale ? (targetSale.quantity || 1) : (targetContract.quantity || 1);
   const unitPrice = targetSale && targetSale.unitPrice ? targetSale.unitPrice : ((targetContract ? targetContract.cashPrice : targetSale.totalPrice) / qty);
 
-  document.getElementById('editQuantityInput').value = qty;
-  document.getElementById('editUnitPriceInput').value = unitPrice;
+  const qtyIn = document.getElementById('editQuantityInput');
+  if (qtyIn) qtyIn.value = qty;
+
+  const upIn = document.getElementById('editUnitPriceInput');
+  if (upIn) upIn.value = unitPrice;
 
   const instBox = document.getElementById('editInstallmentBox');
-  if (isInstallment && targetContract) {
-    instBox.classList.remove('hidden');
-    document.getElementById('editDownPaymentInput').value = targetContract.downPayment || 0;
-    document.getElementById('editInterestRateInput').value = targetContract.interestRate || 15;
-    document.getElementById('editMonthsInput').value = targetContract.months || 12;
-  } else {
-    instBox.classList.add('hidden');
+  if (instBox) {
+    if (isInstallment && targetContract) {
+      instBox.classList.remove('hidden');
+      const dpIn = document.getElementById('editDownPaymentInput');
+      if (dpIn) dpIn.value = targetContract.downPayment || 0;
+
+      const irIn = document.getElementById('editInterestRateInput');
+      if (irIn) irIn.value = targetContract.interestRate || 15;
+
+      const mIn = document.getElementById('editMonthsInput');
+      if (mIn) mIn.value = targetContract.months || 12;
+    } else {
+      instBox.classList.add('hidden');
+    }
   }
 
   calculateEditInvoiceMath();
@@ -1943,24 +2208,37 @@ function openEditInvoiceModal(identifier) {
 }
 
 function calculateEditInvoiceMath() {
-  const qty = parseInt(document.getElementById('editQuantityInput').value) || 1;
-  const unitPrice = parseFloat(document.getElementById('editUnitPriceInput').value) || 0;
+  const qtyIn = document.getElementById('editQuantityInput');
+  const qty = qtyIn ? (parseInt(qtyIn.value) || 1) : 1;
+
+  const upIn = document.getElementById('editUnitPriceInput');
+  const unitPrice = upIn ? (parseFloat(upIn.value) || 0) : 0;
+
   const cashTotal = qty * unitPrice;
-  document.getElementById('editCashTotalInput').value = cashTotal;
+  const totIn = document.getElementById('editCashTotalInput');
+  if (totIn) totIn.value = cashTotal;
 
   const instBox = document.getElementById('editInstallmentBox');
-  if (!instBox.classList.contains('hidden')) {
-    const downPayment = parseFloat(document.getElementById('editDownPaymentInput').value) || 0;
-    const interestRate = parseFloat(document.getElementById('editInterestRateInput').value) || 0;
-    const months = parseInt(document.getElementById('editMonthsInput').value) || 12;
+  if (instBox && !instBox.classList.contains('hidden')) {
+    const dpIn = document.getElementById('editDownPaymentInput');
+    const downPayment = dpIn ? (parseFloat(dpIn.value) || 0) : 0;
+
+    const irIn = document.getElementById('editInterestRateInput');
+    const interestRate = irIn ? (parseFloat(irIn.value) || 0) : 0;
+
+    const mIn = document.getElementById('editMonthsInput');
+    const months = mIn ? (parseInt(mIn.value) || 12) : 12;
 
     const remainingBase = Math.max(0, cashTotal - downPayment);
     const interestAmount = remainingBase * (interestRate / 100) * (months / 12);
     const grandTotalContract = downPayment + remainingBase + interestAmount;
     const monthlyAmount = months > 0 ? Math.round((remainingBase + interestAmount) / months) : 0;
 
-    document.getElementById('editCalculatedTotal').innerText = `${Math.round(grandTotalContract).toLocaleString()} ج.م`;
-    document.getElementById('editCalculatedMonthly').innerText = `${monthlyAmount.toLocaleString()} ج / شهر`;
+    const cTot = document.getElementById('editCalculatedTotal');
+    if (cTot) cTot.innerText = `${Math.round(grandTotalContract).toLocaleString()} ج.م`;
+
+    const cMo = document.getElementById('editCalculatedMonthly');
+    if (cMo) cMo.innerText = `${monthlyAmount.toLocaleString()} ج / شهر`;
   }
 }
 
@@ -1971,13 +2249,22 @@ function handleSaveInvoiceEdits() {
   let targetSale = sales.find(s => s.id === currentEditingInvoiceId || s.contractId === currentEditingInvoiceId);
   let targetContract = contracts.find(c => c.id === currentEditingInvoiceId || (targetSale && c.id === targetSale.contractId));
 
-  const newCustName = document.getElementById('editCustomerNameInput').value.trim();
-  const newCustPhone = document.getElementById('editCustomerPhoneInput').value.trim();
-  const newSerial = document.getElementById('editSerialInput').value.trim();
-  const newQty = parseInt(document.getElementById('editQuantityInput').value) || 1;
-  const newUnitPrice = parseFloat(document.getElementById('editUnitPriceInput').value) || 0;
+  const nameIn = document.getElementById('editCustomerNameInput');
+  const phoneIn = document.getElementById('editCustomerPhoneInput');
+  const serIn = document.getElementById('editSerialInput');
+  const qtyIn = document.getElementById('editQuantityInput');
+  const upIn = document.getElementById('editUnitPriceInput');
+  const devIn = document.getElementById('editDeviceRawNameInput');
+
+  if (!nameIn || !phoneIn || !qtyIn || !upIn) return;
+
+  const newCustName = nameIn.value.trim();
+  const newCustPhone = phoneIn.value.trim();
+  const newSerial = serIn ? serIn.value.trim() : '';
+  const newQty = parseInt(qtyIn.value) || 1;
+  const newUnitPrice = parseFloat(upIn.value) || 0;
   const newCashTotal = newQty * newUnitPrice;
-  const rawDevice = document.getElementById('editDeviceRawNameInput').value;
+  const rawDevice = devIn ? devIn.value : '';
   const newDisplayName = `${rawDevice} (عدد ${newQty})`;
 
   if (!newCustName || !newCustPhone || newQty < 1 || newUnitPrice <= 0) {
@@ -1986,9 +2273,14 @@ function handleSaveInvoiceEdits() {
   }
 
   if (targetContract) {
-    const downPayment = parseFloat(document.getElementById('editDownPaymentInput').value) || 0;
-    const interestRate = parseFloat(document.getElementById('editInterestRateInput').value) || 0;
-    const months = parseInt(document.getElementById('editMonthsInput').value) || 12;
+    const dpIn = document.getElementById('editDownPaymentInput');
+    const downPayment = dpIn ? (parseFloat(dpIn.value) || 0) : 0;
+
+    const irIn = document.getElementById('editInterestRateInput');
+    const interestRate = irIn ? (parseFloat(irIn.value) || 0) : 0;
+
+    const mIn = document.getElementById('editMonthsInput');
+    const months = mIn ? (parseInt(mIn.value) || 12) : 12;
 
     const remainingBase = Math.max(0, newCashTotal - downPayment);
     const interestAmount = remainingBase * (interestRate / 100) * (months / 12);
@@ -2072,7 +2364,8 @@ function openChooseWhatsAppModal(contractId) {
   if (!c) return;
 
   currentContractForWhatsApp = c;
-  document.getElementById('waModalCustomerName').innerText = c.customerName;
+  const nameElem = document.getElementById('waModalCustomerName');
+  if (nameElem) nameElem.innerText = c.customerName;
   openModal('chooseWhatsAppTemplateModal');
 }
 
