@@ -117,9 +117,8 @@
       </div>
       <input type="file" id="restoreFileInput" onchange="restoreJsonBackup(event)" accept=".json" class="hidden">
       
-      <!-- زر إعادة تعيين البيانات التجريبية لحل أي تعليق بالمتصفح -->
       <button onclick="resetSystemToDefaultData()" class="w-full py-1 text-[10px] text-slate-500 hover:text-rose-400 text-center transition">
-        <i class="fa-solid fa-rotate-right"></i> استعادة البيانات النموذجية الافتراضية
+        <i class="fa-solid fa-rotate-right"></i> استعادة البيانات الافتراضية
       </button>
     </div>
   </aside>
@@ -147,9 +146,7 @@
   <!-- المحتوى الرئيسي -->
   <main class="flex-1 p-3 md:p-6 max-w-6xl w-full mx-auto overflow-y-auto">
 
-    <!-- ========================================== -->
-    <!-- VIEW 1: الصفحة الرئيسية والموقف المالي -->
-    <!-- ========================================== -->
+    <!-- VIEW 1: الرئيسية -->
     <section id="view-dashboard" class="space-y-4">
       <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-[#111726] to-blue-950/80 border border-blue-500/30 p-5 shadow-2xl">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
@@ -252,9 +249,7 @@
       </div>
     </section>
 
-    <!-- ========================================== -->
-    <!-- VIEW: صفحة التقارير الشهرية والسنوية الشاملة -->
-    <!-- ========================================== -->
+    <!-- VIEW: التقارير -->
     <section id="view-reports" class="hidden space-y-4">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-[#111726] p-4 rounded-3xl border border-slate-800 shadow-xl">
         <div>
@@ -331,9 +326,7 @@
       </div>
     </section>
 
-    <!-- ========================================== -->
     <!-- VIEW 2: الموردين والمشتريات -->
-    <!-- ========================================== -->
     <section id="view-suppliers" class="hidden space-y-4">
       <div class="bg-gradient-to-r from-purple-950/60 via-slate-900 to-[#111726] border border-purple-500/40 p-4 rounded-3xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3 shadow-xl">
         <div class="flex items-center gap-3">
@@ -366,9 +359,7 @@
       </div>
     </section>
 
-    <!-- ========================================== -->
     <!-- VIEW 3: سجل وإدارة الأقساط -->
-    <!-- ========================================== -->
     <section id="view-installments" class="hidden space-y-4">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-[#111726] p-4 rounded-3xl border border-slate-800">
         <div>
@@ -403,9 +394,7 @@
       </div>
     </section>
 
-    <!-- ========================================== -->
-    <!-- VIEW 4: مخزن الأجهزة والأرصدة -->
-    <!-- ========================================== -->
+    <!-- VIEW 4: المخزن والأرصدة -->
     <section id="view-inventory" class="hidden space-y-4">
       <div class="flex justify-between items-center bg-[#111726] p-4 rounded-3xl border border-slate-800">
         <div>
@@ -440,9 +429,7 @@
       </div>
     </section>
 
-    <!-- ========================================== -->
     <!-- VIEW 5: فواتير البيع -->
-    <!-- ========================================== -->
     <section id="view-sales" class="hidden space-y-4">
       <div class="flex justify-between items-center bg-[#111726] p-4 rounded-3xl border border-slate-800">
         <div>
@@ -478,9 +465,7 @@
       </div>
     </section>
 
-    <!-- ========================================== -->
     <!-- VIEW 6: المصاريف الخارجية -->
-    <!-- ========================================== -->
     <section id="view-expenses" class="hidden space-y-4">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-[#111726] p-4 rounded-3xl border border-slate-800">
         <div>
@@ -516,43 +501,7 @@
 
   </main>
 
-  <!-- شريط الموبايل السفلي السريع -->
-  <nav class="md:hidden fixed bottom-0 inset-x-0 bg-[#0d1322]/95 backdrop-blur-md border-t border-slate-800 flex justify-around items-center p-2 z-40 text-xs">
-    <button onclick="switchView('dashboard')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-blue-400 focus:text-blue-400">
-      <i class="fa-solid fa-house-chimney text-base"></i>
-      <span class="text-[10px] font-bold">الرئيسية</span>
-    </button>
-    <button onclick="switchView('reports')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-indigo-400 focus:text-indigo-400">
-      <i class="fa-solid fa-chart-column text-base"></i>
-      <span class="text-[10px]">التقارير</span>
-    </button>
-    <button onclick="switchView('suppliers')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-purple-400 focus:text-purple-400">
-      <i class="fa-solid fa-truck-ramp-box text-base"></i>
-      <span class="text-[10px]">الموردين</span>
-    </button>
-    <button onclick="switchView('installments')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-emerald-400 focus:text-emerald-400">
-      <i class="fa-solid fa-calendar-check text-base"></i>
-      <span class="text-[10px]">الأقساط</span>
-    </button>
-    <button onclick="switchView('inventory')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-cyan-400 focus:text-cyan-400">
-      <i class="fa-solid fa-boxes-stacked text-base"></i>
-      <span class="text-[10px]">المخزن</span>
-    </button>
-    <button onclick="switchView('sales')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-amber-400 focus:text-amber-400">
-      <i class="fa-solid fa-receipt text-base"></i>
-      <span class="text-[10px]">المبيعات</span>
-    </button>
-    <button onclick="switchView('expenses')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-rose-400 focus:text-rose-400">
-      <i class="fa-solid fa-money-bill-transfer text-base"></i>
-      <span class="text-[10px]">المصاريف</span>
-    </button>
-  </nav>
-
-  <!-- ========================================== -->
-  <!-- MODALS المنظومة (النوافذ المنبثقة) -->
-  <!-- ========================================== -->
-
-  <!-- MODAL: إضافة مورد جديد -->
+  <!-- MODALS -->
   <div id="addNewSupplierProfileModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -582,7 +531,6 @@
     </div>
   </div>
 
-  <!-- MODAL: سلة توريد أصناف مجمعة من مورد -->
   <div id="addSupplierShipmentModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-3 md:p-4 hidden">
     <div class="bg-[#111726] border border-purple-500/40 w-full max-w-2xl rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -666,7 +614,6 @@
     </div>
   </div>
 
-  <!-- MODAL: إضافة مصروف جديد -->
   <div id="addExpenseModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -710,7 +657,6 @@
     </div>
   </div>
 
-  <!-- MODAL: نافذة ماسح الكاميرا للباركود والسيريال نمبر 📷 -->
   <div id="barcodeScannerModal" class="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-cyan-500/50 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -734,7 +680,6 @@
     </div>
   </div>
 
-  <!-- MODAL: بطاقة نتيجة فحص الباركود والاستعلام السريع 🔍 -->
   <div id="deviceInquiryModal" class="fixed inset-0 bg-black/85 z-[60] flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-cyan-500/50 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -754,7 +699,6 @@
     </div>
   </div>
 
-  <!-- MODAL: ملف العميل المطور الشامل للبطاقة والضامن -->
   <div id="customerProfileModal" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-3 md:p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-3xl rounded-3xl p-5 shadow-2xl flex flex-col max-h-[92vh]">
       <div class="flex justify-between items-start border-b border-slate-800 pb-3">
@@ -802,7 +746,6 @@
     </div>
   </div>
 
-  <!-- MODAL: فاتورة بيع جديدة -->
   <div id="newSaleModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-3 md:p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-2xl rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -961,7 +904,6 @@
     </div>
   </div>
 
-  <!-- MODAL: تعديل الفاتورة ✏️ -->
   <div id="editSaleInvoiceModal" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-amber-500/40 w-full max-w-lg rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -1046,7 +988,6 @@
     </div>
   </div>
 
-  <!-- MODAL: نافذة اختيار نموذج رسالة الواتساب للعميل -->
   <div id="chooseWhatsAppTemplateModal" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -1092,7 +1033,6 @@
     </div>
   </div>
 
-  <!-- MODAL: نافذة التحصيل المرن -->
   <div id="collectInstallmentModal" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -1155,289 +1095,7 @@
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- المحرك البرمجي المتكامل (JAVASCRIPT) -->
-  <!-- ========================================== -->
-  <script>
-    const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_detailed_suppliers_v3';
-    const STORAGE_KEY_SELLING_PRICES = 'elabd_selling_prices_v3';
-    const STORAGE_KEY_SALES = 'elabd_sales_v4';
-    const STORAGE_KEY_CONTRACTS = 'elabd_contracts_v12';
-    const STORAGE_KEY_EXPENSES = 'elabd_expenses_v1';
-    const STORAGE_KEY_CURRENT_TAB = 'elabd_current_tab';
-
-    const defaultSuppliersData = [
-      {
-        id: 'SUP-01',
-        name: 'شركة العربي (توشيبا وشارب)',
-        phone: '01099887766',
-        address: 'مخازن بنها',
-        items: [
-          { id: 'ITM-1', barcode: 'TOSH-16-REF', date: '2026-09-15', name: 'ثلاجة توشيبا 16 قدم نوفروست', qty: 5, unitPrice: 21000, total: 105000, paid: 70000, remaining: 35000 },
-          { id: 'ITM-2', barcode: 'SHARP-25-MIC', date: '2026-09-28', name: 'ميكروويف شارب 25 لتر بالشواية', qty: 10, unitPrice: 5200, total: 52000, paid: 30000, remaining: 22000 }
-        ]
-      },
-      {
-        id: 'SUP-02',
-        name: 'موزع غسالات وشاشات إل جي',
-        phone: '01155443322',
-        address: 'مصر الجديدة',
-        items: [
-          { id: 'ITM-3', barcode: 'LG-9K-WASH', date: '2026-10-01', name: 'غسالة إل جي 9 كيلو فول أوتوماتيك', qty: 6, unitPrice: 19500, total: 117000, paid: 117000, remaining: 0 },
-          { id: 'ITM-4', barcode: 'SAM-55-4K', date: '2026-10-03', name: 'شاشة سامسونج 55 بوصة سمارت 4K', qty: 8, unitPrice: 14500, total: 116000, paid: 60000, remaining: 56000 }
-        ]
-      }
-    ];
-
-    const defaultSellingPrices = {
-      'ثلاجة توشيبا 16 قدم نوفروست': 25000,
-      'ميكروويف شارب 25 لتر بالشواية': 6500,
-      'غسالة إل جي 9 كيلو فول أوتوماتيك': 23500,
-      'شاشة سامسونج 55 بوصة سمارت 4K': 17800
-    };
-
-    const defaultContracts = [
-      {
-        clientCode: 1,
-        id: 'CNT-101',
-        invoiceDate: '2026-08-01',
-        customerName: 'محمود عبد الفتاح',
-        customerPhone: '01012345678',
-        nationalId: '29704141234567',
-        guarantorName: 'إبراهيم السيد علي',
-        guarantorPhone: '01123456789',
-        guarantorNationalId: '29508129876543',
-        items: [
-          { name: 'غسالة إل جي 9 كيلو فول أوتوماتيك', qty: 1, unitPrice: 23500, total: 23500, serial: 'SN-LG9K-9921' }
-        ],
-        deviceName: 'غسالة إل جي 9 كيلو فول أوتوماتيك (عدد 1)',
-        rawDeviceName: 'غسالة إل جي 9 كيلو فول أوتوماتيك',
-        serialNumber: 'SN-LG9K-9921',
-        quantity: 1,
-        cashPrice: 23500,
-        downPayment: 3500,
-        months: 12,
-        interestRate: 15,
-        totalWithInterest: 26500,
-        monthlyAmount: 1917,
-        paidAmount: 7334,
-        remainingAmount: 19166,
-        startDate: '2026-08-01',
-        installments: [
-          { number: 1, dueDate: '2026-08-01', amount: 1917, status: 'مدفوع بالكامل', paidDate: '2026-08-01', paidActual: 1917 },
-          { number: 2, dueDate: '2026-09-01', amount: 1917, status: 'مدفوع بالكامل', paidDate: '2026-09-02', paidActual: 1917 },
-          { number: 3, dueDate: '2026-10-01', amount: 1917, status: 'مستحق', paidDate: null, paidActual: 0 },
-          { number: 4, dueDate: '2026-11-01', amount: 1917, status: 'قادم', paidDate: null, paidActual: 0 }
-        ]
-      }
-    ];
-
-    const defaultSales = [
-      {
-        id: 'INV-501',
-        date: '2026-08-01',
-        customerName: 'محمود عبد الفتاح',
-        customerPhone: '01012345678',
-        nationalId: '29704141234567',
-        deviceName: 'غسالة إل جي 9 كيلو فول أوتوماتيك (عدد 1)',
-        rawDeviceName: 'غسالة إل جي 9 كيلو فول أوتوماتيك',
-        serialNumber: 'SN-LG9K-9921',
-        type: 'تقسيط',
-        quantity: 1,
-        unitPrice: 23500,
-        totalPrice: 26500,
-        paidImmediately: 3500,
-        contractId: 'CNT-101'
-      }
-    ];
-
-    const defaultExpenses = [
-      { id: 'EXP-1', date: '2026-10-02', title: 'شحن ونقل شاشات من الميناء', category: 'نقل وشحن', amount: 850, notes: 'نولون سيارة نقل' },
-      { id: 'EXP-2', date: '2026-10-05', title: 'بوفيه وضيافة للمعرض', category: 'مصاريف شخصية وبوفيه', amount: 350, notes: 'مشروبات وضيافة عملاء' }
-    ];
-
-    let currentSupplierShipmentCart = [];
-    let currentSaleInvoiceCart = [];
-
-    let selectedSupplierId = 'SUP-01';
-    let currentCollectingContractId = null;
-    let currentCollectingInstallmentNum = null;
-    let currentCollectingFullAmount = 0;
-    let currentCollectingRemainingAmount = 0;
-    let currentContractForWhatsApp = null;
-    let activeCustomerPhoneForProfile = null;
-    let activeInvoiceIdInProfile = null;
-    let currentEditingInvoiceId = null;
-
-    let html5QrCodeScannerInstance = null;
-    let currentTargetInputIdForScanner = null;
-    let lastInquiredDeviceObject = null;
-
-    // دوال الحفظ وقراءة الذاكرة
-    function getDetailedSuppliers() {
-      try {
-        const d = localStorage.getItem(STORAGE_KEY_DETAILED_SUPPLIERS);
-        if (d) {
-          const parsed = JSON.parse(d);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch (e) {}
-      localStorage.setItem(STORAGE_KEY_DETAILED_SUPPLIERS, JSON.stringify(defaultSuppliersData));
-      return defaultSuppliersData;
-    }
-    function setDetailedSuppliers(d) {
-      localStorage.setItem(STORAGE_KEY_DETAILED_SUPPLIERS, JSON.stringify(d));
-    }
-
-    function getSellingPrices() {
-      try {
-        const d = localStorage.getItem(STORAGE_KEY_SELLING_PRICES);
-        if (d) return JSON.parse(d);
-      } catch (e) {}
-      localStorage.setItem(STORAGE_KEY_SELLING_PRICES, JSON.stringify(defaultSellingPrices));
-      return defaultSellingPrices;
-    }
-    function setSellingPrices(d) {
-      localStorage.setItem(STORAGE_KEY_SELLING_PRICES, JSON.stringify(d));
-    }
-
-    function getStoredContracts() {
-      try {
-        const d = localStorage.getItem(STORAGE_KEY_CONTRACTS);
-        if (d) {
-          const parsed = JSON.parse(d);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch (e) {}
-      localStorage.setItem(STORAGE_KEY_CONTRACTS, JSON.stringify(defaultContracts));
-      return defaultContracts;
-    }
-    function setStoredContracts(d) {
-      localStorage.setItem(STORAGE_KEY_CONTRACTS, JSON.stringify(d));
-    }
-
-    function getStoredSales() {
-      try {
-        const d = localStorage.getItem(STORAGE_KEY_SALES);
-        if (d) {
-          const parsed = JSON.parse(d);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch (e) {}
-      localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(defaultSales));
-      return defaultSales;
-    }
-    function setStoredSales(d) {
-      localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(d));
-    }
-
-    function getStoredExpenses() {
-      try {
-        const d = localStorage.getItem(STORAGE_KEY_EXPENSES);
-        if (d) return JSON.parse(d);
-      } catch (e) {}
-      localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(defaultExpenses));
-      return defaultExpenses;
-    }
-    function setStoredExpenses(d) {
-      localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(d));
-    }
-
-    function resetSystemToDefaultData() {
-      if (confirm('هل ترغب في إعادة تعيين كافة البيانات النموذجية الافتراضية؟ سيتم تنشيط كافة الجداول فوراً.')) {
-        localStorage.clear();
-        setDetailedSuppliers(defaultSuppliersData);
-        setSellingPrices(defaultSellingPrices);
-        setStoredContracts(defaultContracts);
-        setStoredSales(defaultSales);
-        setStoredExpenses(defaultExpenses);
-        location.reload();
-      }
-    }
-
-    function calculateAllSuppliersTotalRemaining() {
-      const suppliers = getDetailedSuppliers();
-      let totalRemaining = 0;
-      suppliers.forEach(sup => {
-        (sup.items || []).forEach(it => {
-          const rem = Math.max(0, (parseFloat(it.total) || 0) - (parseFloat(it.paid) || 0));
-          totalRemaining += rem;
-        });
-      });
-      return totalRemaining;
-    }
-
-    function calculateTotalExpenses() {
-      const expenses = getStoredExpenses();
-      return expenses.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-    }
-
-    function buildDynamicInventory() {
-      const suppliers = getDetailedSuppliers();
-      const sales = getStoredSales();
-      const sellingPrices = getSellingPrices();
-      const inventoryMap = {};
-
-      suppliers.forEach(sup => {
-        (sup.items || []).forEach(it => {
-          if (!inventoryMap[it.id]) {
-            inventoryMap[it.id] = {
-              itemId: it.id,
-              barcode: it.barcode || ('BAR-' + it.id),
-              name: it.name,
-              supplierId: sup.id,
-              supplierName: sup.name,
-              supplyDate: it.date || '',
-              buyPrice: parseFloat(it.unitPrice) || 0,
-              initialQty: parseInt(it.qty) || 0,
-              currentQty: parseInt(it.qty) || 0,
-              cashPrice: sellingPrices[it.name] || Math.round((parseFloat(it.unitPrice) || 0) * 1.2)
-            };
-          } else {
-            inventoryMap[it.id].initialQty += parseInt(it.qty) || 0;
-            inventoryMap[it.id].currentQty += parseInt(it.qty) || 0;
-          }
-        });
-      });
-
-      sales.forEach(sale => {
-        const qtySold = parseInt(sale.quantity) || 1;
-        const itemEntry = Object.values(inventoryMap).find(x => 
-          sale.deviceName.includes(x.name) || x.name === sale.rawDeviceName
-        );
-        if (itemEntry) {
-          itemEntry.currentQty = Math.max(0, itemEntry.currentQty - qtySold);
-        }
-      });
-
-      return Object.values(inventoryMap);
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      // فحص وإصلاح البيانات عند بدء التشغيل
-      getDetailedSuppliers();
-      getStoredContracts();
-      getStoredSales();
-      getStoredExpenses();
-
-      populateDeviceSelects();
-
-      const today = new Date().toISOString().split('T')[0];
-      const startDateInput = document.getElementById('instStartDate');
-      if (startDateInput) startDateInput.value = today;
-
-      const expenseDate = document.getElementById('expenseDateInput');
-      if (expenseDate) expenseDate.value = today;
-
-      const currentYearMonth = today.substring(0, 7);
-      const reportMonthInput = document.getElementById('selectedReportMonthInput');
-      if (reportMonthInput && !reportMonthInput.value) {
-        reportMonthInput.value = currentYearMonth;
-      }
-
-      const savedTab = localStorage.getItem(STORAGE_KEY_CURRENT_TAB) || 'dashboard';
-      switchView(savedTab);
-    });
-  </script>
+  <!-- ربط ملف المحرك البرمجي المستقل app.js -->
+  <script src="app.js"></script>
 </body>
 </html>
