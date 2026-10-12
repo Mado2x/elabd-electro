@@ -1,12 +1,12 @@
 // ==========================================
-// مفاتيح التخزين والبيانات الافتراضية
+// مفاتيح التخزين المحدثة والبيانات الأساسية
 // ==========================================
-const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_detailed_suppliers_v3';
-const STORAGE_KEY_SELLING_PRICES = 'elabd_selling_prices_v3';
-const STORAGE_KEY_SALES = 'elabd_sales_v4';
-const STORAGE_KEY_CONTRACTS = 'elabd_contracts_v12';
-const STORAGE_KEY_EXPENSES = 'elabd_expenses_v2';
-const STORAGE_KEY_CURRENT_TAB = 'elabd_current_tab';
+const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_suppliers_v5';
+const STORAGE_KEY_SELLING_PRICES = 'elabd_prices_v5';
+const STORAGE_KEY_SALES = 'elabd_sales_v5';
+const STORAGE_KEY_CONTRACTS = 'elabd_contracts_v15';
+const STORAGE_KEY_EXPENSES = 'elabd_expenses_v5';
+const STORAGE_KEY_CURRENT_TAB = 'elabd_tab_v5';
 
 const defaultSuppliersData = [
   {
@@ -118,7 +118,7 @@ let currentTargetInputIdForScanner = null;
 let lastInquiredDeviceObject = null;
 
 // ==========================================
-// إدارة البيانات الآمنة (localStorage)
+// قراءة وتخزين البيانات مع الإصلاح التلقائي
 // ==========================================
 function getDetailedSuppliers() {
   try {
@@ -193,13 +193,8 @@ function setStoredExpenses(d) {
 }
 
 function resetSystemToDefaultData() {
-  if (confirm('هل ترغب في إعادة ضبط البيانات إلى الحالة الافتراضية وتشغيل كل الأقسام؟')) {
+  if (confirm('هل ترغب في إعادة ضبط البيانات إلى الحالة الافتراضية؟')) {
     localStorage.clear();
-    setDetailedSuppliers(defaultSuppliersData);
-    setSellingPrices(defaultSellingPrices);
-    setStoredContracts(defaultContracts);
-    setStoredSales(defaultSales);
-    setStoredExpenses(defaultExpenses);
     location.reload();
   }
 }
@@ -262,7 +257,6 @@ function buildDynamicInventory() {
   return Object.values(inventoryMap);
 }
 
-// دالة تفكيك الأصناف
 function parseItemsFromRecord(record) {
   if (record.items && Array.isArray(record.items) && record.items.length > 0) {
     return record.items;
@@ -288,35 +282,31 @@ function parseItemsFromRecord(record) {
 }
 
 // ==========================================
-// التهيئة العامة والتنقل بين الصفحات
+// بدء التشغيل
 // ==========================================
 window.addEventListener('DOMContentLoaded', () => {
-  try {
-    getDetailedSuppliers();
-    getStoredContracts();
-    getStoredSales();
-    getStoredExpenses();
+  getDetailedSuppliers();
+  getStoredContracts();
+  getStoredSales();
+  getStoredExpenses();
 
-    populateDeviceSelects();
+  populateDeviceSelects();
 
-    const today = new Date().toISOString().split('T')[0];
-    const startDateInput = document.getElementById('instStartDate');
-    if (startDateInput) startDateInput.value = today;
+  const today = new Date().toISOString().split('T')[0];
+  const startDateInput = document.getElementById('instStartDate');
+  if (startDateInput) startDateInput.value = today;
 
-    const expenseDate = document.getElementById('expenseDateInput');
-    if (expenseDate) expenseDate.value = today;
+  const expenseDate = document.getElementById('expenseDateInput');
+  if (expenseDate) expenseDate.value = today;
 
-    const currentYearMonth = today.substring(0, 7);
-    const reportMonthInput = document.getElementById('selectedReportMonthInput');
-    if (reportMonthInput && !reportMonthInput.value) {
-      reportMonthInput.value = currentYearMonth;
-    }
-
-    const savedTab = localStorage.getItem(STORAGE_KEY_CURRENT_TAB) || 'dashboard';
-    switchView(savedTab);
-  } catch (err) {
-    console.error("Initialization error:", err);
+  const currentYearMonth = today.substring(0, 7);
+  const reportMonthInput = document.getElementById('selectedReportMonthInput');
+  if (reportMonthInput && !reportMonthInput.value) {
+    reportMonthInput.value = currentYearMonth;
   }
+
+  const savedTab = localStorage.getItem(STORAGE_KEY_CURRENT_TAB) || 'dashboard';
+  switchView(savedTab);
 });
 
 function toggleSidebar() {
@@ -330,41 +320,37 @@ function toggleSidebar() {
 }
 
 function switchView(viewName) {
-  try {
-    if (window.innerWidth < 768) {
-      const sb = document.getElementById('sidebar');
-      if (sb && !sb.classList.contains('translate-x-full')) toggleSidebar();
-    }
-
-    localStorage.setItem(STORAGE_KEY_CURRENT_TAB, viewName);
-
-    ['dashboard', 'reports', 'suppliers', 'installments', 'inventory', 'sales', 'expenses'].forEach(v => {
-      const section = document.getElementById(`view-${v}`);
-      if (section) section.classList.add('hidden');
-      const navBtn = document.getElementById(`nav-${v}`);
-      if (navBtn) {
-        navBtn.className = 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition';
-      }
-    });
-
-    const targetSection = document.getElementById(`view-${viewName}`);
-    if (targetSection) targetSection.classList.remove('hidden');
-
-    const activeBtn = document.getElementById(`nav-${viewName}`);
-    if (activeBtn) {
-      activeBtn.className = 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold transition';
-    }
-
-    if (viewName === 'dashboard') renderDashboard();
-    if (viewName === 'reports') renderAnnualReportsView();
-    if (viewName === 'suppliers') renderSuppliersTable();
-    if (viewName === 'installments') renderInstallmentsTable();
-    if (viewName === 'inventory') renderInventoryTable();
-    if (viewName === 'sales') renderSalesTable();
-    if (viewName === 'expenses') renderExpensesTable();
-  } catch (e) {
-    console.error("Switch view error:", e);
+  if (window.innerWidth < 768) {
+    const sb = document.getElementById('sidebar');
+    if (sb && !sb.classList.contains('translate-x-full')) toggleSidebar();
   }
+
+  localStorage.setItem(STORAGE_KEY_CURRENT_TAB, viewName);
+
+  ['dashboard', 'reports', 'suppliers', 'installments', 'inventory', 'sales', 'expenses'].forEach(v => {
+    const section = document.getElementById(`view-${v}`);
+    if (section) section.classList.add('hidden');
+    const navBtn = document.getElementById(`nav-${v}`);
+    if (navBtn) {
+      navBtn.className = 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition';
+    }
+  });
+
+  const targetSection = document.getElementById(`view-${viewName}`);
+  if (targetSection) targetSection.classList.remove('hidden');
+
+  const activeBtn = document.getElementById(`nav-${viewName}`);
+  if (activeBtn) {
+    activeBtn.className = 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold transition';
+  }
+
+  if (viewName === 'dashboard') renderDashboard();
+  if (viewName === 'reports') renderAnnualReportsView();
+  if (viewName === 'suppliers') renderSuppliersTable();
+  if (viewName === 'installments') renderInstallmentsTable();
+  if (viewName === 'inventory') renderInventoryTable();
+  if (viewName === 'sales') renderSalesTable();
+  if (viewName === 'expenses') renderExpensesTable();
 }
 
 function openModal(id) { 
@@ -377,117 +363,113 @@ function closeModal(id) {
 }
 
 // ==========================================
-// 1. لوحة الموقف المالي (الرئيسية)
+// 1. لوحة الموقف المالي
 // ==========================================
 function renderDashboard() {
-  try {
-    const sales = getStoredSales();
-    const contracts = getStoredContracts();
-    const inventory = buildDynamicInventory();
-    const monthInput = document.getElementById('selectedReportMonthInput');
-    const selectedMonthVal = (monthInput && monthInput.value) ? monthInput.value : new Date().toISOString().substring(0, 7);
+  const sales = getStoredSales();
+  const contracts = getStoredContracts();
+  const inventory = buildDynamicInventory();
+  const monthInput = document.getElementById('selectedReportMonthInput');
+  const selectedMonthVal = (monthInput && monthInput.value) ? monthInput.value : new Date().toISOString().substring(0, 7);
 
-    let totalSalesVal = 0;
-    let cashCollectedVal = 0;
-    let installmentsRemainingVal = 0;
-    let overdueInstallmentsVal = 0;
-    let grossProfitVal = 0;
+  let totalSalesVal = 0;
+  let cashCollectedVal = 0;
+  let installmentsRemainingVal = 0;
+  let overdueInstallmentsVal = 0;
+  let grossProfitVal = 0;
 
-    const salesCountMap = {};
-    let filteredMonthPiecesCount = 0;
+  const salesCountMap = {};
+  let filteredMonthPiecesCount = 0;
 
-    sales.forEach(s => {
-      totalSalesVal += (parseFloat(s.totalPrice) || 0);
-      cashCollectedVal += (parseFloat(s.paidImmediately) || 0);
+  sales.forEach(s => {
+    totalSalesVal += (parseFloat(s.totalPrice) || 0);
+    cashCollectedVal += (parseFloat(s.paidImmediately) || 0);
 
-      const qtySold = parseInt(s.quantity) || 1;
-      const invItem = inventory.find(d => s.deviceName && (s.deviceName.includes(d.name) || d.name === s.rawDeviceName));
-      if (invItem) {
-        grossProfitVal += Math.max(0, (parseFloat(s.totalPrice) || 0) - (invItem.buyPrice * qtySold));
-      }
-
-      if (s.date && s.date.startsWith(selectedMonthVal)) {
-        const cleanName = invItem ? invItem.name : (s.deviceName ? s.deviceName.split(' (عدد')[0] : 'صنف');
-        filteredMonthPiecesCount += qtySold;
-        salesCountMap[cleanName] = (salesCountMap[cleanName] || 0) + qtySold;
-      }
-    });
-
-    contracts.forEach(cnt => {
-      installmentsRemainingVal += (parseFloat(cnt.remainingAmount) || 0);
-    });
-
-    const totalExpensesVal = calculateTotalExpenses();
-    const netProfitVal = Math.max(0, grossProfitVal - totalExpensesVal);
-    const suppliersDebtTotal = calculateAllSuppliersTotalRemaining();
-
-    const elTotalSales = document.getElementById('dashTotalSalesVal');
-    if (elTotalSales) elTotalSales.innerText = `${totalSalesVal.toLocaleString()} ج.م`;
-
-    const elCash = document.getElementById('dashCashCollectedVal');
-    if (elCash) elCash.innerText = `${cashCollectedVal.toLocaleString()} ج.م`;
-
-    const elInstRem = document.getElementById('dashInstallmentsRemainingVal');
-    if (elInstRem) elInstRem.innerText = `${installmentsRemainingVal.toLocaleString()} ج.م`;
-
-    const elSupDebts = document.getElementById('dashSuppliersDebtsVal');
-    if (elSupDebts) elSupDebts.innerText = `${suppliersDebtTotal.toLocaleString()} ج.م`;
-
-    const elExpenses = document.getElementById('dashTotalExpensesVal');
-    if (elExpenses) elExpenses.innerText = `${totalExpensesVal.toLocaleString()} ج.م`;
-
-    const elNetProfit = document.getElementById('dashNetProfitVal');
-    if (elNetProfit) elNetProfit.innerText = `${netProfitVal.toLocaleString()} ج.م`;
-
-    renderTopSellingProductsReport(salesCountMap, filteredMonthPiecesCount, selectedMonthVal);
-
-    const dueTableBody = document.getElementById('dueInstallmentsTableBody');
-    if (!dueTableBody) return;
-    dueTableBody.innerHTML = '';
-    let dueCount = 0;
-
-    contracts.forEach(cnt => {
-      (cnt.installments || []).forEach(inst => {
-        if (inst.status !== 'مدفوع بالكامل') {
-          const isDueInSelectedMonth = inst.dueDate && inst.dueDate.startsWith(selectedMonthVal);
-          if (isDueInSelectedMonth) {
-            dueCount++;
-            const remainingOnInst = inst.amount - (inst.paidActual || 0);
-            overdueInstallmentsVal += remainingOnInst;
-
-            dueTableBody.innerHTML += `
-              <tr>
-                <td class="p-2.5 font-bold text-white">${cnt.customerName}<br><span class="text-[10px] text-slate-400">${cnt.customerPhone}</span></td>
-                <td class="p-2.5">${cnt.deviceName}</td>
-                <td class="p-2.5 font-bold text-rose-400">${inst.dueDate}</td>
-                <td class="p-2.5 font-black text-amber-300">
-                  ${remainingOnInst.toLocaleString()} ج.م
-                  ${inst.paidActual > 0 ? `<span class="block text-[9px] text-emerald-400 font-normal">(سدد منها ${inst.paidActual.toLocaleString()} ج)</span>` : ''}
-                </td>
-                <td class="p-2.5 text-center space-x-1 space-x-reverse">
-                  <button onclick="openCollectInstallmentModal('${cnt.id}', ${inst.number})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow">
-                    تحصيل الآن 💰
-                  </button>
-                  <button onclick="openChooseWhatsAppModal('${cnt.id}')" class="px-2 py-1 bg-emerald-700/30 text-emerald-300 border border-emerald-500/40 rounded-lg text-[10px] font-bold">
-                    <i class="fa-brands fa-whatsapp"></i> تذكير
-                  </button>
-                </td>
-              </tr>
-            `;
-          }
-        }
-      });
-    });
-
-    if (dueCount === 0) {
-      dueTableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">لا توجد أقساط مستحقة التحصيل خلال شهر (${selectedMonthVal}) 👏</td></tr>`;
+    const qtySold = parseInt(s.quantity) || 1;
+    const invItem = inventory.find(d => s.deviceName && (s.deviceName.includes(d.name) || d.name === s.rawDeviceName));
+    if (invItem) {
+      grossProfitVal += Math.max(0, (parseFloat(s.totalPrice) || 0) - (invItem.buyPrice * qtySold));
     }
 
-    const badgeElem = document.getElementById('dueCountBadge');
-    if (badgeElem) badgeElem.innerText = `${dueCount} أقساط مستحقة بالشهر`;
-  } catch (e) {
-    console.error("Dashboard error:", e);
+    if (s.date && s.date.startsWith(selectedMonthVal)) {
+      const cleanName = invItem ? invItem.name : (s.deviceName ? s.deviceName.split(' (عدد')[0] : 'صنف');
+      filteredMonthPiecesCount += qtySold;
+      salesCountMap[cleanName] = (salesCountMap[cleanName] || 0) + qtySold;
+    }
+  });
+
+  contracts.forEach(cnt => {
+    installmentsRemainingVal += (parseFloat(cnt.remainingAmount) || 0);
+  });
+
+  const totalExpensesVal = calculateTotalExpenses();
+  const netProfitVal = Math.max(0, grossProfitVal - totalExpensesVal);
+  const suppliersDebtTotal = calculateAllSuppliersTotalRemaining();
+
+  const elTotalSales = document.getElementById('dashTotalSalesVal');
+  if (elTotalSales) elTotalSales.innerText = `${totalSalesVal.toLocaleString()} ج.م`;
+
+  const elCash = document.getElementById('dashCashCollectedVal');
+  if (elCash) elCash.innerText = `${cashCollectedVal.toLocaleString()} ج.م`;
+
+  const elInstRem = document.getElementById('dashInstallmentsRemainingVal');
+  if (elInstRem) elInstRem.innerText = `${installmentsRemainingVal.toLocaleString()} ج.م`;
+
+  const elSupDebts = document.getElementById('dashSuppliersDebtsVal');
+  if (elSupDebts) elSupDebts.innerText = `${suppliersDebtTotal.toLocaleString()} ج.م`;
+
+  const elExpenses = document.getElementById('dashTotalExpensesVal');
+  if (elExpenses) elExpenses.innerText = `${totalExpensesVal.toLocaleString()} ج.م`;
+
+  const elNetProfit = document.getElementById('dashNetProfitVal');
+  if (elNetProfit) elNetProfit.innerText = `${netProfitVal.toLocaleString()} ج.م`;
+
+  renderTopSellingProductsReport(salesCountMap, filteredMonthPiecesCount, selectedMonthVal);
+
+  const dueTableBody = document.getElementById('dueInstallmentsTableBody');
+  if (!dueTableBody) return;
+  dueTableBody.innerHTML = '';
+  let dueCount = 0;
+
+  contracts.forEach(cnt => {
+    (cnt.installments || []).forEach(inst => {
+      if (inst.status !== 'مدفوع بالكامل') {
+        const isDueInSelectedMonth = inst.dueDate && inst.dueDate.startsWith(selectedMonthVal);
+        if (isDueInSelectedMonth) {
+          dueCount++;
+          const remainingOnInst = inst.amount - (inst.paidActual || 0);
+          overdueInstallmentsVal += remainingOnInst;
+
+          dueTableBody.innerHTML += `
+            <tr>
+              <td class="p-2.5 font-bold text-white">${cnt.customerName}<br><span class="text-[10px] text-slate-400">${cnt.customerPhone}</span></td>
+              <td class="p-2.5">${cnt.deviceName}</td>
+              <td class="p-2.5 font-bold text-rose-400">${inst.dueDate}</td>
+              <td class="p-2.5 font-black text-amber-300">
+                ${remainingOnInst.toLocaleString()} ج.م
+                ${inst.paidActual > 0 ? `<span class="block text-[9px] text-emerald-400 font-normal">(سدد منها ${inst.paidActual.toLocaleString()} ج)</span>` : ''}
+              </td>
+              <td class="p-2.5 text-center space-x-1 space-x-reverse">
+                <button onclick="openCollectInstallmentModal('${cnt.id}', ${inst.number})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow">
+                  تحصيل الآن 💰
+                </button>
+                <button onclick="openChooseWhatsAppModal('${cnt.id}')" class="px-2 py-1 bg-emerald-700/30 text-emerald-300 border border-emerald-500/40 rounded-lg text-[10px] font-bold">
+                  <i class="fa-brands fa-whatsapp"></i> تذكير
+                </button>
+              </td>
+            </tr>
+          `;
+        }
+      }
+    });
+  });
+
+  if (dueCount === 0) {
+    dueTableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">لا توجد أقساط مستحقة التحصيل خلال شهر (${selectedMonthVal}) 👏</td></tr>`;
   }
+
+  const badgeElem = document.getElementById('dueCountBadge');
+  if (badgeElem) badgeElem.innerText = `${dueCount} أقساط مستحقة بالشهر`;
 }
 
 function renderTopSellingProductsReport(salesCountMap, totalPiecesCount, selectedMonth) {
@@ -533,7 +515,7 @@ function renderTopSellingProductsReport(salesCountMap, totalPiecesCount, selecte
 }
 
 // ==========================================
-// 2. تقارير المبيعات الشهرية والسنوية (1 إلى 12)
+// 2. تقارير المبيعات الشهرية والسنوية
 // ==========================================
 function getAnnualReportData(year) {
   const sales = getStoredSales();
@@ -2118,7 +2100,7 @@ ${breakdown.remainingText}
 }
 
 // ==========================================
-// 11. تصدير واستيراد الإكسيل والنسخ
+// 11. تصدير واستيراد الإكسيل
 // ==========================================
 function exportAllDataToExcel() {
   const wb = XLSX.utils.book_new();
