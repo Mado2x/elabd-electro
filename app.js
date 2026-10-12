@@ -1,12 +1,12 @@
 // ==========================================
 // مفاتيح التخزين المحدثة والبيانات الأساسية
 // ==========================================
-const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_suppliers_v5';
-const STORAGE_KEY_SELLING_PRICES = 'elabd_prices_v5';
-const STORAGE_KEY_SALES = 'elabd_sales_v5';
-const STORAGE_KEY_CONTRACTS = 'elabd_contracts_v15';
-const STORAGE_KEY_EXPENSES = 'elabd_expenses_v5';
-const STORAGE_KEY_CURRENT_TAB = 'elabd_tab_v5';
+const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_suppliers_v6';
+const STORAGE_KEY_SELLING_PRICES = 'elabd_prices_v6';
+const STORAGE_KEY_SALES = 'elabd_sales_v6';
+const STORAGE_KEY_CONTRACTS = 'elabd_contracts_v16';
+const STORAGE_KEY_EXPENSES = 'elabd_expenses_v6';
+const STORAGE_KEY_CURRENT_TAB = 'elabd_tab_v6';
 
 const defaultSuppliersData = [
   {
@@ -118,7 +118,7 @@ let currentTargetInputIdForScanner = null;
 let lastInquiredDeviceObject = null;
 
 // ==========================================
-// قراءة وتخزين البيانات مع الإصلاح التلقائي
+// دوال التخزين الآمنة
 // ==========================================
 function getDetailedSuppliers() {
   try {
@@ -282,7 +282,7 @@ function parseItemsFromRecord(record) {
 }
 
 // ==========================================
-// بدء التشغيل
+// بدء التشغيل والتنقل
 // ==========================================
 window.addEventListener('DOMContentLoaded', () => {
   getDetailedSuppliers();
@@ -363,639 +363,308 @@ function closeModal(id) {
 }
 
 // ==========================================
-// 1. لوحة الموقف المالي
+// 1. سجل وإدارة الأقساط (تم معالجة فحص البيانات بدقة)
 // ==========================================
-function renderDashboard() {
-  const sales = getStoredSales();
+function renderInstallmentsTable() {
   const contracts = getStoredContracts();
-  const inventory = buildDynamicInventory();
-  const monthInput = document.getElementById('selectedReportMonthInput');
-  const selectedMonthVal = (monthInput && monthInput.value) ? monthInput.value : new Date().toISOString().substring(0, 7);
-
-  let totalSalesVal = 0;
-  let cashCollectedVal = 0;
-  let installmentsRemainingVal = 0;
-  let overdueInstallmentsVal = 0;
-  let grossProfitVal = 0;
-
-  const salesCountMap = {};
-  let filteredMonthPiecesCount = 0;
-
-  sales.forEach(s => {
-    totalSalesVal += (parseFloat(s.totalPrice) || 0);
-    cashCollectedVal += (parseFloat(s.paidImmediately) || 0);
-
-    const qtySold = parseInt(s.quantity) || 1;
-    const invItem = inventory.find(d => s.deviceName && (s.deviceName.includes(d.name) || d.name === s.rawDeviceName));
-    if (invItem) {
-      grossProfitVal += Math.max(0, (parseFloat(s.totalPrice) || 0) - (invItem.buyPrice * qtySold));
-    }
-
-    if (s.date && s.date.startsWith(selectedMonthVal)) {
-      const cleanName = invItem ? invItem.name : (s.deviceName ? s.deviceName.split(' (عدد')[0] : 'صنف');
-      filteredMonthPiecesCount += qtySold;
-      salesCountMap[cleanName] = (salesCountMap[cleanName] || 0) + qtySold;
-    }
-  });
-
-  contracts.forEach(cnt => {
-    installmentsRemainingVal += (parseFloat(cnt.remainingAmount) || 0);
-  });
-
-  const totalExpensesVal = calculateTotalExpenses();
-  const netProfitVal = Math.max(0, grossProfitVal - totalExpensesVal);
-  const suppliersDebtTotal = calculateAllSuppliersTotalRemaining();
-
-  const elTotalSales = document.getElementById('dashTotalSalesVal');
-  if (elTotalSales) elTotalSales.innerText = `${totalSalesVal.toLocaleString()} ج.م`;
-
-  const elCash = document.getElementById('dashCashCollectedVal');
-  if (elCash) elCash.innerText = `${cashCollectedVal.toLocaleString()} ج.م`;
-
-  const elInstRem = document.getElementById('dashInstallmentsRemainingVal');
-  if (elInstRem) elInstRem.innerText = `${installmentsRemainingVal.toLocaleString()} ج.م`;
-
-  const elSupDebts = document.getElementById('dashSuppliersDebtsVal');
-  if (elSupDebts) elSupDebts.innerText = `${suppliersDebtTotal.toLocaleString()} ج.م`;
-
-  const elExpenses = document.getElementById('dashTotalExpensesVal');
-  if (elExpenses) elExpenses.innerText = `${totalExpensesVal.toLocaleString()} ج.م`;
-
-  const elNetProfit = document.getElementById('dashNetProfitVal');
-  if (elNetProfit) elNetProfit.innerText = `${netProfitVal.toLocaleString()} ج.م`;
-
-  renderTopSellingProductsReport(salesCountMap, filteredMonthPiecesCount, selectedMonthVal);
-
-  const dueTableBody = document.getElementById('dueInstallmentsTableBody');
-  if (!dueTableBody) return;
-  dueTableBody.innerHTML = '';
-  let dueCount = 0;
-
-  contracts.forEach(cnt => {
-    (cnt.installments || []).forEach(inst => {
-      if (inst.status !== 'مدفوع بالكامل') {
-        const isDueInSelectedMonth = inst.dueDate && inst.dueDate.startsWith(selectedMonthVal);
-        if (isDueInSelectedMonth) {
-          dueCount++;
-          const remainingOnInst = inst.amount - (inst.paidActual || 0);
-          overdueInstallmentsVal += remainingOnInst;
-
-          dueTableBody.innerHTML += `
-            <tr>
-              <td class="p-2.5 font-bold text-white">${cnt.customerName}<br><span class="text-[10px] text-slate-400">${cnt.customerPhone}</span></td>
-              <td class="p-2.5">${cnt.deviceName}</td>
-              <td class="p-2.5 font-bold text-rose-400">${inst.dueDate}</td>
-              <td class="p-2.5 font-black text-amber-300">
-                ${remainingOnInst.toLocaleString()} ج.م
-                ${inst.paidActual > 0 ? `<span class="block text-[9px] text-emerald-400 font-normal">(سدد منها ${inst.paidActual.toLocaleString()} ج)</span>` : ''}
-              </td>
-              <td class="p-2.5 text-center space-x-1 space-x-reverse">
-                <button onclick="openCollectInstallmentModal('${cnt.id}', ${inst.number})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow">
-                  تحصيل الآن 💰
-                </button>
-                <button onclick="openChooseWhatsAppModal('${cnt.id}')" class="px-2 py-1 bg-emerald-700/30 text-emerald-300 border border-emerald-500/40 rounded-lg text-[10px] font-bold">
-                  <i class="fa-brands fa-whatsapp"></i> تذكير
-                </button>
-              </td>
-            </tr>
-          `;
-        }
-      }
-    });
-  });
-
-  if (dueCount === 0) {
-    dueTableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">لا توجد أقساط مستحقة التحصيل خلال شهر (${selectedMonthVal}) 👏</td></tr>`;
-  }
-
-  const badgeElem = document.getElementById('dueCountBadge');
-  if (badgeElem) badgeElem.innerText = `${dueCount} أقساط مستحقة بالشهر`;
-}
-
-function renderTopSellingProductsReport(salesCountMap, totalPiecesCount, selectedMonth) {
-  const container = document.getElementById('topSellingReportContainer');
-  if (!container) return;
-  container.innerHTML = '';
-
-  const sortedProducts = Object.keys(salesCountMap).map(name => ({
-    name,
-    count: salesCountMap[name]
-  })).sort((a, b) => b.count - a.count);
-
-  if (sortedProducts.length === 0) {
-    container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">لم يتم تسجيل أي عمليات بيع أو سحب في شهر (${selectedMonth}).</p>`;
-    return;
-  }
-
-  sortedProducts.forEach((prod, idx) => {
-    const percentage = totalPiecesCount > 0 ? Math.round((prod.count / totalPiecesCount) * 100) : 0;
-    const isTop = idx === 0;
-
-    container.innerHTML += `
-      <div class="bg-slate-900/60 border border-slate-800/80 p-3 rounded-2xl">
-        <div class="flex justify-between items-center mb-1.5">
-          <div class="flex items-center gap-2">
-            <span class="w-5 h-5 rounded-lg flex items-center justify-center text-[10px] font-black ${isTop ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-slate-800 text-slate-400'}">
-              ${idx + 1}
-            </span>
-            <span class="text-xs font-bold text-white">${prod.name}</span>
-            ${isTop ? '<span class="text-[9px] px-1.5 py-0.2 bg-amber-500/20 text-amber-300 rounded font-semibold">الأكثر طلباً 🔥</span>' : ''}
-          </div>
-          <div class="text-left">
-            <b class="text-xs text-cyan-400 font-bold">${prod.count} قطع مسحوبة</b>
-            <span class="text-[10px] text-slate-400 mr-1">(${percentage}%)</span>
-          </div>
-        </div>
-        <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden p-0.5">
-          <div class="h-full rounded-full ${isTop ? 'bg-gradient-to-r from-amber-500 to-amber-300' : 'bg-gradient-to-r from-blue-500 to-cyan-400'}" style="width: ${percentage}%"></div>
-        </div>
-      </div>
-    `;
-  });
-}
-
-// ==========================================
-// 2. تقارير المبيعات الشهرية والسنوية
-// ==========================================
-function getAnnualReportData(year) {
-  const sales = getStoredSales();
-  const productMap = {};
-  let totalAnnualRevenue = 0;
-  let totalAnnualPieces = 0;
-  const monthTotals = Array(13).fill(0);
-
-  sales.forEach(sale => {
-    if (!sale.date || !sale.date.startsWith(year.toString())) return;
-
-    const saleMonth = parseInt(sale.date.split('-')[1], 10);
-    if (isNaN(saleMonth) || saleMonth < 1 || saleMonth > 12) return;
-
-    const rawName = sale.rawDeviceName || (sale.deviceName ? sale.deviceName.split(' (عدد')[0].trim() : 'جهاز');
-    const qty = parseInt(sale.quantity) || 1;
-    const totalAmount = parseFloat(sale.totalPrice) || 0;
-
-    if (!productMap[rawName]) {
-      productMap[rawName] = {
-        name: rawName,
-        monthlyPieces: Array(13).fill(0),
-        totalPieces: 0,
-        totalRevenue: 0
-      };
-    }
-
-    productMap[rawName].monthlyPieces[saleMonth] += qty;
-    productMap[rawName].totalPieces += qty;
-    productMap[rawName].totalRevenue += totalAmount;
-
-    totalAnnualRevenue += totalAmount;
-    totalAnnualPieces += qty;
-    monthTotals[saleMonth] += qty;
-  });
-
-  return {
-    products: Object.values(productMap),
-    totalAnnualRevenue,
-    totalAnnualPieces,
-    monthTotals
-  };
-}
-
-function renderAnnualReportsView() {
-  const yearSelect = document.getElementById('annualReportYearSelect');
-  const year = yearSelect ? yearSelect.value : '2026';
-  const searchInput = document.getElementById('annualReportSearchInput');
-  const searchTxt = searchInput ? searchInput.value.trim().toLowerCase() : '';
-
-  const reportData = getAnnualReportData(year);
-
-  const elRev = document.getElementById('annualTotalRevenueVal');
-  if (elRev) elRev.innerText = `${reportData.totalAnnualRevenue.toLocaleString()} ج.م`;
-
-  const elPieces = document.getElementById('annualTotalPiecesVal');
-  if (elPieces) elPieces.innerText = `${reportData.totalAnnualPieces.toLocaleString()} قطعة`;
-
-  let topProduct = '--';
-  let maxProdPieces = 0;
-  reportData.products.forEach(p => {
-    if (p.totalPieces > maxProdPieces) {
-      maxProdPieces = p.totalPieces;
-      topProduct = `${p.name} (${p.totalPieces} قطعة)`;
-    }
-  });
-  const elTopProd = document.getElementById('annualTopProductVal');
-  if (elTopProd) elTopProd.innerText = topProduct;
-
-  const monthNames = ["", "شهر 1 (يناير)", "شهر 2 (فبراير)", "شهر 3 (مارس)", "شهر 4 (أبريل)", "شهر 5 (مايو)", "شهر 6 (يونيو)", "شهر 7 (يوليو)", "شهر 8 (أغسطس)", "شهر 9 (سبتمبر)", "شهر 10 (أكتوبر)", "شهر 11 (نوفمبر)", "شهر 12 (ديسمبر)"];
-  let bestMonthNum = 1;
-  let maxMonthPieces = 0;
-  for (let m = 1; m <= 12; m++) {
-    if (reportData.monthTotals[m] > maxMonthPieces) {
-      maxMonthPieces = reportData.monthTotals[m];
-      bestMonthNum = m;
-    }
-  }
-  const elBestMonth = document.getElementById('annualBestMonthVal');
-  if (elBestMonth) elBestMonth.innerText = maxMonthPieces > 0 ? `${monthNames[bestMonthNum]} (${maxMonthPieces} قطعة)` : 'لا توجد مبيعات';
-
-  const tbody = document.getElementById('annualReportTableBody');
+  const tbody = document.getElementById('installmentsContractsTableBody');
   if (!tbody) return;
+
+  const searchInput = document.getElementById('searchInstallmentInput');
+  const search = searchInput ? searchInput.value.trim().toLowerCase() : '';
   tbody.innerHTML = '';
 
-  const filteredProducts = reportData.products.filter(p => !searchTxt || p.name.toLowerCase().includes(searchTxt));
+  const clientsMap = {};
 
-  if (filteredProducts.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="15" class="p-8 text-center text-slate-500">لا توجد مبيعات مسجلة في سنة ${year} مطابقة للبحث.</td></tr>`;
-    const foot = document.getElementById('annualReportTableFoot');
-    if (foot) foot.innerHTML = '';
-    return;
-  }
+  contracts.forEach((cnt, idx) => {
+    const phone = (cnt.customerPhone || '').toString().trim();
+    if (!phone) return;
 
-  filteredProducts.forEach(prod => {
-    let monthsHtml = '';
-    for (let m = 1; m <= 12; m++) {
-      const qty = prod.monthlyPieces[m];
-      monthsHtml += `
-        <td class="p-2 font-bold ${qty > 0 ? 'text-emerald-400 bg-emerald-500/10 rounded-lg' : 'text-slate-600'}">
-          ${qty > 0 ? qty : '-'}
-        </td>
-      `;
+    if (!clientsMap[phone]) {
+      clientsMap[phone] = {
+        clientCode: cnt.clientCode || (idx + 1),
+        customerName: cnt.customerName || 'عميل غير مسجل',
+        customerPhone: phone,
+        nationalId: cnt.nationalId || '--',
+        guarantorName: cnt.guarantorName || '--',
+        guarantorPhone: cnt.guarantorPhone || '--',
+        invoices: [],
+        totalGrand: 0,
+        totalPaid: 0,
+        totalRemaining: 0
+      };
     }
+    clientsMap[phone].invoices.push(cnt);
+    clientsMap[phone].totalGrand += (parseFloat(cnt.totalWithInterest) || 0);
+    clientsMap[phone].totalPaid += (parseFloat(cnt.paidAmount) || 0);
+    clientsMap[phone].totalRemaining += (parseFloat(cnt.remainingAmount) || 0);
+  });
 
+  const clientsList = Object.values(clientsMap).filter(cl => {
+    const codeMatch = (cl.clientCode || '').toString().toLowerCase().includes(search);
+    const nameMatch = (cl.customerName || '').toLowerCase().includes(search);
+    const phoneMatch = (cl.customerPhone || '').includes(search);
+    const natMatch = (cl.nationalId || '').toString().includes(search);
+    const gNameMatch = (cl.guarantorName || '').toLowerCase().includes(search);
+    return codeMatch || nameMatch || phoneMatch || natMatch || gNameMatch;
+  });
+
+  if (clientsList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-slate-500">لا يوجد عملاء مسجلين أو مطابقين للبحث. اضغط على "فاتورة بيع جديدة" لتسجيل أول عقد.</td></tr>';
+    return;
+  }
+
+  clientsList.forEach(cl => {
     tbody.innerHTML += `
-      <tr class="hover:bg-slate-900/60 transition">
-        <td class="p-2.5 text-right font-bold text-white sticky right-0 bg-[#111726] border-l border-slate-800">${prod.name}</td>
-        ${monthsHtml}
-        <td class="p-2.5 font-black text-cyan-400 bg-slate-950/80 text-sm">${prod.totalPieces}</td>
-        <td class="p-2.5 font-black text-emerald-400 bg-slate-950/80 text-sm">${prod.totalRevenue.toLocaleString()} ج</td>
-      </tr>
-    `;
-  });
-
-  let footerMonthsHtml = '';
-  for (let m = 1; m <= 12; m++) {
-    footerMonthsHtml += `<td class="p-2 text-indigo-300 font-black">${reportData.monthTotals[m] > 0 ? reportData.monthTotals[m] : '-'}</td>`;
-  }
-
-  const foot = document.getElementById('annualReportTableFoot');
-  if (foot) {
-    foot.innerHTML = `
-      <tr>
-        <td class="p-2.5 text-right font-black text-white sticky right-0 bg-slate-900 border-l border-slate-800">إجمالي قطع الشهر:</td>
-        ${footerMonthsHtml}
-        <td class="p-2.5 font-black text-cyan-300 text-sm">${reportData.totalAnnualPieces} قطعة</td>
-        <td class="p-2.5 font-black text-emerald-300 text-sm">${reportData.totalAnnualRevenue.toLocaleString()} ج</td>
-      </tr>
-    `;
-  }
-}
-
-function exportAnnualReportToExcel() {
-  const yearSelect = document.getElementById('annualReportYearSelect');
-  const year = yearSelect ? yearSelect.value : '2026';
-  const reportData = getAnnualReportData(year);
-
-  const excelRows = reportData.products.map(p => ({
-    "اسم المنتج": p.name,
-    "شهر 1 (يناير)": p.monthlyPieces[1],
-    "شهر 2 (فبراير)": p.monthlyPieces[2],
-    "شهر 3 (مارس)": p.monthlyPieces[3],
-    "شهر 4 (أبريل)": p.monthlyPieces[4],
-    "شهر 5 (مايو)": p.monthlyPieces[5],
-    "شهر 6 (يونيو)": p.monthlyPieces[6],
-    "شهر 7 (يوليو)": p.monthlyPieces[7],
-    "شهر 8 (أغسطس)": p.monthlyPieces[8],
-    "شهر 9 (سبتمبر)": p.monthlyPieces[9],
-    "شهر 10 (أكتوبر)": p.monthlyPieces[10],
-    "شهر 11 (نوفمبر)": p.monthlyPieces[11],
-    "شهر 12 (ديسمبر)": p.monthlyPieces[12],
-    "إجمالي القطع المباعة بالسنة": p.totalPieces,
-    "إجمالي المبالغ والمبيعات (ج.م)": p.totalRevenue
-  }));
-
-  const ws = XLSX.utils.json_to_sheet(excelRows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, `تقرير_مبيعات_${year}`);
-  XLSX.writeFile(wb, `تقرير_مبيعات_أولاد_العبد_شهري_سنوي_${year}.xlsx`);
-}
-
-// ==========================================
-// 3. الموردين والمشتريات
-// ==========================================
-function renderSuppliersTable() {
-  const suppliers = getDetailedSuppliers();
-  const listContainer = document.getElementById('suppliersMasterList');
-  if (!listContainer) return;
-  listContainer.innerHTML = '';
-
-  const grandTotalDebts = calculateAllSuppliersTotalRemaining();
-  const debtElem = document.getElementById('allSuppliersGrandRemainingVal');
-  if (debtElem) debtElem.innerText = `${grandTotalDebts.toLocaleString()} ج.م`;
-
-  const badgeElem = document.getElementById('suppliersCountBadge');
-  if (badgeElem) badgeElem.innerText = `${suppliers.length} موردين`;
-
-  if (suppliers.length === 0) {
-    listContainer.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">لا يوجد موردين مسجلين.</p>';
-    const detailContainer = document.getElementById('supplierDetailContainer');
-    if (detailContainer) detailContainer.innerHTML = '';
-    return;
-  }
-
-  if (!selectedSupplierId || !suppliers.find(s => s.id === selectedSupplierId)) {
-    selectedSupplierId = suppliers[0].id;
-  }
-
-  suppliers.forEach(sup => {
-    let totalBill = 0;
-    let totalPaid = 0;
-    (sup.items || []).forEach(it => {
-      totalBill += (parseFloat(it.total) || 0);
-      totalPaid += (parseFloat(it.paid) || 0);
-    });
-    const remaining = Math.max(0, totalBill - totalPaid);
-    const isSelected = sup.id === selectedSupplierId;
-
-    listContainer.innerHTML += `
-      <div onclick="selectSupplierProfile('${sup.id}')" class="p-3 rounded-2xl cursor-pointer border transition ${isSelected ? 'bg-purple-950/40 border-purple-500' : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'}">
-        <div class="flex justify-between items-start">
-          <h4 class="font-bold text-xs text-white truncate">${sup.name}</h4>
-          <span class="text-[9px] px-1.5 py-0.5 rounded font-bold ${remaining > 0 ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}">
-            ${remaining > 0 ? remaining.toLocaleString() + ' ج متبقي' : 'خالص ✔'}
+      <tr class="hover:bg-slate-900/50 transition">
+        <td class="p-2.5 text-center font-black text-cyan-400 font-mono text-sm">#${cl.clientCode}</td>
+        <td class="p-2.5 font-bold text-white cursor-pointer hover:text-blue-400 transition" onclick="openCustomerProfileModal('${cl.customerPhone}')">
+          <span class="flex items-center gap-2">
+            <i class="fa-solid fa-folder-open text-amber-400 text-xs"></i>
+            <span class="underline decoration-slate-700 underline-offset-4">${cl.customerName}</span>
           </span>
-        </div>
-        <p class="text-[10px] text-slate-400 mt-1"><i class="fa-solid fa-phone text-slate-500"></i> ${sup.phone}</p>
-        <div class="mt-2 pt-2 border-t border-slate-800/80 flex justify-between text-[10px]">
-          <span class="text-slate-400">الإجمالي: <b class="text-slate-200">${totalBill.toLocaleString()} ج</b></span>
-          <span class="text-emerald-400">المدفوع: <b>${totalPaid.toLocaleString()} ج</b></span>
-        </div>
-      </div>
-    `;
-  });
-
-  renderSelectedSupplierDetails();
-}
-
-function selectSupplierProfile(supId) {
-  selectedSupplierId = supId;
-  renderSuppliersTable();
-}
-
-function renderSelectedSupplierDetails() {
-  const suppliers = getDetailedSuppliers();
-  const sup = suppliers.find(s => s.id === selectedSupplierId);
-  const container = document.getElementById('supplierDetailContainer');
-  if (!container) return;
-
-  if (!sup) {
-    container.innerHTML = '<p class="text-slate-500 text-center py-10">اختر مورداً من القائمة لعرض كشف حسابه.</p>';
-    return;
-  }
-
-  let grandTotal = 0;
-  let grandPaid = 0;
-  let totalPieces = 0;
-  let rowsHtml = '';
-
-  (sup.items || []).forEach(it => {
-    const itemTot = parseFloat(it.total) || 0;
-    const itemPd = parseFloat(it.paid) || 0;
-    const itemQty = parseInt(it.qty) || 0;
-    const itemUnitPrice = parseFloat(it.unitPrice) || 0;
-    const itemRem = Math.max(0, itemTot - itemPd);
-
-    grandTotal += itemTot;
-    grandPaid += itemPd;
-    totalPieces += itemQty;
-
-    rowsHtml += `
-      <tr>
-        <td class="p-2.5 text-slate-400">${it.date || '--'}</td>
-        <td class="p-2.5 font-bold text-white">${it.name}</td>
-        <td class="p-2.5 font-mono text-cyan-300 text-xs">${it.barcode || '--'}</td>
-        <td class="p-2.5 text-center font-black text-cyan-400">${itemQty}</td>
-        <td class="p-2.5 text-slate-300">${itemUnitPrice.toLocaleString()} ج</td>
-        <td class="p-2.5 font-bold text-white">${itemTot.toLocaleString()} ج</td>
-        <td class="p-2.5 font-bold text-emerald-400">${itemPd.toLocaleString()} ج</td>
-        <td class="p-2.5 font-bold text-rose-400">${itemRem.toLocaleString()} ج</td>
+          <span class="text-[10px] text-slate-400 font-normal block mt-0.5">بطاقة: ${cl.nationalId}</span>
+        </td>
+        <td class="p-2.5">
+          <b class="text-slate-200 text-xs">${cl.guarantorName}</b>
+          <span class="text-[10px] text-slate-400 block">${cl.guarantorPhone}</span>
+        </td>
+        <td class="p-2.5 text-center font-bold text-cyan-300">
+          <span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300">${cl.invoices.length} فواتير</span>
+        </td>
+        <td class="p-2.5 font-bold text-white">${cl.totalGrand.toLocaleString()} ج.م</td>
+        <td class="p-2.5 font-bold text-emerald-400">${cl.totalPaid.toLocaleString()} ج.م</td>
+        <td class="p-2.5 font-bold text-rose-400">${cl.totalRemaining.toLocaleString()} ج.م</td>
         <td class="p-2.5 text-center">
-          <button onclick="deleteSupplierItem('${sup.id}', '${it.id}')" class="text-rose-400 hover:text-rose-300 text-xs p-1" title="حذف الصنف">
-            <i class="fa-solid fa-trash-can"></i>
+          <a href="tel:${cl.customerPhone}" class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-700 transition" title="اتصال بالعميل">
+            <i class="fa-solid fa-phone text-xs"></i>
+          </a>
+        </td>
+        <td class="p-2.5 text-center">
+          <button onclick="openCustomerProfileModal('${cl.customerPhone}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 mx-auto shadow">
+            <i class="fa-solid fa-eye"></i> فتح الملف
           </button>
         </td>
       </tr>
     `;
   });
+}
 
-  const grandRemaining = Math.max(0, grandTotal - grandPaid);
+function openCustomerProfileModal(phone, preferredInvoiceId = null) {
+  activeCustomerPhoneForProfile = phone;
+  const contracts = getStoredContracts().filter(c => (c.customerPhone || '').toString().trim() === phone.trim());
+  if (contracts.length === 0) return;
+
+  const firstCnt = contracts[0];
+  const elCode = document.getElementById('cpModalClientCode');
+  if (elCode) elCode.innerText = `كود: #${firstCnt.clientCode || 1}`;
+
+  const elName = document.getElementById('cpModalCustomerName');
+  if (elName) elName.innerText = firstCnt.customerName || '--';
+
+  const elPhLink = document.getElementById('cpModalCustomerPhoneLink');
+  if (elPhLink) {
+    elPhLink.innerText = firstCnt.customerPhone || '--';
+    elPhLink.href = `tel:${firstCnt.customerPhone}`;
+  }
+
+  const elNat = document.getElementById('cpModalNationalId');
+  if (elNat) elNat.innerText = firstCnt.nationalId || '--';
+
+  const elG = document.getElementById('cpModalGuarantorDetails');
+  if (elG) {
+    elG.innerHTML = `الاسم: <b>${firstCnt.guarantorName || '--'}</b> | الهاتف: <b>${firstCnt.guarantorPhone || '--'}</b> | الرقم القومي: <b>${firstCnt.guarantorNationalId || '--'}</b>`;
+  }
+
+  let grandTotal = 0;
+  let grandPaid = 0;
+  let grandRemaining = 0;
+
+  contracts.forEach(c => {
+    grandTotal += (parseFloat(c.totalWithInterest) || 0);
+    grandPaid += (parseFloat(c.paidAmount) || 0);
+    grandRemaining += (parseFloat(c.remainingAmount) || 0);
+  });
+
+  const elGT = document.getElementById('cpModalGrandTotal');
+  if (elGT) elGT.innerText = `${grandTotal.toLocaleString()} ج.م`;
+
+  const elGP = document.getElementById('cpModalGrandPaid');
+  if (elGP) elGP.innerText = `${grandPaid.toLocaleString()} ج.م`;
+
+  const elGR = document.getElementById('cpModalGrandRemaining');
+  if (elGR) elGR.innerText = `${grandRemaining.toLocaleString()} ج.م`;
+
+  activeInvoiceIdInProfile = preferredInvoiceId || contracts[0].id;
+
+  const tabsContainer = document.getElementById('cpModalInvoicesTabs');
+  if (tabsContainer) {
+    tabsContainer.innerHTML = '';
+    contracts.forEach((cnt, idx) => {
+      const isActive = cnt.id === activeInvoiceIdInProfile;
+      const parsed = parseItemsFromRecord(cnt);
+      const itemCount = parsed.length;
+      tabsContainer.innerHTML += `
+        <button onclick="selectInvoiceTabInProfile('${cnt.id}')" class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${isActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800'}">
+          <span>فاتورة #${idx + 1} (${itemCount} أصناف)</span>
+          <span class="text-[10px] opacity-80">(${cnt.remainingAmount <= 0 ? 'خالصة ✔' : (parseFloat(cnt.remainingAmount) || 0).toLocaleString() + ' ج متبقي'})</span>
+        </button>
+      `;
+    });
+  }
+
+  renderActiveInvoiceDetailsInProfile();
+  openModal('customerProfileModal');
+}
+
+function selectInvoiceTabInProfile(invoiceId) {
+  activeInvoiceIdInProfile = invoiceId;
+  openCustomerProfileModal(activeCustomerPhoneForProfile, invoiceId);
+}
+
+function renderActiveInvoiceDetailsInProfile() {
+  const contracts = getStoredContracts();
+  const cnt = contracts.find(c => c.id === activeInvoiceIdInProfile);
+  const container = document.getElementById('cpModalSelectedInvoiceContainer');
+  if (!container) return;
+
+  if (!cnt) {
+    container.innerHTML = '<p class="text-xs text-slate-500 text-center py-6">لم يتم العثور على الفاتورة المختارة.</p>';
+    return;
+  }
+
+  const isFullyPaid = (parseFloat(cnt.remainingAmount) || 0) <= 0;
+  const purchasedItems = parseItemsFromRecord(cnt);
+
+  const itemsTableRows = purchasedItems.map(item => `
+    <tr class="hover:bg-slate-950/40 transition">
+      <td class="p-2 text-center font-black text-cyan-400 text-sm">${item.qty}</td>
+      <td class="p-2 font-bold text-white">${item.name}</td>
+      <td class="p-2 font-mono text-[11px] text-blue-300">${item.serial || cnt.serialNumber || '--'}</td>
+      <td class="p-2 text-slate-300">${(item.unitPrice || 0).toLocaleString()} ج.م</td>
+      <td class="p-2 font-bold text-emerald-400">${(item.total || (item.qty * item.unitPrice) || 0).toLocaleString()} ج.م</td>
+    </tr>
+  `).join('');
 
   container.innerHTML = `
-    <div class="bg-gradient-to-r from-purple-950/40 via-slate-900 to-[#111726] border border-purple-500/30 p-4 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-      <div>
-        <div class="flex items-center gap-2">
-          <h3 class="text-base font-black text-white">${sup.name}</h3>
-          <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">كود: ${sup.id}</span>
+    <div class="bg-slate-900 border ${isFullyPaid ? 'border-emerald-500/40' : 'border-slate-800'} rounded-3xl p-4 space-y-3.5">
+      
+      <!-- جدول سلة المشتريات (الأجهزة المشتراة وتفاصيلها بدقة) -->
+      <div class="space-y-1.5">
+        <span class="text-xs font-bold text-cyan-400 flex items-center gap-1.5">
+          <i class="fa-solid fa-cart-shopping"></i> قائمة الأجهزة المشتراة في هذه الفاتورة:
+        </span>
+        <div class="overflow-x-auto border border-slate-800 rounded-2xl bg-slate-950/60">
+          <table class="w-full text-right text-xs">
+            <thead class="bg-slate-950 text-slate-400 border-b border-slate-800">
+              <tr>
+                <th class="p-2 text-center">العدد</th>
+                <th class="p-2">الصنف والموديل</th>
+                <th class="p-2">السيريال نمبر</th>
+                <th class="p-2">سعر الوحدة</th>
+                <th class="p-2">السعر الإجمالي</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/80 text-slate-300">
+              ${itemsTableRows}
+            </tbody>
+          </table>
         </div>
-        <p class="text-xs text-slate-400 mt-1">هاتف: <a href="tel:${sup.phone}" class="text-blue-400 underline">${sup.phone}</a> | عنوان: ${sup.address || 'غير محدد'}</p>
       </div>
-      <div class="flex gap-2 w-full md:w-auto">
-        <button onclick="openAddShipmentModal('${sup.id}')" class="flex-1 md:flex-none px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1.5">
-          <i class="fa-solid fa-boxes-packing"></i> تنزيل فاتورة توريد كاملة
-        </button>
-        <button onclick="paySupplierPrompt('${sup.id}')" class="flex-1 md:flex-none px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1.5">
-          <i class="fa-solid fa-hand-holding-dollar"></i> سداد دفعة
-        </button>
-      </div>
-    </div>
 
-    <div class="grid grid-cols-3 gap-2.5 text-center text-xs my-3">
-      <div class="p-2.5 bg-slate-900/90 rounded-2xl border border-slate-800">
-        <span class="text-[10px] text-slate-400 block font-semibold">إجمالي المشتريات منه</span>
-        <b class="text-sm md:text-base font-black text-white mt-0.5 block">${grandTotal.toLocaleString()} ج.م</b>
+      <!-- ملخص شروط التقسيط والحساب -->
+      <div class="bg-slate-950/70 p-3 rounded-2xl border border-slate-800 grid grid-cols-2 md:grid-cols-5 gap-2 text-center text-xs">
+        <div class="p-1.5">
+          <span class="text-[10px] text-slate-400 block font-semibold">إجمالي الكاش</span>
+          <b class="text-white">${(cnt.cashPrice || 0).toLocaleString()} ج</b>
+        </div>
+        <div class="p-1.5">
+          <span class="text-[10px] text-blue-400 block font-semibold">نسبة الفائدة</span>
+          <b class="text-blue-300 font-bold">${cnt.interestRate || 15}% سنوياً</b>
+        </div>
+        <div class="p-1.5">
+          <span class="text-[10px] text-purple-400 block font-semibold">مدة التقسيط</span>
+          <b class="text-purple-300 font-bold">${cnt.months || 12} شهر</b>
+        </div>
+        <div class="p-1.5">
+          <span class="text-[10px] text-emerald-400 block font-semibold">المقدم المدفوع</span>
+          <b class="text-emerald-300 font-bold">${(cnt.downPayment || 0).toLocaleString()} ج</b>
+        </div>
+        <div class="p-1.5">
+          <span class="text-[10px] text-cyan-400 block font-semibold">القسط الشهري</span>
+          <b class="text-cyan-300 font-black">${(cnt.monthlyAmount || 0).toLocaleString()} ج</b>
+        </div>
       </div>
-      <div class="p-2.5 bg-slate-900/90 rounded-2xl border border-emerald-500/20">
-        <span class="text-[10px] text-emerald-400 block font-semibold">المسدد له فعلياً</span>
-        <b class="text-sm md:text-base font-black text-emerald-300 mt-0.5 block">${grandPaid.toLocaleString()} ج.م</b>
-      </div>
-      <div class="p-2.5 bg-slate-900/90 rounded-2xl border border-rose-500/20">
-        <span class="text-[10px] text-rose-400 block font-semibold">المتبقي له في ذمتنا</span>
-        <b class="text-sm md:text-base font-black text-rose-300 mt-0.5 block">${grandRemaining.toLocaleString()} ج.م</b>
-      </div>
-    </div>
 
-    <div class="overflow-x-auto border border-slate-800 rounded-2xl">
-      <table class="w-full text-right text-xs">
-        <thead class="bg-slate-900/90 text-slate-400 border-b border-slate-800">
-          <tr>
-            <th class="p-2.5">التاريخ</th>
-            <th class="p-2.5">الصنف والموديل</th>
-            <th class="p-2.5">الباركود</th>
-            <th class="p-2.5 text-center text-cyan-400">العدد</th>
-            <th class="p-2.5">سعر القطعة</th>
-            <th class="p-2.5 text-white font-bold">الإجمالي</th>
-            <th class="p-2.5 text-emerald-400">المدفوع</th>
-            <th class="p-2.5 text-rose-400">المتبقي</th>
-            <th class="p-2.5 text-center">إجراء</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-800 text-slate-300">
-          ${rowsHtml || '<tr><td colspan="9" class="p-6 text-center text-slate-500">لا توجد أصناف موردة مسجلة لهذا المورد.</td></tr>'}
-        </tbody>
-        <tfoot class="bg-slate-900 font-bold border-t-2 border-slate-700 text-white">
-          <tr>
-            <td colspan="3" class="p-2.5 text-right">إجمالي جميع القطع والتوريدات:</td>
-            <td class="p-2.5 text-center text-cyan-400 text-sm font-black">${totalPieces}</td>
-            <td>--</td>
-            <td class="p-2.5 text-white text-sm font-black">${grandTotal.toLocaleString()} ج</td>
-            <td class="p-2.5 text-emerald-400 text-sm font-black">${grandPaid.toLocaleString()} ج</td>
-            <td class="p-2.5 text-rose-400 text-sm font-black">${grandRemaining.toLocaleString()} ج</td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
+      <!-- شريط الموقف المالي للفاتورة مع أزرار الإجراءات -->
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 bg-slate-950/40 p-2.5 rounded-2xl border border-slate-800/80 text-xs">
+        <div>
+          <span class="text-slate-400">إجمالي الفاتورة بالفوائد: <b class="text-white">${(cnt.totalWithInterest || 0).toLocaleString()} ج</b></span> | 
+          <span class="text-emerald-400">المحصل: <b>${(cnt.paidAmount || 0).toLocaleString()} ج</b></span> | 
+          <span class="text-rose-400">المتبقي المطلوب: <b class="text-sm font-black">${(cnt.remainingAmount || 0).toLocaleString()} ج</b></span>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="openEditInvoiceModal('${cnt.id}')" class="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600 text-amber-300 hover:text-white border border-amber-500/30 rounded-xl text-xs font-bold flex items-center gap-1 transition">
+            <i class="fa-solid fa-pen-to-square"></i> تعديل الفاتورة ✏️
+          </button>
+          <button onclick="openChooseWhatsAppModal('${cnt.id}')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow">
+            <i class="fa-brands fa-whatsapp text-sm"></i> إرسال تقرير الفاتورة
+          </button>
+        </div>
+      </div>
+
+      <!-- جدول الأقساط -->
+      <div class="overflow-x-auto border border-slate-800 rounded-2xl max-h-56 custom-scrollbar">
+        <table class="w-full text-right text-xs">
+          <thead class="bg-slate-950 text-slate-400 sticky top-0 border-b border-slate-800">
+            <tr>
+              <th class="p-2">رقم القسط</th>
+              <th class="p-2">تاريخ الاستحقاق</th>
+              <th class="p-2">المبلغ الكلي</th>
+              <th class="p-2">المسدد منه</th>
+              <th class="p-2 text-rose-300">المتبقي للقسط</th>
+              <th class="p-2">الحالة</th>
+              <th class="p-2 text-center">إجراء السداد</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800 text-slate-300">
+            ${(cnt.installments || []).map(inst => {
+              const paidSoFar = inst.paidActual || 0;
+              const remaining = Math.max(0, inst.amount - paidSoFar);
+              const isDone = inst.status === 'مدفوع بالكامل';
+              const isPartial = inst.status === 'مدفوع جزئياً';
+
+              let statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400">${inst.status}</span>`;
+              if (isDone) statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400">مدفوع بالكامل ✔</span>`;
+              if (isPartial) statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400">مدفوع جزئياً ⏳</span>`;
+
+              return `
+                <tr>
+                  <td class="p-2 font-bold text-white">القسط #${inst.number}</td>
+                  <td class="p-2 text-slate-300">${inst.dueDate}</td>
+                  <td class="p-2 font-bold text-white">${inst.amount.toLocaleString()} ج</td>
+                  <td class="p-2 text-emerald-400 font-bold">${paidSoFar.toLocaleString()} ج</td>
+                  <td class="p-2 text-rose-300 font-bold">${remaining.toLocaleString()} ج</td>
+                  <td class="p-2">${statusBadge}</td>
+                  <td class="p-2 text-center">
+                    ${!isDone ? `
+                      <button onclick="openCollectInstallmentModal('${cnt.id}', ${inst.number})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold shadow">
+                        تحصيل دفعة 💰
+                      </button>
+                    ` : `<span class="text-[10px] text-slate-400">خالص: ${inst.paidDate}</span>`}
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
     </div>
   `;
 }
 
-function handleCreateSupplierProfile() {
-  const nameInput = document.getElementById('newSupNameInput');
-  const phoneInput = document.getElementById('newSupPhoneInput');
-  const addrInput = document.getElementById('newSupAddressInput');
-
-  if (!nameInput || !phoneInput) return;
-
-  const name = nameInput.value.trim();
-  const phone = phoneInput.value.trim();
-  const address = addrInput ? addrInput.value.trim() : '';
-
-  if (!name || !phone) {
-    alert('يرجى إدخال اسم المورد ورقم الهاتف على الأقل.');
-    return;
-  }
-
-  const suppliers = getDetailedSuppliers();
-  const newSup = {
-    id: 'SUP-' + (suppliers.length + 10),
-    name,
-    phone,
-    address,
-    items: []
-  };
-
-  suppliers.push(newSup);
-  setDetailedSuppliers(suppliers);
-  selectedSupplierId = newSup.id;
-
-  closeModal('addNewSupplierProfileModal');
-  nameInput.value = '';
-  phoneInput.value = '';
-  if (addrInput) addrInput.value = '';
-
-  renderSuppliersTable();
-  populateDeviceSelects();
-  alert(`تم إضافة المورد (${name}) بنجاح.`);
-}
-
-function deleteSupplierItem(supId, itemId) {
-  if (confirm('هل أنت متأكد من حذف هذا الصنف من فاتورة المورد؟ سيتم حذفه تلقائياً من رصيد المخزن.')) {
-    const suppliers = getDetailedSuppliers();
-    const sup = suppliers.find(s => s.id === supId);
-    if (sup) {
-      sup.items = sup.items.filter(it => it.id !== itemId);
-      setDetailedSuppliers(suppliers);
-      renderSuppliersTable();
-      populateDeviceSelects();
-      renderDashboard();
-      alert('تم حذف التوريدة واختفى الصنف من المخزن بنجاح.');
-    }
-  }
-}
-
-function paySupplierPrompt(supId) {
-  const suppliers = getDetailedSuppliers();
-  const sup = suppliers.find(s => s.id === supId);
-  if (!sup) return;
-
-  let totalBill = 0;
-  let totalPaid = 0;
-  (sup.items || []).forEach(it => { totalBill += (parseFloat(it.total) || 0); totalPaid += (parseFloat(it.paid) || 0); });
-  const currentRem = Math.max(0, totalBill - totalPaid);
-
-  const amt = prompt(`أدخل المبلغ المراد سداده للمورد (${sup.name}) - المتبقي: ${currentRem.toLocaleString()} ج:`);
-  if (amt && !isNaN(amt) && parseFloat(amt) > 0) {
-    let paymentToDistribute = parseFloat(amt);
-
-    for (let it of (sup.items || [])) {
-      if (paymentToDistribute <= 0) break;
-      const itemRem = (parseFloat(it.total) || 0) - (parseFloat(it.paid) || 0);
-      if (itemRem > 0) {
-        const addPay = Math.min(itemRem, paymentToDistribute);
-        it.paid = (parseFloat(it.paid) || 0) + addPay;
-        it.remaining = (parseFloat(it.total) || 0) - it.paid;
-        paymentToDistribute -= addPay;
-      }
-    }
-
-    setDetailedSuppliers(suppliers);
-    renderSuppliersTable();
-    renderDashboard();
-    alert('تم تسجيل سداد الدفعة للمورد بنجاح.');
-  }
-}
-
 // ==========================================
-// 4. المخزن والأرصدة
-// ==========================================
-function renderInventoryTable() {
-  const inventory = buildDynamicInventory();
-  const tbody = document.getElementById('inventoryTableBody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  if (inventory.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-500">المخزن فارغ حالياً.</td></tr>`;
-    return;
-  }
-
-  inventory.forEach(item => {
-    const isLow = item.currentQty <= 2;
-    tbody.innerHTML += `
-      <tr>
-        <td class="p-2.5 font-bold text-white">${item.name}</td>
-        <td class="p-2.5 font-mono text-cyan-300 text-xs">${item.barcode || '--'}</td>
-        <td class="p-2.5 text-purple-300 font-semibold">${item.supplierName}</td>
-        <td class="p-2.5 text-center font-black text-base ${isLow ? 'text-rose-400' : 'text-emerald-400'}">${item.currentQty}</td>
-        <td class="p-2.5 text-slate-300">${item.buyPrice.toLocaleString()} ج</td>
-        <td class="p-2.5 font-bold text-emerald-400">
-          <input type="number" id="cash_price_input_${item.itemId}" value="${item.cashPrice}" class="w-24 bg-[#090d16] border border-slate-700 rounded-lg p-1 text-white text-xs font-bold text-center">
-        </td>
-        <td class="p-2.5 text-center">
-          <button onclick="updateItemSellingPrice('${item.name}', '${item.itemId}')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow">تحديث</button>
-        </td>
-      </tr>
-    `;
-  });
-}
-
-function updateItemSellingPrice(itemName, itemId) {
-  const input = document.getElementById(`cash_price_input_${itemId}`);
-  if (!input) return;
-  const newPrice = parseFloat(input.value);
-  if (isNaN(newPrice) || newPrice <= 0) {
-    alert('يرجى إدخال سعر بيع كاش صحيح.');
-    return;
-  }
-
-  const sellingPrices = getSellingPrices();
-  sellingPrices[itemName] = newPrice;
-  setSellingPrices(sellingPrices);
-
-  populateDeviceSelects();
-  renderInventoryTable();
-  alert(`تم تحديث سعر البيع الكاش لصنف (${itemName}) إلى ${newPrice.toLocaleString()} ج.م.`);
-}
-
-// ==========================================
-// 5. المبيعات والفواتير
+// 2. المبيعات والمخزن وباقي النوافذ
 // ==========================================
 function viewSingleInvoiceDetails(saleId) {
   const sales = getStoredSales();
@@ -1042,8 +711,8 @@ function renderSalesTable() {
         <td class="p-2.5">${s.customerName}<br><span class="text-[10px] text-slate-400">${s.customerPhone}</span></td>
         <td class="p-2.5 cursor-pointer hover:underline" onclick="viewSingleInvoiceDetails('${s.id}')">${s.deviceName}</td>
         <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.type === 'كاش' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400'}">${s.type}</span></td>
-        <td class="p-2.5 font-bold text-white">${s.totalPrice.toLocaleString()} ج.م</td>
-        <td class="p-2.5 font-bold text-emerald-400">${s.paidImmediately.toLocaleString()} ج.م</td>
+        <td class="p-2.5 font-bold text-white">${(parseFloat(s.totalPrice) || 0).toLocaleString()} ج.م</td>
+        <td class="p-2.5 font-bold text-emerald-400">${(parseFloat(s.paidImmediately) || 0).toLocaleString()} ج.م</td>
         <td class="p-2.5 text-center space-x-1 space-x-reverse">
           <button onclick="viewSingleInvoiceDetails('${s.id}')" class="px-2 py-1 bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/30 rounded-lg text-xs font-bold transition">
             عرض الفاتورة 📄
@@ -1057,496 +726,35 @@ function renderSalesTable() {
   });
 }
 
-// ==========================================
-// 6. سلة التوريد المجمعة للمورد
-// ==========================================
-function openAddShipmentModal(supId) {
-  const suppliers = getDetailedSuppliers();
-  const sup = suppliers.find(s => s.id === supId);
-  if (!sup) return;
+function openNewSaleForThisCustomer() {
+  if (!activeCustomerPhoneForProfile) return;
+  const contracts = getStoredContracts().filter(c => (c.customerPhone || '').toString().trim() === activeCustomerPhoneForProfile.trim());
+  if (contracts.length > 0) {
+    closeModal('customerProfileModal');
+    const nameIn = document.getElementById('saleCustomerName');
+    if (nameIn) nameIn.value = contracts[0].customerName;
 
-  const lbl = document.getElementById('shipmentSupplierName');
-  if (lbl) lbl.innerText = sup.name;
+    const phoneIn = document.getElementById('saleCustomerPhone');
+    if (phoneIn) phoneIn.value = contracts[0].customerPhone;
 
-  const dt = document.getElementById('supplierCartDateInput');
-  if (dt) dt.value = new Date().toISOString().split('T')[0];
+    const natIn = document.getElementById('saleCustomerNationalId');
+    if (natIn) natIn.value = contracts[0].nationalId || '';
 
-  currentSupplierShipmentCart = [];
-  renderSupplierCartTbody();
-  openModal('addSupplierShipmentModal');
-}
+    const gN = document.getElementById('saleGuarantorName');
+    if (gN) gN.value = contracts[0].guarantorName || '';
 
-function addItemToSupplierCart() {
-  const nameInput = document.getElementById('shipItemNameInput');
-  const barInput = document.getElementById('shipItemBarcodeInput');
-  const qtyInput = document.getElementById('shipItemQtyInput');
-  const priceInput = document.getElementById('shipItemPriceInput');
+    const gP = document.getElementById('saleGuarantorPhone');
+    if (gP) gP.value = contracts[0].guarantorPhone || '';
 
-  if (!nameInput || !priceInput) return;
+    const gNat = document.getElementById('saleGuarantorNationalId');
+    if (gNat) gNat.value = contracts[0].guarantorNationalId || '';
 
-  const name = nameInput.value.trim();
-  const barcode = (barInput && barInput.value.trim()) ? barInput.value.trim() : ('BAR-' + Date.now().toString().slice(-6));
-  const qty = (qtyInput && parseInt(qtyInput.value)) ? parseInt(qtyInput.value) : 1;
-  const price = parseFloat(priceInput.value) || 0;
-
-  if (!name || price <= 0) {
-    alert('يرجى كتابة اسم الصنف وسعر الشراء.');
-    return;
-  }
-
-  currentSupplierShipmentCart.push({
-    name,
-    barcode,
-    qty,
-    unitPrice: price,
-    total: qty * price
-  });
-
-  nameInput.value = '';
-  if (barInput) barInput.value = '';
-  if (qtyInput) qtyInput.value = '5';
-
-  renderSupplierCartTbody();
-}
-
-function renderSupplierCartTbody() {
-  const tbody = document.getElementById('supplierCartTbody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-  let grandTotal = 0;
-
-  currentSupplierShipmentCart.forEach((item, idx) => {
-    grandTotal += item.total;
-    tbody.innerHTML += `
-      <tr>
-        <td class="p-2 font-bold text-white">${item.name}</td>
-        <td class="p-2 font-mono text-cyan-300 text-xs">${item.barcode}</td>
-        <td class="p-2 text-center font-bold text-cyan-400">${item.qty}</td>
-        <td class="p-2 text-slate-300">${item.unitPrice.toLocaleString()} ج</td>
-        <td class="p-2 font-bold text-white">${item.total.toLocaleString()} ج</td>
-        <td class="p-2 text-center">
-          <button onclick="removeSupplierCartItem(${idx})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-xmark"></i></button>
-        </td>
-      </tr>
-    `;
-  });
-
-  if (currentSupplierShipmentCart.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">السلة فارغة. أضف الأصناف أعلاه.</td></tr>';
-  }
-
-  const grandElem = document.getElementById('supplierCartGrandTotal');
-  if (grandElem) grandElem.innerText = `${grandTotal.toLocaleString()} ج.م`;
-}
-
-function removeSupplierCartItem(idx) {
-  currentSupplierShipmentCart.splice(idx, 1);
-  renderSupplierCartTbody();
-}
-
-function handleSaveMultiItemSupplierInvoice() {
-  if (currentSupplierShipmentCart.length === 0) {
-    alert('يرجى إضافة صنف واحد على الأقل لفاتورة التوريد.');
-    return;
-  }
-
-  const suppliers = getDetailedSuppliers();
-  const sup = suppliers.find(s => s.id === selectedSupplierId);
-  if (!sup) return;
-
-  const paidInput = document.getElementById('supplierCartPaidInput');
-  const paid = paidInput ? (parseFloat(paidInput.value) || 0) : 0;
-
-  const dateInput = document.getElementById('supplierCartDateInput');
-  const date = (dateInput && dateInput.value) ? dateInput.value : new Date().toISOString().split('T')[0];
-  const sellingPrices = getSellingPrices();
-
-  let invoiceTotal = 0;
-  currentSupplierShipmentCart.forEach(it => invoiceTotal += it.total);
-
-  let remainingPaidToDistribute = paid;
-
-  if (!sup.items) sup.items = [];
-
-  currentSupplierShipmentCart.forEach(it => {
-    const itemPaid = Math.min(it.total, remainingPaidToDistribute);
-    remainingPaidToDistribute = Math.max(0, remainingPaidToDistribute - itemPaid);
-
-    sup.items.unshift({
-      id: 'ITM-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-      barcode: it.barcode,
-      date,
-      name: it.name,
-      qty: it.qty,
-      unitPrice: it.unitPrice,
-      total: it.total,
-      paid: itemPaid,
-      remaining: Math.max(0, it.total - itemPaid)
-    });
-
-    if (!sellingPrices[it.name]) {
-      sellingPrices[it.name] = Math.round(it.unitPrice * 1.2);
-    }
-  });
-
-  setSellingPrices(sellingPrices);
-  setDetailedSuppliers(suppliers);
-  closeModal('addSupplierShipmentModal');
-
-  renderSuppliersTable();
-  populateDeviceSelects();
-  renderDashboard();
-  alert(`تم بنجاح حفظ فاتورة التوريد المجمعة بإجمالي ${invoiceTotal.toLocaleString()} ج.م وترحيلها للمخزن.`);
-}
-
-// ==========================================
-// 7. سلة البيع المجمعة والبحث
-// ==========================================
-function filterSaleProductsLiveSearch() {
-  const searchInput = document.getElementById('saleProductLiveSearch');
-  const searchTxt = searchInput ? searchInput.value.trim().toLowerCase() : '';
-  populateDeviceSelects(searchTxt);
-}
-
-function populateDeviceSelects(filterTxt = '') {
-  const inventory = buildDynamicInventory();
-  const select = document.getElementById('saleDeviceSelect');
-  if (!select) return;
-  select.innerHTML = '<option value="">-- اختر الجهاز من المخزن --</option>';
-
-  const filtered = inventory.filter(dev => 
-    !filterTxt || dev.name.toLowerCase().includes(filterTxt) || (dev.barcode && dev.barcode.toLowerCase().includes(filterTxt))
-  );
-
-  filtered.forEach(dev => {
-    const disabled = dev.currentQty <= 0 ? 'disabled' : '';
-    select.innerHTML += `
-      <option value="${dev.itemId}" data-name="${dev.name}" data-price="${dev.cashPrice}" data-maxqty="${dev.currentQty}" data-barcode="${dev.barcode}" ${disabled}>
-        ${dev.name} [المتوفر: ${dev.currentQty}] - ${dev.cashPrice.toLocaleString()} ج.م
-      </option>
-    `;
-  });
-
-  if (filtered.length > 0) {
-    select.selectedIndex = 1;
-    autoFillDevicePrice();
-  }
-}
-
-function autoFillDevicePrice() {
-  const select = document.getElementById('saleDeviceSelect');
-  if (!select) return;
-  const selectedOption = select.options[select.selectedIndex];
-  if (selectedOption && selectedOption.value) {
-    const unitPrice = parseFloat(selectedOption.getAttribute('data-price')) || 0;
-    const maxQty = parseInt(selectedOption.getAttribute('data-maxqty')) || 1;
-
-    const prInput = document.getElementById('saleItemPriceInput');
-    if (prInput) prInput.value = unitPrice;
-
-    const qtyInput = document.getElementById('saleItemQtyInput');
-    if (qtyInput) {
-      qtyInput.max = maxQty;
-      qtyInput.value = 1;
-    }
-  }
-}
-
-function addItemToSaleCart() {
-  const select = document.getElementById('saleDeviceSelect');
-  if (!select) return;
-  const selectedOption = select.options[select.selectedIndex];
-  if (!selectedOption || !selectedOption.value) {
-    alert('يرجى اختيار جهاز لإضافته للسلة.');
-    return;
-  }
-
-  const name = selectedOption.getAttribute('data-name');
-  const prInput = document.getElementById('saleItemPriceInput');
-  const unitPrice = prInput ? (parseFloat(prInput.value) || 0) : 0;
-
-  const qtyInput = document.getElementById('saleItemQtyInput');
-  const qty = qtyInput ? (parseInt(qtyInput.value) || 1) : 1;
-
-  const serInput = document.getElementById('saleItemSerialInput');
-  const serial = (serInput && serInput.value.trim()) ? serInput.value.trim() : 'SN-AUTO';
-  const maxQty = parseInt(selectedOption.getAttribute('data-maxqty')) || 1;
-
-  if (qty > maxQty) {
-    alert(`الكمية المطلوبة (${qty}) تتجاوز الرصيد المتوفر بالمخزن (${maxQty}).`);
-    return;
-  }
-
-  currentSaleInvoiceCart.push({
-    itemId: selectedOption.value,
-    name,
-    qty,
-    unitPrice,
-    total: qty * unitPrice,
-    serial
-  });
-
-  if (serInput) serInput.value = '';
-  renderSaleCartTbody();
-}
-
-function renderSaleCartTbody() {
-  const tbody = document.getElementById('saleCartTbody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-  let grandTotal = 0;
-
-  currentSaleInvoiceCart.forEach((item, idx) => {
-    grandTotal += item.total;
-    tbody.innerHTML += `
-      <tr>
-        <td class="p-2 font-bold text-white">${item.name}</td>
-        <td class="p-2 font-mono text-cyan-300 text-xs">${item.serial}</td>
-        <td class="p-2 text-center font-bold text-cyan-400">${item.qty}</td>
-        <td class="p-2 text-slate-300">${item.unitPrice.toLocaleString()} ج</td>
-        <td class="p-2 font-bold text-white">${item.total.toLocaleString()} ج</td>
-        <td class="p-2 text-center">
-          <button onclick="removeSaleCartItem(${idx})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-xmark"></i></button>
-        </td>
-      </tr>
-    `;
-  });
-
-  if (currentSaleInvoiceCart.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">السلة فارغة. اختر أجهزة لإضافتها للفاتورة.</td></tr>';
-  }
-
-  const grandDisplay = document.getElementById('saleCartGrandTotalDisplay');
-  if (grandDisplay) grandDisplay.innerText = `${grandTotal.toLocaleString()} ج.م`;
-  calculateInstallmentMath();
-}
-
-function removeSaleCartItem(idx) {
-  currentSaleInvoiceCart.splice(idx, 1);
-  renderSaleCartTbody();
-}
-
-function toggleInstallmentFields() {
-  const typeSelect = document.getElementById('saleTypeSelect');
-  if (!typeSelect) return;
-  const isInst = typeSelect.value === 'installment';
-
-  const box = document.getElementById('installmentFieldsBox');
-  if (box) box.classList.toggle('hidden', !isInst);
-
-  if (isInst) calculateInstallmentMath();
-}
-
-function calculateInstallmentMath() {
-  let cashTotal = 0;
-  currentSaleInvoiceCart.forEach(it => cashTotal += it.total);
-
-  const dpInput = document.getElementById('instDownPayment');
-  const downPayment = dpInput ? (parseFloat(dpInput.value) || 0) : 0;
-
-  const mInput = document.getElementById('instMonths');
-  const months = mInput ? (parseInt(mInput.value) || 12) : 12;
-
-  const irInput = document.getElementById('instInterestRate');
-  const interestRate = irInput ? (parseFloat(irInput.value) || 0) : 0;
-
-  const remainingBase = Math.max(0, cashTotal - downPayment);
-  const interestAmount = remainingBase * (interestRate / 100) * (months / 12);
-  const totalRemainingWithInterest = remainingBase + interestAmount;
-  const grandTotalContract = downPayment + totalRemainingWithInterest;
-  const monthlyAmount = months > 0 ? Math.round(totalRemainingWithInterest / months) : 0;
-
-  const totElem = document.getElementById('instCalculatedTotal');
-  if (totElem) totElem.innerText = `${Math.round(grandTotalContract).toLocaleString()} ج.م`;
-
-  const moElem = document.getElementById('instCalculatedMonthly');
-  if (moElem) moElem.innerText = `${monthlyAmount.toLocaleString()} ج / شهر`;
-
-  return {
-    cashPrice: cashTotal,
-    downPayment,
-    months,
-    interestRate,
-    grandTotalContract: Math.round(grandTotalContract),
-    monthlyAmount,
-    totalRemainingWithInterest: Math.round(totalRemainingWithInterest)
-  };
-}
-
-function handleSaveSaleInvoice() {
-  if (currentSaleInvoiceCart.length === 0) {
-    alert('يرجى إضافة جهاز واحد على الأقل إلى سلة الفاتورة.');
-    return;
-  }
-
-  const nameInput = document.getElementById('saleCustomerName');
-  const phoneInput = document.getElementById('saleCustomerPhone');
-
-  if (!nameInput || !phoneInput) return;
-
-  const customerName = nameInput.value.trim();
-  const customerPhone = phoneInput.value.trim();
-
-  const natIdInput = document.getElementById('saleCustomerNationalId');
-  const nationalId = (natIdInput && natIdInput.value.trim()) ? natIdInput.value.trim() : '--';
-
-  const gNameInput = document.getElementById('saleGuarantorName');
-  const guarantorName = (gNameInput && gNameInput.value.trim()) ? gNameInput.value.trim() : '--';
-
-  const gPhoneInput = document.getElementById('saleGuarantorPhone');
-  const guarantorPhone = (gPhoneInput && gPhoneInput.value.trim()) ? gPhoneInput.value.trim() : '--';
-
-  const gNatIdInput = document.getElementById('saleGuarantorNationalId');
-  const guarantorNationalId = (gNatIdInput && gNatIdInput.value.trim()) ? gNatIdInput.value.trim() : '--';
-
-  const typeSelect = document.getElementById('saleTypeSelect');
-  const saleType = typeSelect ? typeSelect.value : 'installment';
-
-  if (!customerName || !customerPhone) {
-    alert('يرجى كتابة اسم العميل ورقم الهاتف.');
-    return;
-  }
-
-  const today = new Date().toISOString().split('T')[0];
-  const sales = getStoredSales();
-  const newInvoiceId = 'INV-' + (sales.length + 501);
-
-  const deviceNamesCombined = currentSaleInvoiceCart.map(i => `${i.name} (عدد ${i.qty})`).join(' + ');
-  const serialsCombined = currentSaleInvoiceCart.map(i => i.serial).join(', ');
-  let totalQty = 0;
-  let totalCashPrice = 0;
-  currentSaleInvoiceCart.forEach(i => { totalQty += i.qty; totalCashPrice += i.total; });
-
-  if (saleType === 'cash') {
-    sales.unshift({
-      id: newInvoiceId,
-      date: today,
-      customerName,
-      customerPhone,
-      nationalId,
-      guarantorName,
-      guarantorPhone,
-      guarantorNationalId,
-      deviceName: deviceNamesCombined,
-      rawDeviceName: currentSaleInvoiceCart[0].name,
-      serialNumber: serialsCombined,
-      type: 'كاش',
-      quantity: totalQty,
-      unitPrice: totalCashPrice / totalQty,
-      totalPrice: totalCashPrice,
-      paidImmediately: totalCashPrice,
-      contractId: null,
-      items: [...currentSaleInvoiceCart]
-    });
-
-    setStoredSales(sales);
-    closeModal('newSaleModal');
-    currentSaleInvoiceCart = [];
-    renderSaleCartTbody();
-    populateDeviceSelects();
-    renderDashboard();
-    renderInventoryTable();
-    renderSalesTable();
-    alert(`تم حفظ فاتورة البيع الكاش (${newInvoiceId}) بنجاح وخصم الأجهزة من المخزن.`);
-  } else {
-    const math = calculateInstallmentMath();
-    const contracts = getStoredContracts();
-
-    const existingClientContract = contracts.find(c => c.customerPhone.trim() === customerPhone.trim());
-    let clientCodeToUse;
-    if (existingClientContract && existingClientContract.clientCode) {
-      clientCodeToUse = existingClientContract.clientCode;
-    } else {
-      clientCodeToUse = contracts.length > 0 ? (Math.max(...contracts.map(c => c.clientCode || 0)) + 1) : 1;
-    }
-
-    const contractId = 'CNT-' + (contracts.length + 101);
-    const stDateInput = document.getElementById('instStartDate');
-    const startDateStr = (stDateInput && stDateInput.value) ? stDateInput.value : today;
-
-    const installmentsList = [];
-    let currentMonthDate = new Date(startDateStr);
-
-    for (let i = 1; i <= math.months; i++) {
-      const dueDateStr = currentMonthDate.toISOString().split('T')[0];
-      installmentsList.push({
-        number: i,
-        dueDate: dueDateStr,
-        amount: math.monthlyAmount,
-        status: 'قادم',
-        paidDate: null,
-        paidActual: 0
-      });
-      currentMonthDate.setMonth(currentMonthDate.getMonth() + 1);
-    }
-
-    const newContract = {
-      clientCode: clientCodeToUse,
-      id: contractId,
-      invoiceDate: today,
-      customerName,
-      customerPhone,
-      nationalId,
-      guarantorName,
-      guarantorPhone,
-      guarantorNationalId,
-      items: [...currentSaleInvoiceCart],
-      deviceName: deviceNamesCombined,
-      rawDeviceName: currentSaleInvoiceCart[0].name,
-      serialNumber: serialsCombined,
-      quantity: totalQty,
-      cashPrice: math.cashPrice,
-      downPayment: math.downPayment,
-      months: math.months,
-      interestRate: math.interestRate,
-      totalWithInterest: math.grandTotalContract,
-      monthlyAmount: math.monthlyAmount,
-      paidAmount: math.downPayment,
-      remainingAmount: math.totalRemainingWithInterest,
-      startDate: startDateStr,
-      installments: installmentsList
-    };
-
-    contracts.unshift(newContract);
-    setStoredContracts(contracts);
-
-    sales.unshift({
-      id: newInvoiceId,
-      date: today,
-      customerName,
-      customerPhone,
-      nationalId,
-      guarantorName,
-      guarantorPhone,
-      guarantorNationalId,
-      deviceName: deviceNamesCombined,
-      rawDeviceName: currentSaleInvoiceCart[0].name,
-      serialNumber: serialsCombined,
-      type: 'تقسيط',
-      quantity: totalQty,
-      unitPrice: math.cashPrice / totalQty,
-      totalPrice: math.grandTotalContract,
-      paidImmediately: math.downPayment,
-      contractId: contractId,
-      items: [...currentSaleInvoiceCart]
-    });
-
-    setStoredSales(sales);
-    closeModal('newSaleModal');
-    currentSaleInvoiceCart = [];
-    renderSaleCartTbody();
-    populateDeviceSelects();
-    renderDashboard();
-    renderInventoryTable();
-    renderInstallmentsTable();
-    renderSalesTable();
-
-    alert(`تم بنجاح حفظ فاتورة التقسيط للعميل (${customerName}) تحت الكود (#${clientCodeToUse}).`);
+    openModal('newSaleModal');
   }
 }
 
 // ==========================================
-// 8. التحصيل المرن وتعديل الفواتير
+// 3. التحصيل المرن وتعديل الفاتورة
 // ==========================================
 function openCollectInstallmentModal(contractId, installmentNumber) {
   currentCollectingContractId = contractId;
@@ -1704,7 +912,7 @@ function openEditInvoiceModal(identifier) {
   const serIn = document.getElementById('editSerialInput');
   if (serIn) serIn.value = targetSale ? targetSale.serialNumber : targetContract.serialNumber;
 
-  const rawDevice = targetContract ? targetContract.rawDeviceName : (targetSale.rawDeviceName || targetSale.deviceName.split(' (عدد')[0]);
+  const rawDevice = targetContract ? targetContract.rawDeviceName : (targetSale.rawDeviceName || (targetSale.deviceName ? targetSale.deviceName.split(' (عدد')[0] : ''));
   const rawDevIn = document.getElementById('editDeviceRawNameInput');
   if (rawDevIn) rawDevIn.value = rawDevice;
 
@@ -1887,7 +1095,7 @@ function handleSaveInvoiceEdits() {
 }
 
 // ==========================================
-// 9. إدارة المصاريف الخارجية
+// 4. إدارة المصاريف الخارجية
 // ==========================================
 function renderExpensesTable() {
   const expenses = getStoredExpenses();
@@ -1979,7 +1187,7 @@ function deleteExpense(expId) {
 }
 
 // ==========================================
-// 10. رسائل الواتساب
+// 5. رسائل الواتساب
 // ==========================================
 function openChooseWhatsAppModal(contractId) {
   const contracts = getStoredContracts();
@@ -2035,7 +1243,7 @@ function buildDetailedInstallmentsBreakdown(contract) {
 function executeSendWhatsAppTemplate(templateType) {
   if (!currentContractForWhatsApp) return;
   const c = currentContractForWhatsApp;
-  const cleanPhone = c.customerPhone.replace(/[^0-9]/g, '');
+  const cleanPhone = (c.customerPhone || '').toString().replace(/[^0-9]/g, '');
 
   const breakdown = buildDetailedInstallmentsBreakdown(c);
   let message = '';
@@ -2100,7 +1308,7 @@ ${breakdown.remainingText}
 }
 
 // ==========================================
-// 11. تصدير واستيراد الإكسيل
+// 6. تصدير واستيراد الإكسيل
 // ==========================================
 function exportAllDataToExcel() {
   const wb = XLSX.utils.book_new();
@@ -2228,4 +1436,152 @@ function restoreJsonBackup(event) {
     }
   };
   reader.readAsText(file);
+}
+
+// ==========================================
+// 7. الكاميرا والباركود
+// ==========================================
+function openBarcodeScanner(targetMode) {
+  currentTargetInputIdForScanner = targetMode;
+  openModal('barcodeScannerModal');
+
+  const instruction = document.getElementById('scannerInstructionText');
+  if (instruction) {
+    if (targetMode === 'home_inquiry') {
+      instruction.innerText = "وجّه الكاميرا على باركود الجهاز لعرض كافة بياناته وأسعاره من المخزن فوراً.";
+    } else if (targetMode === 'sale_barcode_detect') {
+      instruction.innerText = "امسح باركود كرتونة الجهاز لإضافته تلقائياً إلى سلة الفاتورة.";
+    } else {
+      instruction.innerText = "وجّه كاميرا الهاتف على الباركود أو السيريال الملصق على الكرتونة مباشرة.";
+    }
+  }
+
+  const config = { fps: 15, qrbox: { width: 250, height: 160 } };
+  html5QrCodeScannerInstance = new Html5Qrcode("barcode-scanner-box");
+
+  html5QrCodeScannerInstance.start(
+    { facingMode: "environment" },
+    config,
+    (decodedText) => {
+      handleBarcodeScannedSuccessfully(decodedText);
+    },
+    () => {}
+  ).catch(() => {
+    alert("تعذر الوصول إلى الكاميرا. يرجى التأكد من إعطاء إذن الكاميرا للمتصفح.");
+    closeBarcodeScanner();
+  });
+}
+
+function handleBarcodeScannedSuccessfully(scannedCode) {
+  const codeClean = scannedCode.trim();
+  closeBarcodeScanner();
+
+  if (currentTargetInputIdForScanner === 'home_inquiry') {
+    executeDeviceInquiryByBarcode(codeClean);
+    return;
+  }
+
+  if (currentTargetInputIdForScanner === 'sale_barcode_detect') {
+    executeAutoSelectDeviceForSaleByBarcode(codeClean);
+    return;
+  }
+
+  const inputElem = document.getElementById(currentTargetInputIdForScanner);
+  if (inputElem) {
+    if (inputElem.value && inputElem.value.trim().length > 0) {
+      inputElem.value = inputElem.value.trim() + ", " + codeClean;
+    } else {
+      inputElem.value = codeClean;
+    }
+  }
+}
+
+function closeBarcodeScanner() {
+  if (html5QrCodeScannerInstance) {
+    html5QrCodeScannerInstance.stop().then(() => {
+      html5QrCodeScannerInstance.clear();
+      html5QrCodeScannerInstance = null;
+    }).catch(() => {
+      html5QrCodeScannerInstance = null;
+    });
+  }
+  closeModal('barcodeScannerModal');
+}
+
+function executeDeviceInquiryByBarcode(barcode) {
+  const inventory = buildDynamicInventory();
+  const matchedItem = inventory.find(i => 
+    (i.barcode && i.barcode.toLowerCase() === barcode.toLowerCase()) ||
+    (i.name && i.name.toLowerCase().includes(barcode.toLowerCase()))
+  );
+
+  const content = document.getElementById('deviceInquiryResultContent');
+  if (!content) return;
+
+  if (!matchedItem) {
+    lastInquiredDeviceObject = null;
+    content.innerHTML = `
+      <div class="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-center space-y-1">
+        <i class="fa-solid fa-triangle-exclamation text-rose-400 text-xl"></i>
+        <h4 class="font-bold text-white text-sm">الجهاز غير موجود بالمخزن!</h4>
+        <p class="text-[11px] text-slate-400">الباركود المفحوص: <span class="font-mono text-rose-300">${barcode}</span></p>
+      </div>
+    `;
+  } else {
+    lastInquiredDeviceObject = matchedItem;
+    const isOutOfStock = matchedItem.currentQty <= 0;
+
+    content.innerHTML = `
+      <div class="bg-slate-900 border border-cyan-500/30 rounded-2xl p-4 space-y-3">
+        <div>
+          <span class="text-[10px] text-cyan-400 font-bold block">باركود: ${matchedItem.barcode}</span>
+          <h4 class="text-base font-black text-white mt-0.5">${matchedItem.name}</h4>
+          <p class="text-xs text-slate-400 mt-0.5">المورد: <b class="text-purple-300">${matchedItem.supplierName}</b></p>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-center">
+          <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-slate-400 block font-semibold">الرصيد بالمخزن</span>
+            <b class="text-base font-black ${isOutOfStock ? 'text-rose-400' : 'text-emerald-400'}">
+              ${isOutOfStock ? 'نفذت الكمية ❌' : matchedItem.currentQty + ' أجهزة متوفرة'}
+            </b>
+          </div>
+          <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-emerald-400 block font-semibold">سعر الكاش</span>
+            <b class="text-base font-black text-white">${matchedItem.cashPrice.toLocaleString()} ج.م</b>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  openModal('deviceInquiryModal');
+}
+
+function proceedToSellInquiredDevice() {
+  if (!lastInquiredDeviceObject) return;
+  closeModal('deviceInquiryModal');
+  openModal('newSaleModal');
+  const select = document.getElementById('saleDeviceSelect');
+  if (select) {
+    select.value = lastInquiredDeviceObject.itemId;
+    autoFillDevicePrice();
+  }
+}
+
+function executeAutoSelectDeviceForSaleByBarcode(barcode) {
+  const inventory = buildDynamicInventory();
+  const matched = inventory.find(i => 
+    (i.barcode && i.barcode.toLowerCase() === barcode.toLowerCase()) ||
+    (i.name && i.name.toLowerCase().includes(barcode.toLowerCase()))
+  );
+
+  if (matched) {
+    const select = document.getElementById('saleDeviceSelect');
+    if (select) {
+      select.value = matched.itemId;
+      autoFillDevicePrice();
+    }
+    alert(`تم التعرف على (${matched.name}) وتنزيله بقائمة الفاتورة.`);
+  } else {
+    alert(`لم يتم العثور على جهاز بهذا الباركود (${barcode}) في المخزن.`);
+  }
 }
