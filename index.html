@@ -101,17 +101,17 @@
       </button>
     </nav>
 
-    <!-- قسم أزرار النسخ الاحتياطي والإكسيل بالقائمة -->
+    <!-- أزرار النسخ الاحتياطي والإكسيل -->
     <div class="p-3 border-t border-slate-800 space-y-2">
       <button onclick="exportAllDataToExcel()" class="w-full py-2 px-3 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 text-[11px] font-bold flex items-center justify-center gap-2 transition">
         <i class="fa-solid fa-file-excel text-sm text-emerald-400"></i>
         <span>تصدير إكسيل كامل (.xlsx)</span>
       </button>
       <div class="grid grid-cols-2 gap-1.5">
-        <button onclick="downloadJsonBackup()" class="py-1.5 px-2 rounded-xl bg-blue-600/20 text-blue-300 border border-blue-500/30 text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-blue-600 hover:text-white transition" title="تنزيل نسخة احتياطية آمنة">
+        <button onclick="downloadJsonBackup()" class="py-1.5 px-2 rounded-xl bg-blue-600/20 text-blue-300 border border-blue-500/30 text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-blue-600 hover:text-white transition">
           <i class="fa-solid fa-download"></i> نسخ أمان
         </button>
-        <button onclick="document.getElementById('restoreFileInput').click()" class="py-1.5 px-2 rounded-xl bg-purple-600/20 text-purple-300 border border-purple-500/30 text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-purple-600 hover:text-white transition" title="استرجاع نسخة محفوظة">
+        <button onclick="document.getElementById('restoreFileInput').click()" class="py-1.5 px-2 rounded-xl bg-purple-600/20 text-purple-300 border border-purple-500/30 text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-purple-600 hover:text-white transition">
           <i class="fa-solid fa-upload"></i> استرجاع
         </button>
       </div>
@@ -203,7 +203,7 @@
         </div>
       </div>
 
-      <!-- تقرير حركة المبيعات الشهري السريع -->
+      <!-- تقرير مبيعات الشهر -->
       <div class="bg-[#111726] border border-slate-800 rounded-3xl p-4 shadow-xl space-y-3">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-slate-800/80 pb-3">
           <div>
@@ -251,7 +251,6 @@
     <!-- VIEW: صفحة التقارير الشهرية والسنوية الشاملة -->
     <!-- ========================================== -->
     <section id="view-reports" class="hidden space-y-4">
-      <!-- ترويسة التقارير مع اختيار السنة والبحث والتصدير -->
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-[#111726] p-4 rounded-3xl border border-slate-800 shadow-xl">
         <div>
           <h3 class="text-base font-bold text-white flex items-center gap-2">
@@ -279,7 +278,6 @@
         </div>
       </div>
 
-      <!-- كروت ملخص إحصائيات السنة -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 text-center text-xs">
         <div class="p-3 bg-[#111726] rounded-2xl border border-slate-800">
           <span class="text-[10px] text-slate-400 block font-semibold">إجمالي مبيعات السنة</span>
@@ -299,7 +297,6 @@
         </div>
       </div>
 
-      <!-- جدول مصفوفة الأشهر من 1 إلى 12 -->
       <div class="bg-[#111726] border border-slate-800 rounded-3xl p-4 shadow-xl">
         <div class="overflow-x-auto custom-scrollbar">
           <table class="w-full text-center text-xs whitespace-nowrap">
@@ -1123,572 +1120,339 @@
   </div>
 
   <!-- ========================================== -->
-  <!-- المنطق البرمجي الكامل ودوال النظام والتقارير (JAVASCRIPT) -->
+  <!-- المنطق البرمجي الكامل ودوال النظام والموردين (JAVASCRIPT) -->
   <!-- ========================================== -->
   <script>
-    const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_detailed_suppliers_v3';
-    const STORAGE_KEY_SELLING_PRICES = 'elabd_selling_prices_v3';
-    const STORAGE_KEY_SALES = 'elabd_sales_v4';
-    const STORAGE_KEY_CONTRACTS = 'elabd_contracts_v12';
-    const STORAGE_KEY_EXPENSES = 'elabd_expenses_v1';
-    const STORAGE_KEY_CURRENT_TAB = 'elabd_current_tab';
-
-    const defaultSuppliersData = [
-      {
-        id: 'SUP-01',
-        name: 'شركة العربي (توشيبا وشارب)',
-        phone: '01099887766',
-        address: 'مخازن بنها',
-        items: [
-          { id: 'ITM-1', barcode: 'TOSH-16-REF', date: '2026-09-15', name: 'ثلاجة توشيبا 16 قدم نوفروست', qty: 5, unitPrice: 21000, total: 105000, paid: 70000, remaining: 35000 },
-          { id: 'ITM-2', barcode: 'SHARP-25-MIC', date: '2026-09-28', name: 'ميكروويف شارب 25 لتر بالشواية', qty: 10, unitPrice: 5200, total: 52000, paid: 30000, remaining: 22000 }
-        ]
-      },
-      {
-        id: 'SUP-02',
-        name: 'موزع غسالات وشاشات إل جي',
-        phone: '01155443322',
-        address: 'مصر الجديدة',
-        items: [
-          { id: 'ITM-3', barcode: 'LG-9K-WASH', date: '2026-10-01', name: 'غسالة إل جي 9 كيلو فول أوتوماتيك', qty: 6, unitPrice: 19500, total: 117000, paid: 117000, remaining: 0 },
-          { id: 'ITM-4', barcode: 'SAM-55-4K', date: '2026-10-03', name: 'شاشة سامسونج 55 بوصة سمارت 4K', qty: 8, unitPrice: 14500, total: 116000, paid: 60000, remaining: 56000 }
-        ]
-      }
-    ];
-
-    const defaultSellingPrices = {
-      'ثلاجة توشيبا 16 قدم نوفروست': 25000,
-      'ميكروويف شارب 25 لتر بالشواية': 6500,
-      'غسالة إل جي 9 كيلو فول أوتوماتيك': 23500,
-      'شاشة سامسونج 55 بوصة سمارت 4K': 17800
-    };
-
-    const defaultContracts = [
-      {
-        clientCode: 1,
-        id: 'CNT-101',
-        invoiceDate: '2026-08-01',
-        customerName: 'محمود عبد الفتاح',
-        customerPhone: '01012345678',
-        nationalId: '29704141234567',
-        guarantorName: 'إبراهيم السيد علي',
-        guarantorPhone: '01123456789',
-        guarantorNationalId: '29508129876543',
-        items: [
-          { name: 'غسالة إل جي 9 كيلو فول أوتوماتيك', qty: 1, unitPrice: 23500, total: 23500, serial: 'SN-LG9K-9921' }
-        ],
-        deviceName: 'غسالة إل جي 9 كيلو فول أوتوماتيك (عدد 1)',
-        rawDeviceName: 'غسالة إل جي 9 كيلو فول أوتوماتيك',
-        serialNumber: 'SN-LG9K-9921',
-        quantity: 1,
-        cashPrice: 23500,
-        downPayment: 3500,
-        months: 12,
-        interestRate: 15,
-        totalWithInterest: 26500,
-        monthlyAmount: 1917,
-        paidAmount: 7334,
-        remainingAmount: 19166,
-        startDate: '2026-08-01',
-        installments: [
-          { number: 1, dueDate: '2026-08-01', amount: 1917, status: 'مدفوع بالكامل', paidDate: '2026-08-01', paidActual: 1917 },
-          { number: 2, dueDate: '2026-09-01', amount: 1917, status: 'مدفوع بالكامل', paidDate: '2026-09-02', paidActual: 1917 },
-          { number: 3, dueDate: '2026-10-01', amount: 1917, status: 'مستحق', paidDate: null, paidActual: 0 },
-          { number: 4, dueDate: '2026-11-01', amount: 1917, status: 'قادم', paidDate: null, paidActual: 0 }
-        ]
-      }
-    ];
-
-    const defaultSales = [
-      {
-        id: 'INV-501',
-        date: '2026-08-01',
-        customerName: 'محمود عبد الفتاح',
-        customerPhone: '01012345678',
-        nationalId: '29704141234567',
-        deviceName: 'غسالة إل جي 9 كيلو فول أوتوماتيك (عدد 1)',
-        rawDeviceName: 'غسالة إل جي 9 كيلو فول أوتوماتيك',
-        serialNumber: 'SN-LG9K-9921',
-        type: 'تقسيط',
-        quantity: 1,
-        unitPrice: 23500,
-        totalPrice: 26500,
-        paidImmediately: 3500,
-        contractId: 'CNT-101'
-      }
-    ];
-
-    const defaultExpenses = [
-      { id: 'EXP-1', date: '2026-10-02', title: 'شحن ونقل شاشات من الميناء', category: 'نقل وشحن', amount: 850, notes: 'نولون سيارة نقل' },
-      { id: 'EXP-2', date: '2026-10-05', title: 'بوفيه وضيافة للمعرض', category: 'مصاريف شخصية وبوفيه', amount: 350, notes: 'مشروبات وضيافة عملاء' }
-    ];
-
-    let currentSupplierShipmentCart = [];
-    let currentSaleInvoiceCart = [];
-
-    let selectedSupplierId = 'SUP-01';
-    let currentCollectingContractId = null;
-    let currentCollectingInstallmentNum = null;
-    let currentCollectingFullAmount = 0;
-    let currentCollectingRemainingAmount = 0;
-    let currentContractForWhatsApp = null;
-    let activeCustomerPhoneForProfile = null;
-    let activeInvoiceIdInProfile = null;
-    let currentEditingInvoiceId = null;
-
-    let html5QrCodeScannerInstance = null;
-    let currentTargetInputIdForScanner = null;
-    let lastInquiredDeviceObject = null;
-
-    function getDetailedSuppliers() {
-      const d = localStorage.getItem(STORAGE_KEY_DETAILED_SUPPLIERS);
-      return d ? JSON.parse(d) : defaultSuppliersData;
-    }
-    function setDetailedSuppliers(d) {
-      localStorage.setItem(STORAGE_KEY_DETAILED_SUPPLIERS, JSON.stringify(d));
-    }
-
-    function getSellingPrices() {
-      const d = localStorage.getItem(STORAGE_KEY_SELLING_PRICES);
-      return d ? JSON.parse(d) : defaultSellingPrices;
-    }
-    function setSellingPrices(d) {
-      localStorage.setItem(STORAGE_KEY_SELLING_PRICES, JSON.stringify(d));
-    }
-
-    function getStoredContracts() {
-      const d = localStorage.getItem(STORAGE_KEY_CONTRACTS);
-      return d ? JSON.parse(d) : defaultContracts;
-    }
-    function setStoredContracts(d) {
-      localStorage.setItem(STORAGE_KEY_CONTRACTS, JSON.stringify(d));
-    }
-
-    function getStoredSales() {
-      const d = localStorage.getItem(STORAGE_KEY_SALES);
-      return d ? JSON.parse(d) : defaultSales;
-    }
-    function setStoredSales(d) {
-      localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(d));
-    }
-
-    function getStoredExpenses() {
-      const d = localStorage.getItem(STORAGE_KEY_EXPENSES);
-      return d ? JSON.parse(d) : defaultExpenses;
-    }
-    function setStoredExpenses(d) {
-      localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(d));
-    }
-
-    function calculateAllSuppliersTotalRemaining() {
-      const suppliers = getDetailedSuppliers();
-      let totalRemaining = 0;
-      suppliers.forEach(sup => {
-        (sup.items || []).forEach(it => {
-          const rem = Math.max(0, (it.total || 0) - (it.paid || 0));
-          totalRemaining += rem;
-        });
-      });
-      return totalRemaining;
-    }
-
-    function calculateTotalExpenses() {
-      const expenses = getStoredExpenses();
-      return expenses.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-    }
-
-    function buildDynamicInventory() {
-      const suppliers = getDetailedSuppliers();
-      const sales = getStoredSales();
-      const sellingPrices = getSellingPrices();
-      const inventoryMap = {};
-
-      suppliers.forEach(sup => {
-        (sup.items || []).forEach(it => {
-          if (!inventoryMap[it.id]) {
-            inventoryMap[it.id] = {
-              itemId: it.id,
-              barcode: it.barcode || ('BAR-' + it.id),
-              name: it.name,
-              supplierId: sup.id,
-              supplierName: sup.name,
-              supplyDate: it.date || '',
-              buyPrice: it.unitPrice,
-              initialQty: parseInt(it.qty) || 0,
-              currentQty: parseInt(it.qty) || 0,
-              cashPrice: sellingPrices[it.name] || Math.round(it.unitPrice * 1.2)
-            };
-          } else {
-            inventoryMap[it.id].initialQty += parseInt(it.qty) || 0;
-            inventoryMap[it.id].currentQty += parseInt(it.qty) || 0;
-          }
-        });
-      });
-
-      sales.forEach(sale => {
-        const qtySold = parseInt(sale.quantity) || 1;
-        const itemEntry = Object.values(inventoryMap).find(x => 
-          sale.deviceName.includes(x.name) || x.name === sale.rawDeviceName
-        );
-        if (itemEntry) {
-          itemEntry.currentQty = Math.max(0, itemEntry.currentQty - qtySold);
-        }
-      });
-
-      return Object.values(inventoryMap);
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      populateDeviceSelects();
-      const today = new Date().toISOString().split('T')[0];
-      const startDateInput = document.getElementById('instStartDate');
-      if (startDateInput) startDateInput.value = today;
-
-      const expenseDate = document.getElementById('expenseDateInput');
-      if (expenseDate) expenseDate.value = today;
-
-      const currentYearMonth = today.substring(0, 7);
-      const reportMonthInput = document.getElementById('selectedReportMonthInput');
-      if (reportMonthInput && !reportMonthInput.value) {
-        reportMonthInput.value = currentYearMonth;
-      }
-
-      const savedTab = localStorage.getItem(STORAGE_KEY_CURRENT_TAB) || 'dashboard';
-      switchView(savedTab);
-    });
-
-    function toggleSidebar() {
-      const sb = document.getElementById('sidebar');
-      const ov = document.getElementById('sidebarOverlay');
-      const isClosed = sb.classList.contains('translate-x-full');
-      sb.classList.toggle('translate-x-full', !isClosed);
-      sb.classList.toggle('translate-x-0', isClosed);
-      ov.classList.toggle('hidden', !isClosed);
-    }
-
-    function switchView(viewName) {
-      if (window.innerWidth < 768) {
-        const sb = document.getElementById('sidebar');
-        if (!sb.classList.contains('translate-x-full')) toggleSidebar();
-      }
-
-      localStorage.setItem(STORAGE_KEY_CURRENT_TAB, viewName);
-
-      ['dashboard', 'reports', 'suppliers', 'installments', 'inventory', 'sales', 'expenses'].forEach(v => {
-        const section = document.getElementById(`view-${v}`);
-        if (section) section.classList.add('hidden');
-        const navBtn = document.getElementById(`nav-${v}`);
-        if (navBtn) {
-          navBtn.className = 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition';
-        }
-      });
-
-      const targetSection = document.getElementById(`view-${viewName}`);
-      if (targetSection) targetSection.classList.remove('hidden');
-
-      const activeBtn = document.getElementById(`nav-${viewName}`);
-      if (activeBtn) {
-        activeBtn.className = 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold transition';
-      }
-
-      if (viewName === 'dashboard') renderDashboard();
-      if (viewName === 'reports') renderAnnualReportsView();
-      if (viewName === 'suppliers') renderSuppliersTable();
-      if (viewName === 'installments') renderInstallmentsTable();
-      if (viewName === 'inventory') renderInventoryTable();
-      if (viewName === 'sales') renderSalesTable();
-      if (viewName === 'expenses') renderExpensesTable();
-    }
-
-    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
     // ==========================================
-    // منطق تقارير المبيعات الشهرية والسنوية الشاملة (شهور 1 إلى 12)
+    // دوال الموردين والمشتريات (المكتملة)
     // ==========================================
-    function getAnnualReportData(year) {
-      const sales = getStoredSales();
-      const productMap = {};
-      let totalAnnualRevenue = 0;
-      let totalAnnualPieces = 0;
-      const monthTotals = Array(13).fill(0); // 1..12
+    function renderSuppliersTable() {
+      const suppliers = getDetailedSuppliers();
+      const listContainer = document.getElementById('suppliersMasterList');
+      if (!listContainer) return;
+      listContainer.innerHTML = '';
 
-      sales.forEach(sale => {
-        if (!sale.date || !sale.date.startsWith(year.toString())) return;
+      const grandTotalDebts = calculateAllSuppliersTotalRemaining();
+      const debtElem = document.getElementById('allSuppliersGrandRemainingVal');
+      if (debtElem) debtElem.innerText = `${grandTotalDebts.toLocaleString()} ج.م`;
 
-        const saleMonth = parseInt(sale.date.split('-')[1], 10);
-        if (isNaN(saleMonth) || saleMonth < 1 || saleMonth > 12) return;
+      const badgeElem = document.getElementById('suppliersCountBadge');
+      if (badgeElem) badgeElem.innerText = `${suppliers.length} موردين`;
 
-        // استخراج اسم الصنف بدقة
-        const rawName = sale.rawDeviceName || sale.deviceName.split(' (عدد')[0].trim();
-        const qty = parseInt(sale.quantity) || 1;
-        const totalAmount = parseFloat(sale.totalPrice) || 0;
-
-        if (!productMap[rawName]) {
-          productMap[rawName] = {
-            name: rawName,
-            monthlyPieces: Array(13).fill(0),
-            totalPieces: 0,
-            totalRevenue: 0
-          };
-        }
-
-        productMap[rawName].monthlyPieces[saleMonth] += qty;
-        productMap[rawName].totalPieces += qty;
-        productMap[rawName].totalRevenue += totalAmount;
-
-        totalAnnualRevenue += totalAmount;
-        totalAnnualPieces += qty;
-        monthTotals[saleMonth] += qty;
-      });
-
-      return {
-        products: Object.values(productMap),
-        totalAnnualRevenue,
-        totalAnnualPieces,
-        monthTotals
-      };
-    }
-
-    function renderAnnualReportsView() {
-      const year = document.getElementById('annualReportYearSelect').value || '2026';
-      const searchTxt = (document.getElementById('annualReportSearchInput').value || '').trim().toLowerCase();
-
-      const reportData = getAnnualReportData(year);
-
-      // تحديث كروت الإحصائيات العلوية
-      document.getElementById('annualTotalRevenueVal').innerText = `${reportData.totalAnnualRevenue.toLocaleString()} ج.م`;
-      document.getElementById('annualTotalPiecesVal').innerText = `${reportData.totalAnnualPieces.toLocaleString()} قطعة`;
-
-      // حساب المنتج الأكثر مبيعاً
-      let topProduct = '--';
-      let maxProdPieces = 0;
-      reportData.products.forEach(p => {
-        if (p.totalPieces > maxProdPieces) {
-          maxProdPieces = p.totalPieces;
-          topProduct = `${p.name} (${p.totalPieces} قطعة)`;
-        }
-      });
-      document.getElementById('annualTopProductVal').innerText = topProduct;
-
-      // حساب أكثر الشهور نشاطاً
-      const monthNames = ["", "شهر 1 (يناير)", "شهر 2 (فبراير)", "شهر 3 (مارس)", "شهر 4 (أبريل)", "شهر 5 (مايو)", "شهر 6 (يونيو)", "شهر 7 (يوليو)", "شهر 8 (أغسطس)", "شهر 9 (سبتمبر)", "شهر 10 (أكتوبر)", "شهر 11 (نوفمبر)", "شهر 12 (ديسمبر)"];
-      let bestMonthNum = 1;
-      let maxMonthPieces = 0;
-      for (let m = 1; m <= 12; m++) {
-        if (reportData.monthTotals[m] > maxMonthPieces) {
-          maxMonthPieces = reportData.monthTotals[m];
-          bestMonthNum = m;
-        }
-      }
-      document.getElementById('annualBestMonthVal').innerText = maxMonthPieces > 0 ? `${monthNames[bestMonthNum]} (${maxMonthPieces} قطعة)` : 'لا توجد مبيعات';
-
-      // بناء جدول الـ 12 شهراً
-      const tbody = document.getElementById('annualReportTableBody');
-      tbody.innerHTML = '';
-
-      const filteredProducts = reportData.products.filter(p => !searchTxt || p.name.toLowerCase().includes(searchTxt));
-
-      if (filteredProducts.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="15" class="p-8 text-center text-slate-500">لا توجد مبيعات مسجلة في سنة ${year} مطابقة للبحث.</td></tr>`;
-        document.getElementById('annualReportTableFoot').innerHTML = '';
+      if (suppliers.length === 0) {
+        listContainer.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">لا يوجد موردين مسجلين.</p>';
+        const detailContainer = document.getElementById('supplierDetailContainer');
+        if (detailContainer) detailContainer.innerHTML = '';
         return;
       }
 
-      filteredProducts.forEach(prod => {
-        let monthsHtml = '';
-        for (let m = 1; m <= 12; m++) {
-          const qty = prod.monthlyPieces[m];
-          monthsHtml += `
-            <td class="p-2 font-bold ${qty > 0 ? 'text-emerald-400 bg-emerald-500/10 rounded-lg' : 'text-slate-600'}">
-              ${qty > 0 ? qty : '-'}
-            </td>
-          `;
-        }
+      if (!selectedSupplierId || !suppliers.find(s => s.id === selectedSupplierId)) {
+        selectedSupplierId = suppliers[0].id;
+      }
 
-        tbody.innerHTML += `
-          <tr class="hover:bg-slate-900/60 transition">
-            <td class="p-2.5 text-right font-bold text-white sticky right-0 bg-[#111726] border-l border-slate-800">${prod.name}</td>
-            ${monthsHtml}
-            <td class="p-2.5 font-black text-cyan-400 bg-slate-950/80 text-sm">${prod.totalPieces}</td>
-            <td class="p-2.5 font-black text-emerald-400 bg-slate-950/80 text-sm">${prod.totalRevenue.toLocaleString()} ج</td>
+      suppliers.forEach(sup => {
+        let totalBill = 0;
+        let totalPaid = 0;
+        (sup.items || []).forEach(it => {
+          totalBill += (parseFloat(it.total) || 0);
+          totalPaid += (parseFloat(it.paid) || 0);
+        });
+        const remaining = Math.max(0, totalBill - totalPaid);
+        const isSelected = sup.id === selectedSupplierId;
+
+        listContainer.innerHTML += `
+          <div onclick="selectSupplierProfile('${sup.id}')" class="p-3 rounded-2xl cursor-pointer border transition ${isSelected ? 'bg-purple-950/40 border-purple-500' : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'}">
+            <div class="flex justify-between items-start">
+              <h4 class="font-bold text-xs text-white truncate">${sup.name}</h4>
+              <span class="text-[9px] px-1.5 py-0.5 rounded font-bold ${remaining > 0 ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}">
+                ${remaining > 0 ? remaining.toLocaleString() + ' ج متبقي' : 'خالص ✔'}
+              </span>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-1"><i class="fa-solid fa-phone text-slate-500"></i> ${sup.phone}</p>
+            <div class="mt-2 pt-2 border-t border-slate-800/80 flex justify-between text-[10px]">
+              <span class="text-slate-400">الإجمالي: <b class="text-slate-200">${totalBill.toLocaleString()} ج</b></span>
+              <span class="text-emerald-400">المدفوع: <b>${totalPaid.toLocaleString()} ج</b></span>
+            </div>
+          </div>
+        `;
+      });
+
+      renderSelectedSupplierDetails();
+    }
+
+    function selectSupplierProfile(supId) {
+      selectedSupplierId = supId;
+      renderSuppliersTable();
+    }
+
+    function renderSelectedSupplierDetails() {
+      const suppliers = getDetailedSuppliers();
+      const sup = suppliers.find(s => s.id === selectedSupplierId);
+      const container = document.getElementById('supplierDetailContainer');
+      if (!container) return;
+
+      if (!sup) {
+        container.innerHTML = '<p class="text-slate-500 text-center py-10">اختر مورداً من القائمة لعرض كشف حسابه.</p>';
+        return;
+      }
+
+      let grandTotal = 0;
+      let grandPaid = 0;
+      let totalPieces = 0;
+      let rowsHtml = '';
+
+      (sup.items || []).forEach(it => {
+        const itemTot = parseFloat(it.total) || 0;
+        const itemPd = parseFloat(it.paid) || 0;
+        const itemQty = parseInt(it.qty) || 0;
+        const itemUnitPrice = parseFloat(it.unitPrice) || 0;
+        const itemRem = Math.max(0, itemTot - itemPd);
+
+        grandTotal += itemTot;
+        grandPaid += itemPd;
+        totalPieces += itemQty;
+
+        rowsHtml += `
+          <tr>
+            <td class="p-2.5 text-slate-400">${it.date || '--'}</td>
+            <td class="p-2.5 font-bold text-white">${it.name}</td>
+            <td class="p-2.5 font-mono text-cyan-300 text-xs">${it.barcode || '--'}</td>
+            <td class="p-2.5 text-center font-black text-cyan-400">${itemQty}</td>
+            <td class="p-2.5 text-slate-300">${itemUnitPrice.toLocaleString()} ج</td>
+            <td class="p-2.5 font-bold text-white">${itemTot.toLocaleString()} ج</td>
+            <td class="p-2.5 font-bold text-emerald-400">${itemPd.toLocaleString()} ج</td>
+            <td class="p-2.5 font-bold text-rose-400">${itemRem.toLocaleString()} ج</td>
+            <td class="p-2.5 text-center">
+              <button onclick="deleteSupplierItem('${sup.id}', '${it.id}')" class="text-rose-400 hover:text-rose-300 text-xs p-1" title="حذف الصنف">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </td>
           </tr>
         `;
       });
 
-      // سطر المجاميع النهائي أسفل الجدول
-      let footerMonthsHtml = '';
-      for (let m = 1; m <= 12; m++) {
-        footerMonthsHtml += `<td class="p-2 text-indigo-300 font-black">${reportData.monthTotals[m] > 0 ? reportData.monthTotals[m] : '-'}</td>`;
-      }
+      const grandRemaining = Math.max(0, grandTotal - grandPaid);
 
-      document.getElementById('annualReportTableFoot').innerHTML = `
-        <tr>
-          <td class="p-2.5 text-right font-black text-white sticky right-0 bg-slate-900 border-l border-slate-800">إجمالي قطع الشهر:</td>
-          ${footerMonthsHtml}
-          <td class="p-2.5 font-black text-cyan-300 text-sm">${reportData.totalAnnualPieces} قطعة</td>
-          <td class="p-2.5 font-black text-emerald-300 text-sm">${reportData.totalAnnualRevenue.toLocaleString()} ج</td>
-        </tr>
+      container.innerHTML = `
+        <div class="bg-gradient-to-r from-purple-950/40 via-slate-900 to-[#111726] border border-purple-500/30 p-4 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-black text-white">${sup.name}</h3>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">كود: ${sup.id}</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">هاتف: <a href="tel:${sup.phone}" class="text-blue-400 underline">${sup.phone}</a> | عنوان: ${sup.address || 'غير محدد'}</p>
+          </div>
+          <div class="flex gap-2 w-full md:w-auto">
+            <button onclick="openAddShipmentModal('${sup.id}')" class="flex-1 md:flex-none px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-boxes-packing"></i> تنزيل فاتورة توريد كاملة
+            </button>
+            <button onclick="paySupplierPrompt('${sup.id}')" class="flex-1 md:flex-none px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-hand-holding-dollar"></i> سداد دفعة
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2.5 text-center text-xs my-3">
+          <div class="p-2.5 bg-slate-900/90 rounded-2xl border border-slate-800">
+            <span class="text-[10px] text-slate-400 block font-semibold">إجمالي المشتريات منه</span>
+            <b class="text-sm md:text-base font-black text-white mt-0.5 block">${grandTotal.toLocaleString()} ج.م</b>
+          </div>
+          <div class="p-2.5 bg-slate-900/90 rounded-2xl border border-emerald-500/20">
+            <span class="text-[10px] text-emerald-400 block font-semibold">المسدد له فعلياً</span>
+            <b class="text-sm md:text-base font-black text-emerald-300 mt-0.5 block">${grandPaid.toLocaleString()} ج.م</b>
+          </div>
+          <div class="p-2.5 bg-slate-900/90 rounded-2xl border border-rose-500/20">
+            <span class="text-[10px] text-rose-400 block font-semibold">المتبقي له في ذمتنا</span>
+            <b class="text-sm md:text-base font-black text-rose-300 mt-0.5 block">${grandRemaining.toLocaleString()} ج.م</b>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto border border-slate-800 rounded-2xl">
+          <table class="w-full text-right text-xs">
+            <thead class="bg-slate-900/90 text-slate-400 border-b border-slate-800">
+              <tr>
+                <th class="p-2.5">التاريخ</th>
+                <th class="p-2.5">الصنف والموديل</th>
+                <th class="p-2.5">الباركود</th>
+                <th class="p-2.5 text-center text-cyan-400">العدد</th>
+                <th class="p-2.5">سعر القطعة</th>
+                <th class="p-2.5 text-white font-bold">الإجمالي</th>
+                <th class="p-2.5 text-emerald-400">المدفوع</th>
+                <th class="p-2.5 text-rose-400">المتبقي</th>
+                <th class="p-2.5 text-center">إجراء</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800 text-slate-300">
+              ${rowsHtml || '<tr><td colspan="9" class="p-6 text-center text-slate-500">لا توجد أصناف موردة مسجلة لهذا المورد.</td></tr>'}
+            </tbody>
+            <tfoot class="bg-slate-900 font-bold border-t-2 border-slate-700 text-white">
+              <tr>
+                <td colspan="3" class="p-2.5 text-right">إجمالي جميع القطع والتوريدات:</td>
+                <td class="p-2.5 text-center text-cyan-400 text-sm font-black">${totalPieces}</td>
+                <td>--</td>
+                <td class="p-2.5 text-white text-sm font-black">${grandTotal.toLocaleString()} ج</td>
+                <td class="p-2.5 text-emerald-400 text-sm font-black">${grandPaid.toLocaleString()} ج</td>
+                <td class="p-2.5 text-rose-400 text-sm font-black">${grandRemaining.toLocaleString()} ج</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       `;
     }
 
-    function exportAnnualReportToExcel() {
-      const year = document.getElementById('annualReportYearSelect').value || '2026';
-      const reportData = getAnnualReportData(year);
+    function handleCreateSupplierProfile() {
+      const name = document.getElementById('newSupNameInput').value.trim();
+      const phone = document.getElementById('newSupPhoneInput').value.trim();
+      const address = document.getElementById('newSupAddressInput').value.trim();
 
-      const excelRows = reportData.products.map(p => ({
-        "اسم المنتج": p.name,
-        "شهر 1 (يناير)": p.monthlyPieces[1],
-        "شهر 2 (فبراير)": p.monthlyPieces[2],
-        "شهر 3 (مارس)": p.monthlyPieces[3],
-        "شهر 4 (أبريل)": p.monthlyPieces[4],
-        "شهر 5 (مايو)": p.monthlyPieces[5],
-        "شهر 6 (يونيو)": p.monthlyPieces[6],
-        "شهر 7 (يوليو)": p.monthlyPieces[7],
-        "شهر 8 (أغسطس)": p.monthlyPieces[8],
-        "شهر 9 (سبتمبر)": p.monthlyPieces[9],
-        "شهر 10 (أكتوبر)": p.monthlyPieces[10],
-        "شهر 11 (نوفمبر)": p.monthlyPieces[11],
-        "شهر 12 (ديسمبر)": p.monthlyPieces[12],
-        "إجمالي القطع المباعة بالسنة": p.totalPieces,
-        "إجمالي المبالغ والمبيعات (ج.م)": p.totalRevenue
-      }));
+      if (!name || !phone) {
+        alert('يرجى إدخال اسم المورد ورقم الهاتف على الأقل.');
+        return;
+      }
 
-      const ws = XLSX.utils.json_to_sheet(excelRows);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, `تقرير_مبيعات_${year}`);
-      XLSX.writeFile(wb, `تقرير_مبيعات_أولاد_العبد_شهري_سنوي_${year}.xlsx`);
-    }
-
-    // ==========================================
-    // بقية دوال النظام (التحصيل، التعديل، المبيعات، المخزن)
-    // ==========================================
-    function exportAllDataToExcel() {
-      const wb = XLSX.utils.book_new();
-
-      const contracts = getStoredContracts();
-      const contractsSheetData = contracts.map(c => ({
-        "كود العميل": c.clientCode,
-        "اسم العميل": c.customerName,
-        "هاتف العميل": c.customerPhone,
-        "الرقم القومي للعميل": c.nationalId || "--",
-        "اسم الضامن": c.guarantorName || "--",
-        "هاتف الضامن": c.guarantorPhone || "--",
-        "الرقم القومي للضامن": c.guarantorNationalId || "--",
-        "الأجهزة": c.deviceName,
-        "إجمالي العقد بالفوائد": c.totalWithInterest,
-        "المسدد": c.paidAmount,
-        "المتبقي": c.remainingAmount,
-        "القسط الشهري": c.monthlyAmount,
-        "عدد الشهور": c.months,
-        "نسبة الفائدة %": c.interestRate,
-        "تاريخ الفاتورة": c.invoiceDate || c.startDate
-      }));
-      const wsContracts = XLSX.utils.json_to_sheet(contractsSheetData);
-      XLSX.utils.book_append_sheet(wb, wsContracts, "الأقساط والعملاء");
-
-      const inventory = buildDynamicInventory();
-      const inventorySheetData = inventory.map(i => ({
-        "اسم الجهاز": i.name,
-        "الباركود": i.barcode,
-        "المورد": i.supplierName,
-        "الرصيد المتاح": i.currentQty,
-        "سعر الشراء": i.buyPrice,
-        "سعر الكاش": i.cashPrice
-      }));
-      const wsInventory = XLSX.utils.json_to_sheet(inventorySheetData);
-      XLSX.utils.book_append_sheet(wb, wsInventory, "المخزن والأرصدة");
-
-      const sales = getStoredSales();
-      const salesSheetData = sales.map(s => ({
-        "رقم الفاتورة": s.id,
-        "التاريخ": s.date,
-        "العميل": s.customerName,
-        "الهاتف": s.customerPhone,
-        "الأصناف": s.deviceName,
-        "النوع": s.type,
-        "الكمية": s.quantity,
-        "إجمالي الفاتورة": s.totalPrice,
-        "المدفوع فوراً": s.paidImmediately
-      }));
-      const wsSales = XLSX.utils.json_to_sheet(salesSheetData);
-      XLSX.utils.book_append_sheet(wb, wsSales, "سجل المبيعات");
-
-      const expenses = getStoredExpenses();
-      const expensesSheetData = expenses.map(e => ({
-        "التاريخ": e.date,
-        "بند المصروف": e.title,
-        "التصنيف": e.category,
-        "المبلغ": e.amount,
-        "ملاحظات": e.notes || "--"
-      }));
-      const wsExpenses = XLSX.utils.json_to_sheet(expensesSheetData);
-      XLSX.utils.book_append_sheet(wb, wsExpenses, "المصاريف والهوالك");
-
-      const todayStr = new Date().toISOString().split('T')[0];
-      XLSX.writeFile(wb, `معرض_أولاد_العبد_نسخة_كاملة_${todayStr}.xlsx`);
-    }
-
-    function exportInventoryToExcel() {
-      const inventory = buildDynamicInventory();
-      const data = inventory.map(i => ({
-        "اسم الجهاز": i.name,
-        "الباركود": i.barcode,
-        "المورد": i.supplierName,
-        "الكمية الحالية": i.currentQty,
-        "سعر الشراء (ج.م)": i.buyPrice,
-        "سعر الكاش (ج.م)": i.cashPrice,
-        "إجمالي قيمة المخزون": i.currentQty * i.buyPrice
-      }));
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "جرد المخزن");
-      XLSX.writeFile(wb, `جرد_مخزن_أولاد_العبد_${new Date().toISOString().split('T')[0]}.xlsx`);
-    }
-
-    function downloadJsonBackup() {
-      const backupData = {
-        suppliers: getDetailedSuppliers(),
-        sellingPrices: getSellingPrices(),
-        contracts: getStoredContracts(),
-        sales: getStoredSales(),
-        expenses: getStoredExpenses(),
-        date: new Date().toISOString()
+      const suppliers = getDetailedSuppliers();
+      const newSup = {
+        id: 'SUP-' + (suppliers.length + 10),
+        name,
+        phone,
+        address,
+        items: []
       };
-      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `نسخة_احتياطية_أولاد_العبد_${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+
+      suppliers.push(newSup);
+      setDetailedSuppliers(suppliers);
+      selectedSupplierId = newSup.id;
+
+      closeModal('addNewSupplierProfileModal');
+      document.getElementById('newSupNameInput').value = '';
+      document.getElementById('newSupPhoneInput').value = '';
+      document.getElementById('newSupAddressInput').value = '';
+
+      renderSuppliersTable();
+      populateDeviceSelects();
+      alert(`تم إضافة المورد (${name}) بنجاح.`);
     }
 
-    function restoreJsonBackup(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const data = JSON.parse(e.target.result);
-          if (data.suppliers && data.contracts) {
-            setDetailedSuppliers(data.suppliers);
-            if (data.sellingPrices) setSellingPrices(data.sellingPrices);
-            setStoredContracts(data.contracts);
-            if (data.sales) setStoredSales(data.sales);
-            if (data.expenses) setStoredExpenses(data.expenses);
-
-            alert('تم بنجاح استرجاع وتثبيت كافة بيانات المعرض كما كانت!');
-            location.reload();
-          } else {
-            alert('الملف المختار غير صالح كنسخة احتياطية للمعرض.');
-          }
-        } catch (err) {
-          alert('حدث خطأ أثناء قراءة الملف. تأكد من سلامة ملف النسخة.');
+    function deleteSupplierItem(supId, itemId) {
+      if (confirm('هل أنت متأكد من حذف هذا الصنف من فاتورة المورد؟ سيتم حذفه تلقائياً من رصيد المخزن.')) {
+        const suppliers = getDetailedSuppliers();
+        const sup = suppliers.find(s => s.id === supId);
+        if (sup) {
+          sup.items = sup.items.filter(it => it.id !== itemId);
+          setDetailedSuppliers(suppliers);
+          renderSuppliersTable();
+          populateDeviceSelects();
+          renderDashboard();
+          alert('تم حذف التوريدة واختفى الصنف من المخزن بنجاح.');
         }
-      };
-      reader.readAsText(file);
+      }
+    }
+
+    function paySupplierPrompt(supId) {
+      const suppliers = getDetailedSuppliers();
+      const sup = suppliers.find(s => s.id === supId);
+      if (!sup) return;
+
+      let totalBill = 0;
+      let totalPaid = 0;
+      (sup.items || []).forEach(it => { totalBill += (parseFloat(it.total) || 0); totalPaid += (parseFloat(it.paid) || 0); });
+      const currentRem = Math.max(0, totalBill - totalPaid);
+
+      const amt = prompt(`أدخل المبلغ المراد سداده للمورد (${sup.name}) - المتبقي: ${currentRem.toLocaleString()} ج:`);
+      if (amt && !isNaN(amt) && parseFloat(amt) > 0) {
+        let paymentToDistribute = parseFloat(amt);
+
+        for (let it of (sup.items || [])) {
+          if (paymentToDistribute <= 0) break;
+          const itemRem = (parseFloat(it.total) || 0) - (parseFloat(it.paid) || 0);
+          if (itemRem > 0) {
+            const addPay = Math.min(itemRem, paymentToDistribute);
+            it.paid = (parseFloat(it.paid) || 0) + addPay;
+            it.remaining = (parseFloat(it.total) || 0) - it.paid;
+            paymentToDistribute -= addPay;
+          }
+        }
+
+        setDetailedSuppliers(suppliers);
+        renderSuppliersTable();
+        renderDashboard();
+        alert('تم تسجيل سداد الدفعة للمورد بنجاح.');
+      }
+    }
+
+    function renderInventoryTable() {
+      const inventory = buildDynamicInventory();
+      const tbody = document.getElementById('inventoryTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (inventory.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-500">المخزن فارغ حالياً.</td></tr>`;
+        return;
+      }
+
+      inventory.forEach(item => {
+        const isLow = item.currentQty <= 2;
+        tbody.innerHTML += `
+          <tr>
+            <td class="p-2.5 font-bold text-white">${item.name}</td>
+            <td class="p-2.5 font-mono text-cyan-300 text-xs">${item.barcode || '--'}</td>
+            <td class="p-2.5 text-purple-300 font-semibold">${item.supplierName}</td>
+            <td class="p-2.5 text-center font-black text-base ${isLow ? 'text-rose-400' : 'text-emerald-400'}">${item.currentQty}</td>
+            <td class="p-2.5 text-slate-300">${item.buyPrice.toLocaleString()} ج</td>
+            <td class="p-2.5 font-bold text-emerald-400">
+              <input type="number" id="cash_price_input_${item.itemId}" value="${item.cashPrice}" class="w-24 bg-[#090d16] border border-slate-700 rounded-lg p-1 text-white text-xs font-bold text-center">
+            </td>
+            <td class="p-2.5 text-center">
+              <button onclick="updateItemSellingPrice('${item.name}', '${item.itemId}')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow">تحديث</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function updateItemSellingPrice(itemName, itemId) {
+      const input = document.getElementById(`cash_price_input_${itemId}`);
+      const newPrice = parseFloat(input.value);
+      if (isNaN(newPrice) || newPrice <= 0) {
+        alert('يرجى إدخال سعر بيع كاش صحيح.');
+        return;
+      }
+
+      const sellingPrices = getSellingPrices();
+      sellingPrices[itemName] = newPrice;
+      setSellingPrices(sellingPrices);
+
+      populateDeviceSelects();
+      renderInventoryTable();
+      alert(`تم تحديث سعر البيع الكاش لصنف (${itemName}) إلى ${newPrice.toLocaleString()} ج.م.`);
+    }
+
+    function renderSalesTable() {
+      const sales = getStoredSales();
+      const tbody = document.getElementById('salesInvoicesTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      sales.forEach(s => {
+        tbody.innerHTML += `
+          <tr>
+            <td class="p-2.5 font-bold text-white">#${s.id}</td>
+            <td class="p-2.5 text-slate-400">${s.date}</td>
+            <td class="p-2.5">${s.customerName}<br><span class="text-[10px] text-slate-400">${s.customerPhone}</span></td>
+            <td class="p-2.5">${s.deviceName}<br><span class="text-[10px] text-blue-400 font-mono">سيريال: ${s.serialNumber}</span></td>
+            <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.type === 'كاش' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400'}">${s.type}</span></td>
+            <td class="p-2.5 font-bold text-white">${s.totalPrice.toLocaleString()} ج.م</td>
+            <td class="p-2.5 font-bold text-emerald-400">${s.paidImmediately.toLocaleString()} ج.م</td>
+            <td class="p-2.5 text-center">
+              <button onclick="openEditInvoiceModal('${s.id}')" class="px-3 py-1 bg-amber-600/20 hover:bg-amber-600 text-amber-300 hover:text-white border border-amber-500/30 rounded-lg text-xs font-bold transition flex items-center gap-1 mx-auto shadow">
+                <i class="fa-solid fa-pen-to-square"></i> تعديل ✏️
+              </button>
+            </td>
+          </tr>
+        `;
+      });
     }
   </script>
 </body>
