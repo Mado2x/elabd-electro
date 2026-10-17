@@ -22,6 +22,7 @@
     body { font-family: 'Cairo', sans-serif; }
     .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    #barcode-scanner-box video { border-radius: 1rem; width: 100% !important; height: auto !important; }
   </style>
 </head>
 <body class="bg-[#090d16] text-slate-100 min-h-screen pb-16 md:pb-0 flex flex-col md:flex-row">
@@ -306,7 +307,7 @@
       </div>
     </section>
 
-    <!-- VIEW 4: سجل الأقساط -->
+    <!-- VIEW 4: سجل الأقساط (تم ضبط الـ tbody الخاص به) -->
     <section id="view-installments" class="hidden space-y-4">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-[#111726] p-4 rounded-3xl border border-slate-800">
         <div>
@@ -375,7 +376,7 @@
       </div>
     </section>
 
-    <!-- VIEW 6: المبيعات -->
+    <!-- VIEW 6: المبيعات (تم ضبط الـ tbody الخاص به) -->
     <section id="view-sales" class="hidden space-y-4">
       <div class="flex justify-between items-center bg-[#111726] p-4 rounded-3xl border border-slate-800">
         <div>
@@ -410,7 +411,7 @@
       </div>
     </section>
 
-    <!-- VIEW 7: المصاريف -->
+    <!-- VIEW 7: المصاريف (تم ضبط الـ tbody الخاص به) -->
     <section id="view-expenses" class="hidden space-y-4">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-[#111726] p-4 rounded-3xl border border-slate-800">
         <div>
@@ -446,7 +447,6 @@
   </main>
 
   <!-- MODALS -->
-  <!-- MODAL: إضافة مورد جديد -->
   <div id="addNewSupplierProfileModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -474,7 +474,6 @@
     </div>
   </div>
 
-  <!-- MODAL: توريد أصناف مجمعة -->
   <div id="addSupplierShipmentModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-3 md:p-4 hidden">
     <div class="bg-[#111726] border border-purple-500/40 w-full max-w-2xl rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -551,7 +550,6 @@
     </div>
   </div>
 
-  <!-- MODAL: إضافة مصروف -->
   <div id="addExpenseModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -593,7 +591,6 @@
     </div>
   </div>
 
-  <!-- MODAL: ملف العميل -->
   <div id="customerProfileModal" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-3 md:p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-3xl rounded-3xl p-5 shadow-2xl flex flex-col max-h-[92vh]">
       <div class="flex justify-between items-start border-b border-slate-800 pb-3">
@@ -641,7 +638,6 @@
     </div>
   </div>
 
-  <!-- MODAL: بيع جديد -->
   <div id="newSaleModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-3 md:p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-2xl rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -782,7 +778,6 @@
     </div>
   </div>
 
-  <!-- MODAL: عرض الفاتورة -->
   <div id="viewSingleInvoiceModal" class="fixed inset-0 bg-black/85 z-[65] flex items-center justify-center p-3 md:p-4 hidden">
     <div class="bg-[#111726] border border-blue-500/40 w-full max-w-2xl rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -821,7 +816,6 @@
     </div>
   </div>
 
-  <!-- MODAL: تعديل الفاتورة -->
   <div id="editSaleInvoiceModal" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-amber-500/40 w-full max-w-lg rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -865,7 +859,6 @@
     </div>
   </div>
 
-  <!-- MODAL: تحصيل قسط -->
   <div id="collectInstallmentModal" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -911,7 +904,6 @@
     </div>
   </div>
 
-  <!-- MODAL: ماسح الكاميرا -->
   <div id="barcodeScannerModal" class="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-cyan-500/50 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -926,7 +918,6 @@
     </div>
   </div>
 
-  <!-- MODAL: فحص الجهاز بالباركود -->
   <div id="deviceInquiryModal" class="fixed inset-0 bg-black/85 z-[60] flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-cyan-500/50 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -941,7 +932,6 @@
     </div>
   </div>
 
-  <!-- MODAL: واتساب -->
   <div id="chooseWhatsAppTemplateModal" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#111726] border border-slate-700 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -965,6 +955,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=clean_start"></script>
+  <script src="app.js?v=final_fix"></script>
 </body>
 </html>
