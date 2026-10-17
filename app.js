@@ -1,14 +1,15 @@
 // ==========================================
-// المحرك التشغيلي (app.js) - نسخة مصفّرة ونظيفة v3
+// المحرك التشغيلي الشامل (app.js)
 // معرض أولاد العبد للأجهزة الكهربائية
+// نظام البحث الذكي وخيارات الكاش/التقسيط
 // ==========================================
 
-const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_clean_suppliers_v3';
-const STORAGE_KEY_SELLING_PRICES = 'elabd_clean_prices_v3';
-const STORAGE_KEY_SALES = 'elabd_clean_sales_v3';
-const STORAGE_KEY_CONTRACTS = 'elabd_clean_contracts_v3';
-const STORAGE_KEY_EXPENSES = 'elabd_clean_expenses_v3';
-const STORAGE_KEY_CURRENT_TAB = 'elabd_clean_tab_v3';
+const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_clean_suppliers_v4';
+const STORAGE_KEY_SELLING_PRICES = 'elabd_clean_prices_v4';
+const STORAGE_KEY_SALES = 'elabd_clean_sales_v4';
+const STORAGE_KEY_CONTRACTS = 'elabd_clean_contracts_v4';
+const STORAGE_KEY_EXPENSES = 'elabd_clean_expenses_v4';
+const STORAGE_KEY_CURRENT_TAB = 'elabd_clean_tab_v4';
 
 let currentSupplierShipmentCart = [];
 let currentSaleInvoiceCart = [];
@@ -21,13 +22,14 @@ let currentContractForWhatsApp = null;
 let activeCustomerPhoneForProfile = null;
 let activeInvoiceIdInProfile = null;
 let currentEditingInvoiceId = null;
+let currentSelectedInventoryItem = null;
 
 let html5QrCodeScannerInstance = null;
 let currentTargetInputIdForScanner = null;
 let lastInquiredDeviceObject = null;
 
 // ==========================================
-// دوال إدارة الذاكرة المحلية الآمنة
+// دوال إدارة الذاكرة المحلية
 // ==========================================
 function getDetailedSuppliers() {
   try {
@@ -177,8 +179,6 @@ function parseItemsFromRecord(record) {
 // التهيئة والتنقل
 // ==========================================
 window.addEventListener('DOMContentLoaded', () => {
-  populateDeviceSelects();
-
   const today = new Date().toISOString().split('T')[0];
   const startDateInput = document.getElementById('instStartDate');
   if (startDateInput) startDateInput.value = today;
@@ -244,7 +244,12 @@ function switchView(viewName) {
 
 function openModal(id) { 
   const el = document.getElementById(id);
-  if (el) el.classList.remove('hidden'); 
+  if (el) {
+    el.classList.remove('hidden');
+    if (id === 'newSaleModal') {
+      toggleInstallmentFields();
+    }
+  }
 }
 function closeModal(id) { 
   const el = document.getElementById(id);
@@ -308,7 +313,6 @@ function renderDashboard() {
   const netProfitVal = Math.max(0, grossProfitVal - totalExpensesVal);
   const suppliersDebtTotal = calculateAllSuppliersTotalRemaining();
 
-  // رصيد الخزينة = (المحصل من المبيعات والأقساط) - (المدفوع للموردين + المصاريف)
   const netCashFlowVal = cashCollectedVal - (totalPaidToSuppliers + totalExpensesVal);
 
   const elTotalSales = document.getElementById('dashTotalSalesVal');
@@ -802,7 +806,6 @@ function handleCreateSupplierProfile() {
   if (addrInput) addrInput.value = '';
 
   renderSuppliersTable();
-  populateDeviceSelects();
   if (typeof exportCurrentDatabaseToExcel === 'function') {
     exportCurrentDatabaseToExcel();
   }
@@ -950,7 +953,6 @@ function handleSaveMultiItemSupplierInvoice() {
   currentSupplierShipmentCart = [];
 
   renderSuppliersTable();
-  populateDeviceSelects();
   renderInventoryTable();
   renderDashboard();
 
@@ -969,7 +971,6 @@ function deleteSupplierItem(supId, itemId) {
       sup.items = sup.items.filter(it => it.id !== itemId);
       setDetailedSuppliers(suppliers);
       renderSuppliersTable();
-      populateDeviceSelects();
       renderDashboard();
       if (typeof exportCurrentDatabaseToExcel === 'function') {
         exportCurrentDatabaseToExcel();
@@ -1060,7 +1061,6 @@ function updateItemSellingPrice(itemName, itemId) {
   sellingPrices[itemName] = newPrice;
   setSellingPrices(sellingPrices);
 
-  populateDeviceSelects();
   renderInventoryTable();
   if (typeof exportCurrentDatabaseToExcel === 'function') {
     exportCurrentDatabaseToExcel();
@@ -1477,56 +1477,93 @@ function openNewSaleForThisCustomer() {
 }
 
 // ==========================================
-// 7. سلة البيع وحفظ الفاتورة واقتراح الأجهزة
+// 7. محرك البحث التفاعلي للأجهزة وسلة البيع
 // ==========================================
-function populateDeviceSelects() {
+function liveSearchInventoryDevices() {
+  const input = document.getElementById('saleDeviceInput');
+  const dropdown = document.getElementById('deviceSuggestionsDropdown');
+  if (!input || !dropdown) return;
+
+  const query = input.value.trim().toLowerCase();
   const inventory = buildDynamicInventory();
-  const datalist = document.getElementById('inventoryDevicesDatalist');
-  if (!datalist) return;
-  
-  datalist.innerHTML = '';
-  inventory.forEach(dev => {
-    datalist.innerHTML += `
-      <option value="${dev.name}">[المتاح بالمخزن: ${dev.currentQty} قطعة] - بسعر ${dev.cashPrice.toLocaleString()} ج.م</option>
+
+  const matches = inventory.filter(dev => 
+    !query || dev.name.toLowerCase().includes(query) || (dev.barcode && dev.barcode.toLowerCase().includes(query))
+  );
+
+  if (matches.length === 0) {
+    dropdown.innerHTML = `
+      <div class="p-3 text-center text-slate-500 text-xs">
+        ${inventory.length === 0 ? 'المخزن فارغ حالياً! يجب تنزيل بضاعة أولاً من قسم الموردين.' : 'لا يوجد صنف مطابق في المخزن بهذا الاسم.'}
+      </div>
+    `;
+    dropdown.classList.remove('hidden');
+    return;
+  }
+
+  let html = '';
+  matches.forEach(item => {
+    const isOut = item.currentQty <= 0;
+    html += `
+      <div onclick="selectDeviceFromSuggestion('${encodeURIComponent(JSON.stringify(item))}')" class="p-2.5 hover:bg-slate-800 cursor-pointer border-b border-slate-800/60 last:border-0 flex justify-between items-center transition">
+        <div>
+          <b class="text-xs text-white block">${item.name}</b>
+          <span class="text-[10px] text-slate-400">المورد: ${item.supplierName} | باركود: ${item.barcode || '--'}</span>
+        </div>
+        <div class="text-left">
+          <span class="text-xs font-bold text-emerald-400 block">${item.cashPrice.toLocaleString()} ج</span>
+          <span class="text-[10px] font-bold ${isOut ? 'text-rose-400' : 'text-cyan-400'}">
+            ${isOut ? 'نفذت الكمية ❌' : 'متاح: ' + item.currentQty + ' قطع'}
+          </span>
+        </div>
+      </div>
     `;
   });
+
+  dropdown.innerHTML = html;
+  dropdown.classList.remove('hidden');
 }
 
-function handleDeviceSelectionFromInput() {
+function selectDeviceFromSuggestion(encodedItem) {
+  const item = JSON.parse(decodeURIComponent(encodedItem));
+  currentSelectedInventoryItem = item;
+
   const input = document.getElementById('saleDeviceInput');
-  if (!input) return;
-  const val = input.value.trim();
-  const inventory = buildDynamicInventory();
-  
-  const matched = inventory.find(i => i.name.toLowerCase() === val.toLowerCase());
+  const dropdown = document.getElementById('deviceSuggestionsDropdown');
   const priceInput = document.getElementById('saleItemPriceInput');
   const qtyInput = document.getElementById('saleItemQtyInput');
   const notice = document.getElementById('deviceStockNotice');
 
-  if (matched) {
-    if (priceInput) priceInput.value = matched.cashPrice;
-    if (qtyInput) {
-      qtyInput.max = matched.currentQty;
-      if (parseInt(qtyInput.value) > matched.currentQty) qtyInput.value = 1;
-    }
-    if (notice) {
-      notice.innerHTML = `<span class="text-emerald-400 font-bold">✔ متوفر بالمخزن: ${matched.currentQty} قطع</span> (سعر الكاش: ${matched.cashPrice.toLocaleString()} ج)`;
-    }
-  } else {
-    if (notice) notice.innerHTML = '';
+  if (input) input.value = item.name;
+  if (dropdown) dropdown.classList.add('hidden');
+  if (priceInput) priceInput.value = item.cashPrice;
+  if (qtyInput) {
+    qtyInput.max = item.currentQty;
+    qtyInput.value = 1;
+  }
+  if (notice) {
+    notice.innerHTML = `<span class="text-emerald-400 font-bold">✔ تم اختيار: ${item.name}</span> - الرصيد المتوفر: <b class="text-white">${item.currentQty}</b> قطع.`;
   }
 }
+
+document.addEventListener('click', function(e) {
+  const dropdown = document.getElementById('deviceSuggestionsDropdown');
+  const input = document.getElementById('saleDeviceInput');
+  if (dropdown && !dropdown.contains(e.target) && e.target !== input) {
+    dropdown.classList.add('hidden');
+  }
+});
 
 function addItemToSaleCart() {
   const input = document.getElementById('saleDeviceInput');
   if (!input || !input.value.trim()) {
-    alert('يرجى كتابة أو اختيار اسم الجهاز من المقترحات.');
+    alert('يرجى اختيار صنف من مقترحات المخزن.');
     return;
   }
 
   const name = input.value.trim();
   const inventory = buildDynamicInventory();
-  const matched = inventory.find(i => i.name.toLowerCase() === name.toLowerCase());
+  const matched = inventory.find(i => i.name.toLowerCase() === name.toLowerCase()) || currentSelectedInventoryItem;
 
   const priceInput = document.getElementById('saleItemPriceInput');
   const unitPrice = priceInput ? (parseFloat(priceInput.value) || 0) : 0;
@@ -1552,6 +1589,7 @@ function addItemToSaleCart() {
   });
 
   input.value = '';
+  currentSelectedInventoryItem = null;
   if (priceInput) priceInput.value = '';
   if (serialInput) serialInput.value = '';
   const notice = document.getElementById('deviceStockNotice');
@@ -1602,10 +1640,16 @@ function toggleInstallmentFields() {
   const isInstallment = typeSelect.value === 'installment';
 
   const installmentBox = document.getElementById('installmentFieldsBox');
-  if (installmentBox) installmentBox.classList.toggle('hidden', !isInstallment);
+  if (installmentBox) {
+    if (isInstallment) installmentBox.classList.remove('hidden');
+    else installmentBox.classList.add('hidden');
+  }
 
   const guarantorBox = document.getElementById('guarantorAndNationalIdBox');
-  if (guarantorBox) guarantorBox.classList.toggle('hidden', !isInstallment);
+  if (guarantorBox) {
+    if (isInstallment) guarantorBox.classList.remove('hidden');
+    else guarantorBox.classList.add('hidden');
+  }
 
   if (isInstallment) calculateInstallmentMath();
 }
@@ -1672,7 +1716,7 @@ function handleSaveSaleInvoice() {
   const guarantorNationalId = (gNatIdInput && gNatIdInput.value.trim()) ? gNatIdInput.value.trim() : '--';
 
   const typeSelect = document.getElementById('saleTypeSelect');
-  const saleType = typeSelect ? typeSelect.value : 'installment';
+  const saleType = typeSelect ? typeSelect.value : 'cash';
 
   if (!customerName || !customerPhone) {
     alert('يرجى كتابة اسم العميل ورقم الهاتف.');
@@ -1715,7 +1759,6 @@ function handleSaveSaleInvoice() {
     closeModal('newSaleModal');
     currentSaleInvoiceCart = [];
     renderSaleCartTbody();
-    populateDeviceSelects();
     renderDashboard();
     renderInventoryTable();
     renderSalesTable();
@@ -1810,7 +1853,6 @@ function handleSaveSaleInvoice() {
     closeModal('newSaleModal');
     currentSaleInvoiceCart = [];
     renderSaleCartTbody();
-    populateDeviceSelects();
     renderDashboard();
     renderInventoryTable();
     renderInstallmentsTable();
@@ -2217,7 +2259,7 @@ function handleSaveExpense() {
   const notes = notesInput ? notesInput.value.trim() : '';
 
   if (!title) {
-    alert('يرجى كتابة بند المصروف (مثل: نولون شحن أجهزة).');
+    alert('يرجى كتابة بند المصروف.');
     return;
   }
 
@@ -2398,8 +2440,6 @@ function openBarcodeScanner(targetMode) {
   if (instruction) {
     if (targetMode === 'home_inquiry') {
       instruction.innerText = "وجّه الكاميرا على باركود الجهاز لعرض كافة بياناته وأسعاره من المخزن فوراً.";
-    } else if (targetMode === 'sale_barcode_detect') {
-      instruction.innerText = "امسح باركود كرتونة الجهاز لإضافته تلقائياً إلى سلة الفاتورة.";
     } else {
       instruction.innerText = "وجّه كاميرا الهاتف على الباركود أو السيريال الملصق على الكرتونة مباشرة.";
     }
@@ -2427,11 +2467,6 @@ function handleBarcodeScannedSuccessfully(scannedCode) {
 
   if (currentTargetInputIdForScanner === 'home_inquiry') {
     executeDeviceInquiryByBarcode(codeClean);
-    return;
-  }
-
-  if (currentTargetInputIdForScanner === 'sale_barcode_detect') {
-    executeAutoSelectDeviceForSaleByBarcode(codeClean);
     return;
   }
 
@@ -2512,25 +2547,6 @@ function proceedToSellInquiredDevice() {
   const input = document.getElementById('saleDeviceInput');
   if (input) {
     input.value = lastInquiredDeviceObject.name;
-    handleDeviceSelectionFromInput();
-  }
-}
-
-function executeAutoSelectDeviceForSaleByBarcode(barcode) {
-  const inventory = buildDynamicInventory();
-  const matched = inventory.find(i => 
-    (i.barcode && i.barcode.toLowerCase() === barcode.toLowerCase()) ||
-    (i.name && i.name.toLowerCase().includes(barcode.toLowerCase()))
-  );
-
-  if (matched) {
-    const input = document.getElementById('saleDeviceInput');
-    if (input) {
-      input.value = matched.name;
-      handleDeviceSelectionFromInput();
-    }
-    alert(`تم التعرف على (${matched.name}) وتنزيله بقائمة الفاتورة.`);
-  } else {
-    alert(`لم يتم العثور على جهاز بهذا الباركود (${barcode}) في المخزن.`);
+    selectDeviceFromSuggestion(encodeURIComponent(JSON.stringify(lastInquiredDeviceObject)));
   }
 }
