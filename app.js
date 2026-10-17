@@ -1,21 +1,21 @@
 // ==========================================
-// المحرك التشغيلي (app.js) - نسخة مصفّرة ونظيفة
+// المحرك التشغيلي (app.js) - نسخة مصفّرة ونظيفة v2
 // معرض أولاد العبد للأجهزة الكهربائية
 // ==========================================
 
-const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_unified_suppliers';
-const STORAGE_KEY_SELLING_PRICES = 'elabd_unified_prices';
-const STORAGE_KEY_SALES = 'elabd_unified_sales';
-const STORAGE_KEY_CONTRACTS = 'elabd_unified_contracts';
-const STORAGE_KEY_EXPENSES = 'elabd_unified_expenses';
-const STORAGE_KEY_CURRENT_TAB = 'elabd_unified_tab';
+// مسح أي بيانات سابقة مخزنة على المتصفح تلقائياً
+localStorage.removeItem('elabd_unified_suppliers');
+localStorage.removeItem('elabd_unified_prices');
+localStorage.removeItem('elabd_unified_sales');
+localStorage.removeItem('elabd_unified_contracts');
+localStorage.removeItem('elabd_unified_expenses');
 
-// بيانات مصفّرة بالكامل لبداية جديدة
-const defaultSuppliersData = [];
-const defaultSellingPrices = {};
-const defaultContracts = [];
-const defaultSales = [];
-const defaultExpenses = [];
+const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_clean_suppliers_v2';
+const STORAGE_KEY_SELLING_PRICES = 'elabd_clean_prices_v2';
+const STORAGE_KEY_SALES = 'elabd_clean_sales_v2';
+const STORAGE_KEY_CONTRACTS = 'elabd_clean_contracts_v2';
+const STORAGE_KEY_EXPENSES = 'elabd_clean_expenses_v2';
+const STORAGE_KEY_CURRENT_TAB = 'elabd_clean_tab_v2';
 
 let currentSupplierShipmentCart = [];
 let currentSaleInvoiceCart = [];
@@ -92,7 +92,7 @@ function setStoredExpenses(d) {
 }
 
 function resetSystemToDefaultData() {
-  if (confirm('هل ترغب في مسح كل البيانات وتصفير المعرض بالكامل؟')) {
+  if (confirm('هل ترغب في إعادة تصفير النظام بالكامل لبدء العمل من جديد؟')) {
     localStorage.clear();
     location.reload();
   }
@@ -313,7 +313,7 @@ function renderDashboard() {
   const netProfitVal = Math.max(0, grossProfitVal - totalExpensesVal);
   const suppliersDebtTotal = calculateAllSuppliersTotalRemaining();
 
-  // رصيد الخزينة = (المحصل من البيع والأقساط) - (المدفوع للموردين + المصاريف)
+  // رصيد الخزينة = (المحصل من المبيعات والأقساط) - (المدفوع للموردين + المصاريف)
   const netCashFlowVal = cashCollectedVal - (totalPaidToSuppliers + totalExpensesVal);
 
   const elTotalSales = document.getElementById('dashTotalSalesVal');
@@ -380,11 +380,11 @@ function renderDashboard() {
   });
 
   if (dueCount === 0) {
-    dueTableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">لا توجد أقساط مستحقة التحصيل خلال شهر (${selectedMonthVal}) 👏</td></tr>`;
+    dueTableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">لا توجد أقساط مستحقة للتحصيل 👏</td></tr>`;
   }
 
   const badgeElem = document.getElementById('dueCountBadge');
-  if (badgeElem) badgeElem.innerText = `${dueCount} أقساط مستحقة بالشهر`;
+  if (badgeElem) badgeElem.innerText = `${dueCount} عميل مستحق`;
 }
 
 function renderTopSellingProductsReport(salesCountMap, totalPiecesCount, selectedMonth) {
@@ -398,7 +398,7 @@ function renderTopSellingProductsReport(salesCountMap, totalPiecesCount, selecte
   })).sort((a, b) => b.count - a.count);
 
   if (sortedProducts.length === 0) {
-    container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">لم يتم تسجيل أي عمليات بيع أو سحب في شهر (${selectedMonth}).</p>`;
+    container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">لم يتم تسجيل أي عمليات بيع أو سحب حتى الآن.</p>`;
     return;
   }
 
@@ -519,7 +519,7 @@ function renderAnnualReportsView() {
   const filteredProducts = reportData.products.filter(p => !searchTxt || p.name.toLowerCase().includes(searchTxt));
 
   if (filteredProducts.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="15" class="p-8 text-center text-slate-500">لا توجد مبيعات مسجلة في سنة ${year} مطابقة للبحث.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="15" class="p-8 text-center text-slate-500">لا توجد مبيعات مسجلة في سنة ${year}.</td></tr>`;
     const foot = document.getElementById('annualReportTableFoot');
     if (foot) foot.innerHTML = '';
     return;
@@ -607,13 +607,13 @@ function renderSuppliersTable() {
   if (debtElem) debtElem.innerText = `${grandTotalDebts.toLocaleString()} ج.م`;
 
   const badgeElem = document.getElementById('suppliersCountBadge');
-  if (badgeElem) badgeElem.innerText = `${suppliers.length} موردين`;
+  if (badgeElem) badgeElem.innerText = `${suppliers.length} مورد`;
 
   const detailContainer = document.getElementById('supplierDetailContainer');
 
   if (suppliers.length === 0) {
-    listContainer.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">لا يوجد موردين مسجلين بعد. ابدأ بإضافة مورد جديد.</p>';
-    if (detailContainer) detailContainer.innerHTML = '<p class="text-xs text-slate-500 text-center py-10">اضغط على زر (إضافة مورد جديد) لتسجيل الموردين وفواتيرهم.</p>';
+    listContainer.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">لا يوجد موردين مسجلين بعد. ابدأ بإضافة موردك الأول.</p>';
+    if (detailContainer) detailContainer.innerHTML = '<p class="text-xs text-slate-500 text-center py-10">اضغط على زر (+ إضافة مورد جديد) بالأعلى لتسجيل بيانات المورد وفواتيره.</p>';
     return;
   }
 
@@ -814,6 +814,158 @@ function handleCreateSupplierProfile() {
   alert(`تم إضافة المورد (${name}) بنجاح.`);
 }
 
+function openAddShipmentModal(supId) {
+  selectedSupplierId = supId;
+  const suppliers = getDetailedSuppliers();
+  const sup = suppliers.find(s => s.id === supId);
+  const nameSpan = document.getElementById('shipmentSupplierName');
+  if (nameSpan && sup) nameSpan.innerText = sup.name;
+
+  currentSupplierShipmentCart = [];
+  renderSupplierCartTbody();
+
+  const dateInput = document.getElementById('supplierCartDateInput');
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+
+  const paidInput = document.getElementById('supplierCartPaidInput');
+  if (paidInput) paidInput.value = 0;
+
+  openModal('addSupplierShipmentModal');
+}
+
+function addItemToSupplierCart() {
+  const nameIn = document.getElementById('shipItemNameInput');
+  const barIn = document.getElementById('shipItemBarcodeInput');
+  const qtyIn = document.getElementById('shipItemQtyInput');
+  const priceIn = document.getElementById('shipItemPriceInput');
+
+  if (!nameIn || !priceIn) return;
+
+  const name = nameIn.value.trim();
+  const barcode = barIn ? barIn.value.trim() : '';
+  const qty = qtyIn ? (parseInt(qtyIn.value) || 1) : 1;
+  const unitPrice = parseFloat(priceIn.value) || 0;
+
+  if (!name) {
+    alert('يرجى إدخال اسم الصنف والموديل.');
+    return;
+  }
+
+  if (unitPrice <= 0) {
+    alert('يرجى إدخال سعر شراء صحيح أكبر من الصفر.');
+    return;
+  }
+
+  currentSupplierShipmentCart.push({
+    id: 'ITM-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+    name,
+    barcode: barcode || ('BAR-' + Date.now().toString().slice(-6)),
+    qty,
+    unitPrice,
+    total: qty * unitPrice
+  });
+
+  nameIn.value = '';
+  if (barIn) barIn.value = '';
+  if (qtyIn) qtyIn.value = 1;
+  if (priceIn) priceIn.value = '';
+
+  renderSupplierCartTbody();
+}
+
+function renderSupplierCartTbody() {
+  const tbody = document.getElementById('supplierCartTbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  let grandTotal = 0;
+
+  currentSupplierShipmentCart.forEach((item, idx) => {
+    grandTotal += item.total;
+    tbody.innerHTML += `
+      <tr>
+        <td class="p-2 font-bold text-white">${item.name}</td>
+        <td class="p-2 font-mono text-cyan-300 text-xs">${item.barcode}</td>
+        <td class="p-2 text-center font-bold text-cyan-400">${item.qty}</td>
+        <td class="p-2 text-slate-300">${item.unitPrice.toLocaleString()} ج</td>
+        <td class="p-2 font-bold text-white">${item.total.toLocaleString()} ج</td>
+        <td class="p-2 text-center">
+          <button onclick="removeSupplierCartItem(${idx})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-xmark"></i></button>
+        </td>
+      </tr>
+    `;
+  });
+
+  if (currentSupplierShipmentCart.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">لم تضف أصنافاً بعد. اكتب الصنف واضغط (+ إضافة الصنف للفاتورة).</td></tr>';
+  }
+
+  const grandDisplay = document.getElementById('supplierCartGrandTotal');
+  if (grandDisplay) grandDisplay.innerText = `${grandTotal.toLocaleString()} ج.م`;
+}
+
+function removeSupplierCartItem(idx) {
+  currentSupplierShipmentCart.splice(idx, 1);
+  renderSupplierCartTbody();
+}
+
+function handleSaveMultiItemSupplierInvoice() {
+  if (currentSupplierShipmentCart.length === 0) {
+    alert('يرجى إضافة صنف واحد على الأقل إلى فاتورة التوريد.');
+    return;
+  }
+
+  const suppliers = getDetailedSuppliers();
+  const sup = suppliers.find(s => s.id === selectedSupplierId);
+  if (!sup) return;
+
+  const dateInput = document.getElementById('supplierCartDateInput');
+  const paidInput = document.getElementById('supplierCartPaidInput');
+
+  const invoiceDate = (dateInput && dateInput.value) ? dateInput.value : new Date().toISOString().split('T')[0];
+  const paidNow = paidInput ? (parseFloat(paidInput.value) || 0) : 0;
+
+  let grandInvoiceTotal = 0;
+  currentSupplierShipmentCart.forEach(it => grandInvoiceTotal += it.total);
+
+  let paidToDistribute = paidNow;
+
+  currentSupplierShipmentCart.forEach(it => {
+    let itemPaid = 0;
+    if (paidToDistribute > 0) {
+      itemPaid = Math.min(it.total, paidToDistribute);
+      paidToDistribute -= itemPaid;
+    }
+
+    if (!sup.items) sup.items = [];
+    sup.items.push({
+      id: it.id,
+      date: invoiceDate,
+      name: it.name,
+      barcode: it.barcode,
+      qty: it.qty,
+      unitPrice: it.unitPrice,
+      total: it.total,
+      paid: itemPaid,
+      remaining: it.total - itemPaid
+    });
+  });
+
+  setDetailedSuppliers(suppliers);
+  closeModal('addSupplierShipmentModal');
+  currentSupplierShipmentCart = [];
+
+  renderSuppliersTable();
+  populateDeviceSelects();
+  renderInventoryTable();
+  renderDashboard();
+
+  if (typeof exportCurrentDatabaseToExcel === 'function') {
+    exportCurrentDatabaseToExcel();
+  }
+
+  alert(`تم بنجاح اعتماد فاتورة التوريد وإدخال البضائع إلى رصيد المخزن.`);
+}
+
 function deleteSupplierItem(supId, itemId) {
   if (confirm('هل أنت متأكد من حذف هذا الصنف من فاتورة المورد؟')) {
     const suppliers = getDetailedSuppliers();
@@ -876,7 +1028,7 @@ function renderInventoryTable() {
   tbody.innerHTML = '';
 
   if (inventory.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-500">المخزن فارغ حالياً. سيبدأ الامتلاء تلقائياً عند تنزيل فواتير التوريد من الموردين.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-500">المخزن فارغ حالياً. سيبدأ الامتلاء تلقائياً بمجرد إدخال فواتير التوريد من الموردين.</td></tr>`;
     return;
   }
 
@@ -1539,7 +1691,7 @@ function handleSaveSaleInvoice() {
 
   const today = new Date().toISOString().split('T')[0];
   const sales = getStoredSales();
-  const newInvoiceId = 'INV-' + (sales.length + 101);
+  const newInvoiceId = 'INV-' + (sales.length + 1);
 
   const deviceNamesCombined = currentSaleInvoiceCart.map(i => `${i.name} (عدد ${i.qty})`).join(' + ');
   const serialsCombined = currentSaleInvoiceCart.map(i => i.serial).join(', ');
@@ -1593,7 +1745,7 @@ function handleSaveSaleInvoice() {
       clientCodeToUse = contracts.length > 0 ? (Math.max(...contracts.map(c => c.clientCode || 0)) + 1) : 1;
     }
 
-    const contractId = 'CNT-' + (contracts.length + 101);
+    const contractId = 'CNT-' + (contracts.length + 1);
     const stDateInput = document.getElementById('instStartDate');
     const startDateStr = (stDateInput && stDateInput.value) ? stDateInput.value : today;
 
