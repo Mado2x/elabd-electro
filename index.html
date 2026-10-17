@@ -426,7 +426,7 @@
   <!-- MODALS: النوافذ المنبثقة -->
   <!-- ========================================== -->
 
-  <!-- Modal 1: فاتورة بيع جديدة -->
+<!-- Modal: فاتورة بيع جديدة -->
   <div id="newSaleModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
     <div class="bg-[#111726] border border-slate-800 w-full max-w-2xl rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -438,12 +438,12 @@
         </button>
       </div>
 
-      <!-- نظام البيع أولاً لتحديد الحقول -->
+      <!-- نظام البيع -->
       <div>
         <label class="block text-xs font-semibold text-slate-300 mb-1">نظام البيع *</label>
         <select id="saleTypeSelect" onchange="toggleInstallmentFields()" class="w-full bg-[#090d16] border border-slate-800 rounded-xl p-2.5 text-white text-xs outline-none focus:border-blue-500 font-bold">
-          <option value="installment">بيع بالتقسيط</option>
           <option value="cash">بيع كاش</option>
+          <option value="installment">بيع بالتقسيط</option>
         </select>
       </div>
 
@@ -459,8 +459,8 @@
         </div>
       </div>
 
-      <!-- حقول التقسيط الإضافية للعميل والضامن (تختفي تماماً في البيع الكاش) -->
-      <div id="guarantorAndNationalIdBox" class="space-y-3 bg-slate-900/40 p-3 rounded-2xl border border-slate-800/80">
+      <!-- حقول التقسيط والضامن والرقم القومي (مخفية افتراضياً في الكاش) -->
+      <div id="guarantorAndNationalIdBox" class="space-y-3 bg-slate-900/40 p-3 rounded-2xl border border-slate-800/80 hidden">
         <div>
           <label class="block text-xs font-semibold text-blue-400 mb-1">الرقم القومي للعميل</label>
           <input type="text" id="saleCustomerNationalId" maxlength="14" placeholder="الرقم القومي للعميل (14 رقم)" class="w-full bg-[#090d16] border border-slate-800 rounded-xl p-2 text-white text-xs outline-none focus:border-blue-500">
@@ -481,22 +481,25 @@
         </div>
       </div>
 
-      <!-- اختيار الجهاز بالبحث التوقعي الذكي مثل جوجل -->
-      <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-3">
-        <div>
+      <!-- محرك البحث الذكي المخصص للأجهزة من المخزن -->
+      <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-3 relative">
+        <div class="relative">
           <label class="block text-xs font-semibold text-cyan-400 mb-1">اسم الجهاز أو الموديل (بحث واقتراح فوري من المخزن) *</label>
           <div class="relative">
-            <input type="text" id="saleDeviceInput" list="inventoryDevicesDatalist" oninput="handleDeviceSelectionFromInput()" placeholder="اكتب أول حرف مثل (ثلاجة، شاشة...) وسيظهر مقترح المخزن فوراً..." class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white text-xs outline-none focus:border-cyan-500 pr-9">
+            <input type="text" id="saleDeviceInput" oninput="liveSearchInventoryDevices()" onfocus="liveSearchInventoryDevices()" placeholder="اكتب أول حرف مثل (ثلاجة، شاشة...) وسيظهر مقترح المخزن فوراً..." autocomplete="off" class="w-full bg-[#090d16] border border-slate-700 rounded-xl p-2.5 text-white text-xs outline-none focus:border-cyan-500 pr-9">
             <span class="absolute right-3 top-2.5 text-slate-500"><i class="fa-solid fa-magnifying-glass"></i></span>
           </div>
-          <datalist id="inventoryDevicesDatalist"></datalist>
+          
+          <!-- القائمة المنسدلة الذكية مثل جوجل -->
+          <div id="deviceSuggestionsDropdown" class="absolute z-50 right-0 left-0 mt-1 bg-[#0d1322] border border-slate-700 rounded-2xl shadow-2xl max-h-56 overflow-y-auto custom-scrollbar hidden"></div>
+          
           <p id="deviceStockNotice" class="text-[11px] text-slate-400 mt-1"></p>
         </div>
 
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block text-xs text-slate-400 mb-1">العدد المطلوب</label>
-            <input type="number" id="saleItemQtyInput" value="1" min="1" onchange="calculateInstallmentMath()" class="w-full bg-[#090d16] border border-slate-800 rounded-xl p-2 text-white text-xs outline-none focus:border-cyan-500 text-center font-bold">
+            <input type="number" id="saleItemQtyInput" value="1" min="1" oninput="calculateInstallmentMath()" class="w-full bg-[#090d16] border border-slate-800 rounded-xl p-2 text-white text-xs outline-none focus:border-cyan-500 text-center font-bold">
           </div>
           <div>
             <label class="block text-xs text-slate-400 mb-1">سعر القطعة كاش (ج.م)</label>
@@ -519,7 +522,7 @@
         </button>
       </div>
 
-      <!-- سلة الأجهزة المضافة للفاتورة -->
+      <!-- سلة الأجهزة المضافة -->
       <div class="overflow-x-auto border border-slate-800 rounded-2xl bg-slate-950/60">
         <table class="w-full text-right text-xs">
           <thead class="bg-slate-900 text-slate-400 border-b border-slate-800">
@@ -543,8 +546,8 @@
         <b id="saleCartGrandTotalDisplay" class="text-sm font-black text-emerald-400">0 ج.م</b>
       </div>
 
-      <!-- تفاصيل وحسابات التقسيط (تختفي في البيع الكاش) -->
-      <div id="installmentFieldsBox" class="space-y-3 bg-blue-950/20 p-3.5 rounded-2xl border border-blue-500/20">
+      <!-- تفاصيل وحسابات التقسيط (مخفية افتراضياً في الكاش) -->
+      <div id="installmentFieldsBox" class="space-y-3 bg-blue-950/20 p-3.5 rounded-2xl border border-blue-500/20 hidden">
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block text-xs text-slate-300 mb-1">المقدم المدفوع (ج.م)</label>
@@ -1013,3 +1016,5 @@
   <script src="app.js?v=clean_v3"></script>
 </body>
 </html>
+
+<script src="app.js?v=live_search_v1"></script>
