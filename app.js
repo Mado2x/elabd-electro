@@ -1,15 +1,14 @@
 // ==========================================
-// المحرك التشغيلي الشامل (app.js)
+// المحرك التشغيلي الشامل (app.js) - نسخة الاستقرار النهائي v6
 // معرض أولاد العبد للأجهزة الكهربائية
-// نظام البحث الذكي وخيارات الكاش/التقسيط
 // ==========================================
 
-const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_clean_suppliers_v4';
-const STORAGE_KEY_SELLING_PRICES = 'elabd_clean_prices_v4';
-const STORAGE_KEY_SALES = 'elabd_clean_sales_v4';
-const STORAGE_KEY_CONTRACTS = 'elabd_clean_contracts_v4';
-const STORAGE_KEY_EXPENSES = 'elabd_clean_expenses_v4';
-const STORAGE_KEY_CURRENT_TAB = 'elabd_clean_tab_v4';
+const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_clean_suppliers_v6';
+const STORAGE_KEY_SELLING_PRICES = 'elabd_clean_prices_v6';
+const STORAGE_KEY_SALES = 'elabd_clean_sales_v6';
+const STORAGE_KEY_CONTRACTS = 'elabd_clean_contracts_v6';
+const STORAGE_KEY_EXPENSES = 'elabd_clean_expenses_v6';
+const STORAGE_KEY_CURRENT_TAB = 'elabd_clean_tab_v6';
 
 let currentSupplierShipmentCart = [];
 let currentSaleInvoiceCart = [];
@@ -22,7 +21,7 @@ let currentContractForWhatsApp = null;
 let activeCustomerPhoneForProfile = null;
 let activeInvoiceIdInProfile = null;
 let currentEditingInvoiceId = null;
-let currentSelectedInventoryItem = null;
+let currentStrictSelectedDevice = null;
 
 let html5QrCodeScannerInstance = null;
 let currentTargetInputIdForScanner = null;
@@ -138,13 +137,23 @@ function buildDynamicInventory() {
     });
   });
 
+  // خصم المبيعات من رصيد المخزن بمطابقة الاسم بدقة
   sales.forEach(sale => {
-    const qtySold = parseInt(sale.quantity) || 1;
-    const itemEntry = Object.values(inventoryMap).find(x => 
-      sale.deviceName && (sale.deviceName.includes(x.name) || x.name === sale.rawDeviceName)
-    );
-    if (itemEntry) {
-      itemEntry.currentQty = Math.max(0, itemEntry.currentQty - qtySold);
+    if (sale.items && Array.isArray(sale.items)) {
+      sale.items.forEach(soldItm => {
+        const itemEntry = Object.values(inventoryMap).find(x => x.itemId === soldItm.itemId || x.name === soldItm.name);
+        if (itemEntry) {
+          itemEntry.currentQty = Math.max(0, itemEntry.currentQty - (parseInt(soldItm.qty) || 1));
+        }
+      });
+    } else {
+      const qtySold = parseInt(sale.quantity) || 1;
+      const itemEntry = Object.values(inventoryMap).find(x => 
+        sale.deviceName && (sale.deviceName.includes(x.name) || x.name === sale.rawDeviceName)
+      );
+      if (itemEntry) {
+        itemEntry.currentQty = Math.max(0, itemEntry.currentQty - qtySold);
+      }
     }
   });
 
@@ -247,7 +256,7 @@ function openModal(id) {
   if (el) {
     el.classList.remove('hidden');
     if (id === 'newSaleModal') {
-      toggleInstallmentFields();
+      clearSaleModalFields();
     }
   }
 }
@@ -1454,6 +1463,8 @@ function openNewSaleForThisCustomer() {
   const contracts = getStoredContracts().filter(c => (c.customerPhone || '').toString().trim() === activeCustomerPhoneForProfile.trim());
   if (contracts.length > 0) {
     closeModal('customerProfileModal');
+    clearSaleModalFields();
+
     const nameIn = document.getElementById('saleCustomerName');
     if (nameIn) nameIn.value = contracts[0].customerName;
 
@@ -1479,12 +1490,11 @@ function openNewSaleForThisCustomer() {
 // ==========================================
 // 7. محرك البحث التفاعلي للأجهزة وسلة البيع
 // ==========================================
-function liveSearchInventoryDevices() {
-  const input = document.getElementById('saleDeviceInput');
-  const dropdown = document.getElementById('deviceSuggestionsDropdown');
-  if (!input || !dropdown) return;
+function handleDeviceSearchInput(term) {
+  const dropdown = document.getElementById('deviceSearchResultsList');
+  if (!dropdown) return;
 
-  const query = input.value.trim().toLowerCase();
+  const query = (term || '').trim().toLowerCase();
   const inventory = buildDynamicInventory();
 
   const matches = inventory.filter(dev => 
@@ -1494,7 +1504,7 @@ function liveSearchInventoryDevices() {
   if (matches.length === 0) {
     dropdown.innerHTML = `
       <div class="p-3 text-center text-slate-500 text-xs">
-        ${inventory.length === 0 ? 'المخزن فارغ حالياً! يجب تنزيل بضاعة أولاً من قسم الموردين.' : 'لا يوجد صنف مطابق في المخزن بهذا الاسم.'}
+        لا يوجد صنف مطابق في المخزن. تأكد من إدخال التوريدات أولاً.
       </div>
     `;
     dropdown.classList.remove('hidden');
@@ -1505,7 +1515,7 @@ function liveSearchInventoryDevices() {
   matches.forEach(item => {
     const isOut = item.currentQty <= 0;
     html += `
-      <div onclick="selectDeviceFromSuggestion('${encodeURIComponent(JSON.stringify(item))}')" class="p-2.5 hover:bg-slate-800 cursor-pointer border-b border-slate-800/60 last:border-0 flex justify-between items-center transition">
+      <div onclick="applyDeviceFromStock('${item.itemId}')" class="p-2.5 hover:bg-slate-800 cursor-pointer border-b border-slate-800/60 last:border-0 flex justify-between items-center transition">
         <div>
           <b class="text-xs text-white block">${item.name}</b>
           <span class="text-[10px] text-slate-400">المورد: ${item.supplierName} | باركود: ${item.barcode || '--'}</span>
@@ -1513,7 +1523,7 @@ function liveSearchInventoryDevices() {
         <div class="text-left">
           <span class="text-xs font-bold text-emerald-400 block">${item.cashPrice.toLocaleString()} ج</span>
           <span class="text-[10px] font-bold ${isOut ? 'text-rose-400' : 'text-cyan-400'}">
-            ${isOut ? 'نفذت الكمية ❌' : 'متاح: ' + item.currentQty + ' قطع'}
+            ${isOut ? 'نفذت الكمية (0)' : 'المتاح: ' + item.currentQty + ' قطع'}
           </span>
         </div>
       </div>
@@ -1524,15 +1534,18 @@ function liveSearchInventoryDevices() {
   dropdown.classList.remove('hidden');
 }
 
-function selectDeviceFromSuggestion(encodedItem) {
-  const item = JSON.parse(decodeURIComponent(encodedItem));
-  currentSelectedInventoryItem = item;
+function applyDeviceFromStock(itemId) {
+  const inventory = buildDynamicInventory();
+  const item = inventory.find(i => i.itemId === itemId);
+  if (!item) return;
+
+  currentStrictSelectedDevice = item;
 
   const input = document.getElementById('saleDeviceInput');
-  const dropdown = document.getElementById('deviceSuggestionsDropdown');
+  const dropdown = document.getElementById('deviceSearchResultsList');
   const priceInput = document.getElementById('saleItemPriceInput');
   const qtyInput = document.getElementById('saleItemQtyInput');
-  const notice = document.getElementById('deviceStockNotice');
+  const badge = document.getElementById('selectedDeviceBadge');
 
   if (input) input.value = item.name;
   if (dropdown) dropdown.classList.add('hidden');
@@ -1541,13 +1554,13 @@ function selectDeviceFromSuggestion(encodedItem) {
     qtyInput.max = item.currentQty;
     qtyInput.value = 1;
   }
-  if (notice) {
-    notice.innerHTML = `<span class="text-emerald-400 font-bold">✔ تم اختيار: ${item.name}</span> - الرصيد المتوفر: <b class="text-white">${item.currentQty}</b> قطع.`;
+  if (badge) {
+    badge.innerHTML = `<span class="text-emerald-400 font-bold">✔ تم اختيار: (${item.name})</span> - الرصيد المتاح بالمخزن: <b class="text-white">${item.currentQty}</b> قطع.`;
   }
 }
 
 document.addEventListener('click', function(e) {
-  const dropdown = document.getElementById('deviceSuggestionsDropdown');
+  const dropdown = document.getElementById('deviceSearchResultsList');
   const input = document.getElementById('saleDeviceInput');
   if (dropdown && !dropdown.contains(e.target) && e.target !== input) {
     dropdown.classList.add('hidden');
@@ -1556,32 +1569,34 @@ document.addEventListener('click', function(e) {
 
 function addItemToSaleCart() {
   const input = document.getElementById('saleDeviceInput');
-  if (!input || !input.value.trim()) {
-    alert('يرجى اختيار صنف من مقترحات المخزن.');
+  const devName = input ? input.value.trim() : '';
+
+  const inventory = buildDynamicInventory();
+  const matched = inventory.find(i => i.name.toLowerCase() === devName.toLowerCase()) || currentStrictSelectedDevice;
+
+  if (!matched || matched.name !== devName) {
+    alert('عفواً! يجب اختيار الصنف من قائمة المخزن المنسدلة لضمان الخصم السليم للرصيد وتفادي الأخطاء الإملائية.');
     return;
   }
 
-  const name = input.value.trim();
-  const inventory = buildDynamicInventory();
-  const matched = inventory.find(i => i.name.toLowerCase() === name.toLowerCase()) || currentSelectedInventoryItem;
-
   const priceInput = document.getElementById('saleItemPriceInput');
-  const unitPrice = priceInput ? (parseFloat(priceInput.value) || 0) : 0;
+  const unitPrice = priceInput ? (parseFloat(priceInput.value) || 0) : matched.cashPrice;
 
   const qtyInput = document.getElementById('saleItemQtyInput');
   const qty = qtyInput ? (parseInt(qtyInput.value) || 1) : 1;
 
-  const serialInput = document.getElementById('saleItemSerialInput');
-  const serial = (serialInput && serialInput.value.trim()) ? serialInput.value.trim() : 'SN-AUTO';
-
-  if (matched && qty > matched.currentQty) {
-    alert(`الكمية المطلوبة (${qty}) أكبر من المتوفر في المخزن (${matched.currentQty}).`);
+  if (qty > matched.currentQty) {
+    alert(`الكمية المطلوبة (${qty}) أكبر من الرصيد المتوفر بالمخزن لهذا الجهاز (${matched.currentQty}).`);
     return;
   }
 
+  const serialInput = document.getElementById('saleItemSerialInput');
+  const serial = (serialInput && serialInput.value.trim()) ? serialInput.value.trim() : 'SN-AUTO';
+
   currentSaleInvoiceCart.push({
-    itemId: matched ? matched.itemId : ('ITM-' + Date.now()),
-    name: name,
+    itemId: matched.itemId,
+    name: matched.name,
+    rawName: matched.name,
     qty: qty,
     unitPrice: unitPrice,
     total: qty * unitPrice,
@@ -1589,12 +1604,53 @@ function addItemToSaleCart() {
   });
 
   input.value = '';
-  currentSelectedInventoryItem = null;
+  currentStrictSelectedDevice = null;
   if (priceInput) priceInput.value = '';
   if (serialInput) serialInput.value = '';
-  const notice = document.getElementById('deviceStockNotice');
-  if (notice) notice.innerHTML = '';
+  const badge = document.getElementById('selectedDeviceBadge');
+  if (badge) badge.innerHTML = '';
 
+  renderSaleCartTbody();
+}
+
+function clearSaleModalFields() {
+  currentSaleInvoiceCart = [];
+  currentStrictSelectedDevice = null;
+
+  const nameInput = document.getElementById('saleCustomerName');
+  if (nameInput) nameInput.value = '';
+
+  const phoneInput = document.getElementById('saleCustomerPhone');
+  if (phoneInput) phoneInput.value = '';
+
+  const natIdInput = document.getElementById('saleCustomerNationalId');
+  if (natIdInput) natIdInput.value = '';
+
+  const gNameInput = document.getElementById('saleGuarantorName');
+  if (gNameInput) gNameInput.value = '';
+
+  const gPhoneInput = document.getElementById('saleGuarantorPhone');
+  if (gPhoneInput) gPhoneInput.value = '';
+
+  const gNatIdInput = document.getElementById('saleGuarantorNationalId');
+  if (gNatIdInput) gNatIdInput.value = '';
+
+  const devInput = document.getElementById('saleDeviceInput');
+  if (devInput) devInput.value = '';
+
+  const prInput = document.getElementById('saleItemPriceInput');
+  if (prInput) prInput.value = '';
+
+  const serInput = document.getElementById('saleItemSerialInput');
+  if (serInput) serInput.value = '';
+
+  const badge = document.getElementById('selectedDeviceBadge');
+  if (badge) badge.innerHTML = '';
+
+  const typeSelect = document.getElementById('saleTypeSelect');
+  if (typeSelect) typeSelect.value = 'cash';
+
+  toggleInstallmentFields();
   renderSaleCartTbody();
 }
 
@@ -1621,7 +1677,7 @@ function renderSaleCartTbody() {
   });
 
   if (currentSaleInvoiceCart.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">السلة فارغة. ابحث عن جهاز وأضفه للسلة.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">السلة فارغة. اختر صنفاً من المخزن لإضافته.</td></tr>';
   }
 
   const grandDisplay = document.getElementById('saleCartGrandTotalDisplay');
@@ -1757,15 +1813,14 @@ function handleSaveSaleInvoice() {
 
     setStoredSales(sales);
     closeModal('newSaleModal');
-    currentSaleInvoiceCart = [];
-    renderSaleCartTbody();
+    clearSaleModalFields(); // مسح كامل وتصفير للبدء نظيف
     renderDashboard();
     renderInventoryTable();
     renderSalesTable();
     if (typeof exportCurrentDatabaseToExcel === 'function') {
       exportCurrentDatabaseToExcel();
     }
-    alert(`تم حفظ فاتورة البيع الكاش (${newInvoiceId}) بنجاح.`);
+    alert(`تم حفظ فاتورة البيع الكاش (${newInvoiceId}) بنجاح وخصم الرصيد من المخزن.`);
   } else {
     const math = calculateInstallmentMath();
     const contracts = getStoredContracts();
@@ -1851,8 +1906,7 @@ function handleSaveSaleInvoice() {
 
     setStoredSales(sales);
     closeModal('newSaleModal');
-    currentSaleInvoiceCart = [];
-    renderSaleCartTbody();
+    clearSaleModalFields(); // مسح كامل وتصفير للبدء نظيف
     renderDashboard();
     renderInventoryTable();
     renderInstallmentsTable();
@@ -1860,7 +1914,7 @@ function handleSaveSaleInvoice() {
     if (typeof exportCurrentDatabaseToExcel === 'function') {
       exportCurrentDatabaseToExcel();
     }
-    alert(`تم حفظ فاتورة التقسيط للعميل (${customerName}) تحت الكود (#${clientCodeToUse}).`);
+    alert(`تم حفظ فاتورة التقسيط للعميل (${customerName}) تحت الكود (#${clientCodeToUse}) وخصم الرصيد من المخزن.`);
   }
 }
 
@@ -2544,9 +2598,5 @@ function proceedToSellInquiredDevice() {
   if (!lastInquiredDeviceObject) return;
   closeModal('deviceInquiryModal');
   openModal('newSaleModal');
-  const input = document.getElementById('saleDeviceInput');
-  if (input) {
-    input.value = lastInquiredDeviceObject.name;
-    selectDeviceFromSuggestion(encodeURIComponent(JSON.stringify(lastInquiredDeviceObject)));
-  }
+  applyDeviceFromStock(lastInquiredDeviceObject.itemId);
 }
