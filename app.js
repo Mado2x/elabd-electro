@@ -1,5 +1,5 @@
 // ==========================================
-// المحرك التشغيلي الشامل (app.js) - نسخة الاستقرار النهائي v6
+// المحرك التشغيلي الشامل (app.js) - نسخة الحفظ اليدوي v7
 // معرض أولاد العبد للأجهزة الكهربائية
 // ==========================================
 
@@ -137,7 +137,6 @@ function buildDynamicInventory() {
     });
   });
 
-  // خصم المبيعات من رصيد المخزن بمطابقة الاسم بدقة
   sales.forEach(sale => {
     if (sale.items && Array.isArray(sale.items)) {
       sale.items.forEach(soldItm => {
@@ -815,9 +814,6 @@ function handleCreateSupplierProfile() {
   if (addrInput) addrInput.value = '';
 
   renderSuppliersTable();
-  if (typeof exportCurrentDatabaseToExcel === 'function') {
-    exportCurrentDatabaseToExcel();
-  }
   alert(`تم إضافة المورد (${name}) بنجاح.`);
 }
 
@@ -965,10 +961,6 @@ function handleSaveMultiItemSupplierInvoice() {
   renderInventoryTable();
   renderDashboard();
 
-  if (typeof exportCurrentDatabaseToExcel === 'function') {
-    exportCurrentDatabaseToExcel();
-  }
-
   alert(`تم بنجاح اعتماد فاتورة التوريد وإدخال البضائع إلى رصيد المخزن.`);
 }
 
@@ -981,9 +973,6 @@ function deleteSupplierItem(supId, itemId) {
       setDetailedSuppliers(suppliers);
       renderSuppliersTable();
       renderDashboard();
-      if (typeof exportCurrentDatabaseToExcel === 'function') {
-        exportCurrentDatabaseToExcel();
-      }
     }
   }
 }
@@ -1016,9 +1005,6 @@ function paySupplierPrompt(supId) {
     setDetailedSuppliers(suppliers);
     renderSuppliersTable();
     renderDashboard();
-    if (typeof exportCurrentDatabaseToExcel === 'function') {
-      exportCurrentDatabaseToExcel();
-    }
     alert('تم تسجيل سداد الدفعة للمورد بنجاح.');
   }
 }
@@ -1071,9 +1057,6 @@ function updateItemSellingPrice(itemName, itemId) {
   setSellingPrices(sellingPrices);
 
   renderInventoryTable();
-  if (typeof exportCurrentDatabaseToExcel === 'function') {
-    exportCurrentDatabaseToExcel();
-  }
   alert(`تم تحديث سعر البيع الكاش لصنف (${itemName}) إلى ${newPrice.toLocaleString()} ج.م.`);
 }
 
@@ -1813,13 +1796,10 @@ function handleSaveSaleInvoice() {
 
     setStoredSales(sales);
     closeModal('newSaleModal');
-    clearSaleModalFields(); // مسح كامل وتصفير للبدء نظيف
+    clearSaleModalFields();
     renderDashboard();
     renderInventoryTable();
     renderSalesTable();
-    if (typeof exportCurrentDatabaseToExcel === 'function') {
-      exportCurrentDatabaseToExcel();
-    }
     alert(`تم حفظ فاتورة البيع الكاش (${newInvoiceId}) بنجاح وخصم الرصيد من المخزن.`);
   } else {
     const math = calculateInstallmentMath();
@@ -1906,14 +1886,11 @@ function handleSaveSaleInvoice() {
 
     setStoredSales(sales);
     closeModal('newSaleModal');
-    clearSaleModalFields(); // مسح كامل وتصفير للبدء نظيف
+    clearSaleModalFields();
     renderDashboard();
     renderInventoryTable();
     renderInstallmentsTable();
     renderSalesTable();
-    if (typeof exportCurrentDatabaseToExcel === 'function') {
-      exportCurrentDatabaseToExcel();
-    }
     alert(`تم حفظ فاتورة التقسيط للعميل (${customerName}) تحت الكود (#${clientCodeToUse}) وخصم الرصيد من المخزن.`);
   }
 }
@@ -2046,9 +2023,6 @@ function confirmCollectInstallment() {
 
   renderDashboard();
   renderInstallmentsTable();
-  if (typeof exportCurrentDatabaseToExcel === 'function') {
-    exportCurrentDatabaseToExcel();
-  }
   alert(`تم بنجاح تسجيل تحصيل مبلغ ${paidVal.toLocaleString()} ج.م للعميل (${cnt.customerName}).`);
 }
 
@@ -2258,9 +2232,6 @@ function handleSaveInvoiceEdits() {
   renderInstallmentsTable();
   renderSalesTable();
   renderInventoryTable();
-  if (typeof exportCurrentDatabaseToExcel === 'function') {
-    exportCurrentDatabaseToExcel();
-  }
   alert('تم بنجاح تعديل الفاتورة وحفظ التغييرات.');
 }
 
@@ -2343,9 +2314,6 @@ function handleSaveExpense() {
 
   renderExpensesTable();
   renderDashboard();
-  if (typeof exportCurrentDatabaseToExcel === 'function') {
-    exportCurrentDatabaseToExcel();
-  }
   alert(`تم بنجاح تسجيل مصروف (${title}) بمبلغ ${amount.toLocaleString()} ج.م.`);
 }
 
@@ -2356,9 +2324,6 @@ function deleteExpense(expId) {
     setStoredExpenses(expenses);
     renderExpensesTable();
     renderDashboard();
-    if (typeof exportCurrentDatabaseToExcel === 'function') {
-      exportCurrentDatabaseToExcel();
-    }
   }
 }
 
