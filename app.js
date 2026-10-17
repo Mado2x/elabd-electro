@@ -404,12 +404,32 @@ function renderDashboard() {
     installmentsRemainingVal += (parseFloat(cnt.remainingAmount) || 0);
   });
 
+    // حساب إجمالي المدفوع كاش للموردين فعلياً
+  const suppliers = getDetailedSuppliers();
+  let totalPaidToSuppliers = 0;
+  suppliers.forEach(sup => {
+    (sup.items || []).forEach(it => {
+      totalPaidToSuppliers += (parseFloat(it.paid) || 0);
+    });
+  });
+
   const totalExpensesVal = calculateTotalExpenses();
   const netProfitVal = Math.max(0, grossProfitVal - totalExpensesVal);
   const suppliersDebtTotal = calculateAllSuppliersTotalRemaining();
 
+  // المعادلة: (الكاش المحصل) - (المدفوع للموردين + المصاريف)
+  const netCashFlowVal = cashCollectedVal - (totalPaidToSuppliers + totalExpensesVal);
+
   const elTotalSales = document.getElementById('dashTotalSalesVal');
-  if (elTotalSales) elTotalSales.innerText = `${totalSalesVal.toLocaleString()} ج.م`;
+  if (elTotalSales) {
+    elTotalSales.innerText = `${netCashFlowVal.toLocaleString()} ج.م`;
+    // تلوين الرقم بالأخضر لو موجب وبالأحمر لو سالب
+    if (netCashFlowVal >= 0) {
+      elTotalSales.className = "text-2xl md:text-3xl font-black text-emerald-400";
+    } else {
+      elTotalSales.className = "text-2xl md:text-3xl font-black text-rose-400";
+    }
+  }
 
   const elCash = document.getElementById('dashCashCollectedVal');
   if (elCash) elCash.innerText = `${cashCollectedVal.toLocaleString()} ج.م`;
