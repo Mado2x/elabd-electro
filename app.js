@@ -1,5 +1,5 @@
 // ==========================================
-// الجزء الثالث: المحرك التشغيلي (app.js)
+// المحرك التشغيلي (app.js) - نسخة مصفّرة ونظيفة
 // معرض أولاد العبد للأجهزة الكهربائية
 // ==========================================
 
@@ -10,102 +10,16 @@ const STORAGE_KEY_CONTRACTS = 'elabd_unified_contracts';
 const STORAGE_KEY_EXPENSES = 'elabd_unified_expenses';
 const STORAGE_KEY_CURRENT_TAB = 'elabd_unified_tab';
 
-const defaultSuppliersData = [
-  {
-    id: 'SUP-01',
-    name: 'شركة العربي (توشيبا وشارب)',
-    phone: '01099887766',
-    address: 'مخازن بنها',
-    items: [
-      { id: 'ITM-1', barcode: 'TOSH-16-REF', date: '2026-09-15', name: 'ثلاجة توشيبا 16 قدم نوفروست', qty: 5, unitPrice: 21000, total: 105000, paid: 70000, remaining: 35000 },
-      { id: 'ITM-2', barcode: 'SHARP-25-MIC', date: '2026-09-28', name: 'ميكروويف شارب 25 لتر بالشواية', qty: 10, unitPrice: 5200, total: 52000, paid: 30000, remaining: 22000 }
-    ]
-  },
-  {
-    id: 'SUP-02',
-    name: 'موزع غسالات وشاشات إل جي',
-    phone: '01155443322',
-    address: 'مصر الجديدة',
-    items: [
-      { id: 'ITM-3', barcode: 'LG-9K-WASH', date: '2026-10-01', name: 'غسالة إل جي 9 كيلو فول أوتوماتيك', qty: 6, unitPrice: 19500, total: 117000, paid: 117000, remaining: 0 },
-      { id: 'ITM-4', barcode: 'SAM-55-4K', date: '2026-10-03', name: 'شاشة سامسونج 55 بوصة سمارت 4K', qty: 8, unitPrice: 14500, total: 116000, paid: 60000, remaining: 56000 }
-    ]
-  }
-];
-
-const defaultSellingPrices = {
-  'ثلاجة توشيبا 16 قدم نوفروست': 25000,
-  'ميكروويف شارب 25 لتر بالشواية': 6500,
-  'غسالة إل جي 9 كيلو فول أوتوماتيك': 23500,
-  'شاشة سامسونج 55 بوصة سمارت 4K': 17800
-};
-
-const defaultContracts = [
-  {
-    clientCode: 1,
-    id: 'CNT-101',
-    invoiceDate: '2026-08-01',
-    customerName: 'محمود عبد الفتاح',
-    customerPhone: '01012345678',
-    nationalId: '29704141234567',
-    guarantorName: 'إبراهيم السيد علي',
-    guarantorPhone: '01123456789',
-    guarantorNationalId: '29508129876543',
-    items: [
-      { name: 'غسالة إل جي 9 كيلو فول أوتوماتيك', qty: 1, unitPrice: 23500, total: 23500, serial: 'SN-LG9K-9921' }
-    ],
-    deviceName: 'غسالة إل جي 9 كيلو فول أوتوماتيك (عدد 1)',
-    rawDeviceName: 'غسالة إل جي 9 كيلو فول أوتوماتيك',
-    serialNumber: 'SN-LG9K-9921',
-    quantity: 1,
-    cashPrice: 23500,
-    downPayment: 3500,
-    months: 12,
-    interestRate: 15,
-    totalWithInterest: 26500,
-    monthlyAmount: 1917,
-    paidAmount: 7334,
-    remainingAmount: 19166,
-    startDate: '2026-08-01',
-    installments: [
-      { number: 1, dueDate: '2026-08-01', amount: 1917, status: 'مدفوع بالكامل', paidDate: '2026-08-01', paidActual: 1917 },
-      { number: 2, dueDate: '2026-09-01', amount: 1917, status: 'مدفوع بالكامل', paidDate: '2026-09-02', paidActual: 1917 },
-      { number: 3, dueDate: '2026-10-01', amount: 1917, status: 'مستحق', paidDate: null, paidActual: 0 },
-      { number: 4, dueDate: '2026-11-01', amount: 1917, status: 'قادم', paidDate: null, paidActual: 0 }
-    ]
-  }
-];
-
-const defaultSales = [
-  {
-    id: 'INV-501',
-    date: '2026-08-01',
-    customerName: 'محمود عبد الفتاح',
-    customerPhone: '01012345678',
-    nationalId: '29704141234567',
-    deviceName: 'غسالة إل جي 9 كيلو فول أوتوماتيك (عدد 1)',
-    rawDeviceName: 'غسالة إل جي 9 كيلو فول أوتوماتيك',
-    serialNumber: 'SN-LG9K-9921',
-    type: 'تقسيط',
-    quantity: 1,
-    unitPrice: 23500,
-    totalPrice: 26500,
-    paidImmediately: 3500,
-    contractId: 'CNT-101',
-    items: [
-      { name: 'غسالة إل جي 9 كيلو فول أوتوماتيك', qty: 1, unitPrice: 23500, total: 23500, serial: 'SN-LG9K-9921' }
-    ]
-  }
-];
-
-const defaultExpenses = [
-  { id: 'EXP-1', date: '2026-10-02', title: 'شحن ونقل شاشات من الميناء', category: 'نقل وشحن', amount: 850, notes: 'نولون سيارة نقل' },
-  { id: 'EXP-2', date: '2026-10-05', title: 'بوفيه وضيافة للمعرض', category: 'مصاريف شخصية وبوفيه', amount: 350, notes: 'مشروبات وضيافة عملاء' }
-];
+// بيانات مصفّرة بالكامل لبداية جديدة
+const defaultSuppliersData = [];
+const defaultSellingPrices = {};
+const defaultContracts = [];
+const defaultSales = [];
+const defaultExpenses = [];
 
 let currentSupplierShipmentCart = [];
 let currentSaleInvoiceCart = [];
-let selectedSupplierId = 'SUP-01';
+let selectedSupplierId = null;
 let currentCollectingContractId = null;
 let currentCollectingInstallmentNum = null;
 let currentCollectingFullAmount = 0;
@@ -125,13 +39,9 @@ let lastInquiredDeviceObject = null;
 function getDetailedSuppliers() {
   try {
     const d = localStorage.getItem(STORAGE_KEY_DETAILED_SUPPLIERS);
-    if (d) {
-      const parsed = JSON.parse(d);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
+    if (d) return JSON.parse(d);
   } catch (e) {}
-  localStorage.setItem(STORAGE_KEY_DETAILED_SUPPLIERS, JSON.stringify(defaultSuppliersData));
-  return defaultSuppliersData;
+  return [];
 }
 function setDetailedSuppliers(d) {
   localStorage.setItem(STORAGE_KEY_DETAILED_SUPPLIERS, JSON.stringify(d));
@@ -142,8 +52,7 @@ function getSellingPrices() {
     const d = localStorage.getItem(STORAGE_KEY_SELLING_PRICES);
     if (d) return JSON.parse(d);
   } catch (e) {}
-  localStorage.setItem(STORAGE_KEY_SELLING_PRICES, JSON.stringify(defaultSellingPrices));
-  return defaultSellingPrices;
+  return {};
 }
 function setSellingPrices(d) {
   localStorage.setItem(STORAGE_KEY_SELLING_PRICES, JSON.stringify(d));
@@ -152,13 +61,9 @@ function setSellingPrices(d) {
 function getStoredContracts() {
   try {
     const d = localStorage.getItem(STORAGE_KEY_CONTRACTS);
-    if (d) {
-      const parsed = JSON.parse(d);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
+    if (d) return JSON.parse(d);
   } catch (e) {}
-  localStorage.setItem(STORAGE_KEY_CONTRACTS, JSON.stringify(defaultContracts));
-  return defaultContracts;
+  return [];
 }
 function setStoredContracts(d) {
   localStorage.setItem(STORAGE_KEY_CONTRACTS, JSON.stringify(d));
@@ -167,13 +72,9 @@ function setStoredContracts(d) {
 function getStoredSales() {
   try {
     const d = localStorage.getItem(STORAGE_KEY_SALES);
-    if (d) {
-      const parsed = JSON.parse(d);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
+    if (d) return JSON.parse(d);
   } catch (e) {}
-  localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(defaultSales));
-  return defaultSales;
+  return [];
 }
 function setStoredSales(d) {
   localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(d));
@@ -182,20 +83,16 @@ function setStoredSales(d) {
 function getStoredExpenses() {
   try {
     const d = localStorage.getItem(STORAGE_KEY_EXPENSES);
-    if (d) {
-      const parsed = JSON.parse(d);
-      if (Array.isArray(parsed)) return parsed;
-    }
+    if (d) return JSON.parse(d);
   } catch (e) {}
-  localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(defaultExpenses));
-  return defaultExpenses;
+  return [];
 }
 function setStoredExpenses(d) {
   localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(d));
 }
 
 function resetSystemToDefaultData() {
-  if (confirm('هل ترغب في إعادة ضبط البيانات إلى الحالة الافتراضية؟')) {
+  if (confirm('هل ترغب في مسح كل البيانات وتصفير المعرض بالكامل؟')) {
     localStorage.clear();
     location.reload();
   }
@@ -287,11 +184,6 @@ function parseItemsFromRecord(record) {
 // التهيئة والتنقل
 // ==========================================
 window.addEventListener('DOMContentLoaded', () => {
-  getDetailedSuppliers();
-  getStoredContracts();
-  getStoredSales();
-  getStoredExpenses();
-
   populateDeviceSelects();
 
   const today = new Date().toISOString().split('T')[0];
@@ -402,7 +294,6 @@ function renderDashboard() {
 
   contracts.forEach(cnt => {
     installmentsRemainingVal += (parseFloat(cnt.remainingAmount) || 0);
-    // إضافة المبالغ المحصلة من الأقساط إلى إجمالي الكاش المحصل
     (cnt.installments || []).forEach(inst => {
       if (inst.paidActual && inst.paidActual > 0) {
         cashCollectedVal += parseFloat(inst.paidActual);
@@ -410,7 +301,6 @@ function renderDashboard() {
     });
   });
 
-  // حساب إجمالي النقدية المدفوعة للموردين
   const suppliers = getDetailedSuppliers();
   let totalPaidToSuppliers = 0;
   suppliers.forEach(sup => {
@@ -423,17 +313,15 @@ function renderDashboard() {
   const netProfitVal = Math.max(0, grossProfitVal - totalExpensesVal);
   const suppliersDebtTotal = calculateAllSuppliersTotalRemaining();
 
-  // المعادلة: (الكاش المحصل) - (المدفوع للموردين + المصاريف)
+  // رصيد الخزينة = (المحصل من البيع والأقساط) - (المدفوع للموردين + المصاريف)
   const netCashFlowVal = cashCollectedVal - (totalPaidToSuppliers + totalExpensesVal);
 
   const elTotalSales = document.getElementById('dashTotalSalesVal');
   if (elTotalSales) {
     elTotalSales.innerText = `${netCashFlowVal.toLocaleString()} ج.م`;
-    if (netCashFlowVal >= 0) {
-      elTotalSales.className = "text-2xl md:text-3xl font-black text-emerald-400";
-    } else {
-      elTotalSales.className = "text-2xl md:text-3xl font-black text-rose-400";
-    }
+    elTotalSales.className = netCashFlowVal >= 0 
+      ? "text-2xl md:text-3xl font-black text-emerald-400" 
+      : "text-2xl md:text-3xl font-black text-rose-400";
   }
 
   const elCash = document.getElementById('dashCashCollectedVal');
@@ -542,7 +430,7 @@ function renderTopSellingProductsReport(salesCountMap, totalPiecesCount, selecte
 }
 
 // ==========================================
-// 2. تقارير المبيعات الشهرية والسنوية (1 إلى 12)
+// 2. تقارير المبيعات
 // ==========================================
 function getAnnualReportData(year) {
   const sales = getStoredSales();
@@ -721,10 +609,11 @@ function renderSuppliersTable() {
   const badgeElem = document.getElementById('suppliersCountBadge');
   if (badgeElem) badgeElem.innerText = `${suppliers.length} موردين`;
 
+  const detailContainer = document.getElementById('supplierDetailContainer');
+
   if (suppliers.length === 0) {
-    listContainer.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">لا يوجد موردين مسجلين.</p>';
-    const detailContainer = document.getElementById('supplierDetailContainer');
-    if (detailContainer) detailContainer.innerHTML = '';
+    listContainer.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">لا يوجد موردين مسجلين بعد. ابدأ بإضافة مورد جديد.</p>';
+    if (detailContainer) detailContainer.innerHTML = '<p class="text-xs text-slate-500 text-center py-10">اضغط على زر (إضافة مورد جديد) لتسجيل الموردين وفواتيرهم.</p>';
     return;
   }
 
@@ -826,7 +715,7 @@ function renderSelectedSupplierDetails() {
       </div>
       <div class="flex gap-2 w-full md:w-auto">
         <button onclick="openAddShipmentModal('${sup.id}')" class="flex-1 md:flex-none px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1.5">
-          <i class="fa-solid fa-boxes-packing"></i> تنزيل فاتورة توريد كاملة
+          <i class="fa-solid fa-boxes-packing"></i> تنزيل فاتورة توريد
         </button>
         <button onclick="paySupplierPrompt('${sup.id}')" class="flex-1 md:flex-none px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1.5">
           <i class="fa-solid fa-hand-holding-dollar"></i> سداد دفعة
@@ -865,11 +754,11 @@ function renderSelectedSupplierDetails() {
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-800 text-slate-300">
-          ${rowsHtml || '<tr><td colspan="9" class="p-6 text-center text-slate-500">لا توجد أصناف موردة مسجلة لهذا المورد.</td></tr>'}
+          ${rowsHtml || '<tr><td colspan="9" class="p-6 text-center text-slate-500">لا توجد أصناف موردة مسجلة بعد لهذا المورد.</td></tr>'}
         </tbody>
         <tfoot class="bg-slate-900 font-bold border-t-2 border-slate-700 text-white">
           <tr>
-            <td colspan="3" class="p-2.5 text-right">إجمالي جميع القطع والتوريدات:</td>
+            <td colspan="3" class="p-2.5 text-right">إجمالي القطع والتوريدات:</td>
             <td class="p-2.5 text-center text-cyan-400 text-sm font-black">${totalPieces}</td>
             <td>--</td>
             <td class="p-2.5 text-white text-sm font-black">${grandTotal.toLocaleString()} ج</td>
@@ -901,7 +790,7 @@ function handleCreateSupplierProfile() {
 
   const suppliers = getDetailedSuppliers();
   const newSup = {
-    id: 'SUP-' + (suppliers.length + 10),
+    id: 'SUP-' + (suppliers.length + 1),
     name,
     phone,
     address,
@@ -926,7 +815,7 @@ function handleCreateSupplierProfile() {
 }
 
 function deleteSupplierItem(supId, itemId) {
-  if (confirm('هل أنت متأكد من حذف هذا الصنف من فاتورة المورد؟ سيتم حذفه تلقائياً من رصيد المخزن.')) {
+  if (confirm('هل أنت متأكد من حذف هذا الصنف من فاتورة المورد؟')) {
     const suppliers = getDetailedSuppliers();
     const sup = suppliers.find(s => s.id === supId);
     if (sup) {
@@ -938,7 +827,6 @@ function deleteSupplierItem(supId, itemId) {
       if (typeof exportCurrentDatabaseToExcel === 'function') {
         exportCurrentDatabaseToExcel();
       }
-      alert('تم حذف التوريدة واختفى الصنف من المخزن بنجاح.');
     }
   }
 }
@@ -988,7 +876,7 @@ function renderInventoryTable() {
   tbody.innerHTML = '';
 
   if (inventory.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-500">المخزن فارغ حالياً.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-500">المخزن فارغ حالياً. سيبدأ الامتلاء تلقائياً عند تنزيل فواتير التوريد من الموردين.</td></tr>`;
     return;
   }
 
@@ -1051,7 +939,7 @@ function exportInventoryToExcel() {
 }
 
 // ==========================================
-// 5. سجل وإدارة الأقساط وملفات العملاء
+// 5. سجل الأقساط
 // ==========================================
 function renderInstallmentsTable() {
   const contracts = getStoredContracts();
@@ -1098,7 +986,7 @@ function renderInstallmentsTable() {
   });
 
   if (clientsList.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-slate-500">لا يوجد عملاء مسجلين أو مطابقين للبحث.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-slate-500">لا يوجد عملاء أو أقساط مسجلة بعد.</td></tr>';
     return;
   }
 
@@ -1651,7 +1539,7 @@ function handleSaveSaleInvoice() {
 
   const today = new Date().toISOString().split('T')[0];
   const sales = getStoredSales();
-  const newInvoiceId = 'INV-' + (sales.length + 501);
+  const newInvoiceId = 'INV-' + (sales.length + 101);
 
   const deviceNamesCombined = currentSaleInvoiceCart.map(i => `${i.name} (عدد ${i.qty})`).join(' + ');
   const serialsCombined = currentSaleInvoiceCart.map(i => i.serial).join(', ');
@@ -1793,7 +1681,7 @@ function handleSaveSaleInvoice() {
 }
 
 // ==========================================
-// 8. التحصيل والمرونة وتعديل الفواتير
+// 8. التحصيل وتعديل الفواتير
 // ==========================================
 function openCollectInstallmentModal(contractId, installmentNumber) {
   currentCollectingContractId = contractId;
@@ -2139,7 +2027,7 @@ function handleSaveInvoiceEdits() {
 }
 
 // ==========================================
-// 9. إدارة المصاريف الخارجية
+// 9. إدارة المصاريف
 // ==========================================
 function renderExpensesTable() {
   const expenses = getStoredExpenses();
@@ -2358,7 +2246,7 @@ ${breakdown.remainingText}
 }
 
 // ==========================================
-// 11. ماسح الكاميرا وفحص الباركود
+// 11. ماسح الكاميرا
 // ==========================================
 function openBarcodeScanner(targetMode) {
   currentTargetInputIdForScanner = targetMode;
