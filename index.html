@@ -12,9 +12,7 @@
   <script>
     tailwind.config = {
       theme: {
-        extend: {
-          fontFamily: { sans: ['Cairo', 'sans-serif'] }
-        }
+        extend: { fontFamily: { sans: ['Cairo', 'sans-serif'] } }
       }
     }
   </script>
@@ -39,11 +37,27 @@
           <p class="text-[10px] text-blue-400 font-bold">للأجهزة الكهربائية</p>
         </div>
       </div>
-      <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
+      <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
     </div>
 
+    <!-- كارت إدارة الإكسيل المركزي -->
+    <div class="p-3 mx-3 my-2 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 space-y-2">
+      <div class="flex items-center justify-between text-xs">
+        <span class="text-emerald-400 font-bold flex items-center gap-1.5"><i class="fa-solid fa-file-excel"></i> قاعدة بيانات إكسيل</span>
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      </div>
+      <div class="grid grid-cols-2 gap-1.5 text-[10px]">
+        <button onclick="document.getElementById('excelFileInput').click()" class="py-1.5 px-2 rounded-lg bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 font-bold flex items-center justify-center gap-1 transition">
+          <i class="fa-solid fa-folder-open"></i> فتح شيت
+        </button>
+        <button onclick="exportCurrentDatabaseToExcel(true)" class="py-1.5 px-2 rounded-lg bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/30 font-bold flex items-center justify-center gap-1 transition">
+          <i class="fa-solid fa-floppy-disk"></i> حفظ إكسيل
+        </button>
+      </div>
+      <input type="file" id="excelFileInput" onchange="importDatabaseFromExcelFile(event)" accept=".xlsx, .xls" class="hidden">
+    </div>
+
+    <!-- روابط الشاشات -->
     <nav class="p-3 space-y-1.5 text-xs flex-1 overflow-y-auto custom-scrollbar">
       <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition">
         <i class="fa-solid fa-house-chimney w-4 text-center"></i>
@@ -81,13 +95,9 @@
       </button>
     </nav>
 
-    <div class="p-3 border-t border-slate-800 space-y-2">
-      <button onclick="exportAllDataToExcel()" class="w-full py-2 px-3 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 text-[11px] font-bold flex items-center justify-center gap-2 transition">
-        <i class="fa-solid fa-file-excel text-sm text-emerald-400"></i>
-        <span>تصدير إكسيل كامل</span>
-      </button>
-      <button onclick="resetSystemToDefaultData()" class="w-full py-1 text-[10px] text-slate-500 hover:text-rose-400 text-center transition">
-        <i class="fa-solid fa-rotate-right"></i> إعادة تهيئة البيانات
+    <div class="p-3 border-t border-slate-800 text-center">
+      <button onclick="resetSystemToDefaultData()" class="text-[10px] text-slate-500 hover:text-rose-400 transition">
+        <i class="fa-solid fa-rotate-right"></i> استعادة البيانات الافتراضية
       </button>
     </div>
   </aside>
@@ -100,9 +110,14 @@
       </button>
       <span class="font-black text-sm text-white">معرض أولاد العبد</span>
     </div>
-    <button onclick="openModal('newSaleModal')" class="px-3 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5">
-      <i class="fa-solid fa-plus"></i> بيع
-    </button>
+    <div class="flex items-center gap-1.5">
+      <button onclick="exportCurrentDatabaseToExcel(true)" class="p-2 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold" title="حفظ إكسيل">
+        <i class="fa-solid fa-file-excel"></i>
+      </button>
+      <button onclick="openModal('newSaleModal')" class="px-3 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5">
+        <i class="fa-solid fa-plus"></i> بيع
+      </button>
+    </div>
   </div>
 
   <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-40 hidden md:hidden"></div>
@@ -126,9 +141,9 @@
           </div>
           
           <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-            <button onclick="exportAllDataToExcel()" class="px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-lg flex items-center justify-center gap-1.5 transition">
+            <button onclick="exportCurrentDatabaseToExcel(true)" class="px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-lg flex items-center justify-center gap-1.5 transition">
               <i class="fa-solid fa-file-excel text-sm"></i>
-              <span>تصدير إكسيل</span>
+              <span>تصدير إكسيل كامل</span>
             </button>
             <button onclick="openBarcodeScanner('home_inquiry')" class="px-3.5 py-2.5 bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white border border-cyan-500/40 rounded-xl text-xs font-bold shadow-lg flex items-center justify-center gap-1.5 transition">
               <i class="fa-solid fa-barcode text-sm"></i>
@@ -172,12 +187,10 @@
       <!-- تقرير حركة السحب -->
       <div class="bg-[#111726] border border-slate-800 rounded-3xl p-4 shadow-xl space-y-3">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-slate-800/80 pb-3">
-          <div>
-            <h4 class="font-bold text-sm text-white flex items-center gap-2">
-              <i class="fa-solid fa-fire-flame-curved text-amber-500"></i>
-              تقرير حركة المبيعات والأكثر طلباً
-            </h4>
-          </div>
+          <h4 class="font-bold text-sm text-white flex items-center gap-2">
+            <i class="fa-solid fa-fire-flame-curved text-amber-500"></i>
+            تقرير حركة المبيعات والأكثر طلباً
+          </h4>
           <div class="flex items-center gap-2 w-full md:w-auto">
             <span class="text-xs text-slate-400 font-semibold whitespace-nowrap">اختر الشهر:</span>
             <input type="month" id="selectedReportMonthInput" onchange="renderDashboard()" class="bg-[#090d16] border border-blue-500/40 rounded-xl px-3 py-1.5 text-xs text-white font-bold focus:outline-none">
@@ -307,7 +320,7 @@
       </div>
     </section>
 
-    <!-- VIEW 4: سجل الأقساط (تم ضبط الـ tbody الخاص به) -->
+    <!-- VIEW 4: سجل الأقساط -->
     <section id="view-installments" class="hidden space-y-4">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-[#111726] p-4 rounded-3xl border border-slate-800">
         <div>
@@ -376,7 +389,7 @@
       </div>
     </section>
 
-    <!-- VIEW 6: المبيعات (تم ضبط الـ tbody الخاص به) -->
+    <!-- VIEW 6: المبيعات -->
     <section id="view-sales" class="hidden space-y-4">
       <div class="flex justify-between items-center bg-[#111726] p-4 rounded-3xl border border-slate-800">
         <div>
@@ -411,7 +424,7 @@
       </div>
     </section>
 
-    <!-- VIEW 7: المصاريف (تم ضبط الـ tbody الخاص به) -->
+    <!-- VIEW 7: المصاريف -->
     <section id="view-expenses" class="hidden space-y-4">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-[#111726] p-4 rounded-3xl border border-slate-800">
         <div>
@@ -955,6 +968,8 @@
     </div>
   </div>
 
-  <script src="app.js?v=final_fix"></script>
+  <!-- ربط الجزأين: محرك الإكسيل أولاً ثم محرك العمليات -->
+  <script src="excel-engine.js?v=final"></script>
+  <script src="app.js?v=final"></script>
 </body>
 </html>
