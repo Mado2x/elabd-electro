@@ -2459,3 +2459,101 @@ function executeAutoSelectDeviceForSaleByBarcode(barcode) {
     alert(`لم يتم العثور على جهاز بهذا الباركود (${barcode}) في المخزن.`);
   }
 }
+
+// ==========================================
+// إدارة المصاريف الخارجية والنقل والهوالك
+// ==========================================
+function renderExpensesTable() {
+  const expenses = getStoredExpenses();
+  const tbody = document.getElementById('expensesTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (!expenses || expenses.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-500">لا توجد مصاريف مسجلة حتى الآن.</td></tr>';
+    return;
+  }
+
+  expenses.forEach(exp => {
+    const amt = parseFloat(exp.amount) || 0;
+    tbody.innerHTML += `
+      <tr class="hover:bg-slate-900/60 transition">
+        <td class="p-2.5 text-slate-400 font-mono">${exp.date || '--'}</td>
+        <td class="p-2.5 font-bold text-white">${exp.title || '--'}</td>
+        <td class="p-2.5"><span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 text-[10px] font-bold border border-rose-500/30">${exp.category || 'عام'}</span></td>
+        <td class="p-2.5 text-rose-400 font-black text-sm">${amt.toLocaleString()} ج.م</td>
+        <td class="p-2.5 text-slate-400">${exp.notes || '--'}</td>
+        <td class="p-2.5 text-center">
+          <button onclick="deleteExpense('${exp.id}')" class="text-rose-400 hover:text-rose-300 p-1 text-xs" title="حذف المصروف">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function handleSaveExpense() {
+  const titleInput = document.getElementById('expenseTitleInput');
+  const catInput = document.getElementById('expenseCategorySelect');
+  const amtInput = document.getElementById('expenseAmountInput');
+  const dateInput = document.getElementById('expenseDateInput');
+  const notesInput = document.getElementById('expenseNotesInput');
+
+  if (!titleInput || !amtInput) return;
+
+  const title = titleInput.value.trim();
+  const category = catInput ? catInput.value : 'أخرى';
+  const amount = parseFloat(amtInput.value);
+  const date = (dateInput && dateInput.value) ? dateInput.value : new Date().toISOString().split('T')[0];
+  const notes = notesInput ? notesInput.value.trim() : '';
+
+  if (!title) {
+    alert('يرجى كتابة بند المصروف (مثل: نولون شحن أجهزة).');
+    return;
+  }
+
+  if (isNaN(amount) || amount <= 0) {
+    alert('يرجى إدخال مبلغ صحيح أكبر من الصفر.');
+    return;
+  }
+
+  const expenses = getStoredExpenses();
+  const newExp = {
+    id: 'EXP-' + Date.now(),
+    date,
+    title,
+    category,
+    amount,
+    notes
+  };
+
+  expenses.unshift(newExp);
+  setStoredExpenses(expenses);
+
+  closeModal('addExpenseModal');
+
+  titleInput.value = '';
+  amtInput.value = '';
+  if (notesInput) notesInput.value = '';
+
+  renderExpensesTable();
+  renderDashboard();
+  if (typeof exportCurrentDatabaseToExcel === 'function') {
+    exportCurrentDatabaseToExcel();
+  }
+  alert(`تم بنجاح تسجيل مصروف (${title}) بمبلغ ${amount.toLocaleString()} ج.م.`);
+}
+
+function deleteExpense(expId) {
+  if (confirm('هل أنت متأكد من حذف هذا المصروف؟')) {
+    let expenses = getStoredExpenses();
+    expenses = expenses.filter(e => e.id !== expId);
+    setStoredExpenses(expenses);
+    renderExpensesTable();
+    renderDashboard();
+    if (typeof exportCurrentDatabaseToExcel === 'function') {
+      exportCurrentDatabaseToExcel();
+    }
+  }
+}
