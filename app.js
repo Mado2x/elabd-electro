@@ -1973,3 +1973,149 @@ function proceedToSellInquiredDevice() {
   openModal('newSaleModal');
   applyDeviceFromStock(lastInquiredDeviceObject.itemId);
 }
+
+// ==========================================
+// 1. نظام إيصالات الأمانة وتوثيقها
+// ==========================================
+function getStoredNotes() {
+  try { const d = localStorage.getItem('elabd_promissory_notes'); if (d) return JSON.parse(d); } catch(e){} return {};
+}
+function setStoredNotes(data) {
+  localStorage.setItem('elabd_promissory_notes', JSON.stringify(data));
+}
+
+function updatePromissoryNoteInfo(contractId) {
+  const notes = getStoredNotes();
+  const current = notes[contractId] || { noteNumber: '', folderLocation: '' };
+  
+  const noteNum = prompt('أدخل رقم إيصال الأمانة / الشيك:', current.noteNumber);
+  if (noteNum === null) return;
+  const folderLoc = prompt('أين تم حفظ الإيصال؟ (مثال: دوسيه A بالخزينة):', current.folderLocation);
+  if (folderLoc === null) return;
+
+  notes[contractId] = { noteNumber: noteNum.trim(), folderLocation: folderLoc.trim() };
+  setStoredNotes(notes);
+  alert('تم حفظ وتوثيق بيانات إيصال الأمانة بنجاح.');
+  if (activeCustomerPhoneForProfile) openCustomerProfileModal(activeCustomerPhoneForProfile, contractId);
+}
+
+// ==========================================
+// 2. نظام حجز الأجهزة والعربون
+// ==========================================
+function getStoredBookings() {
+  try { const d = localStorage.getItem('elabd_device_bookings'); if (d) return JSON.parse(d); } catch(e){} return [];
+}
+function setStoredBookings(d) {
+  localStorage.setItem('elabd_device_bookings', JSON.stringify(d));
+}
+
+function openBookingModal() {
+  const inv = buildDynamicInventory();
+  const select = document.getElementById('bookDeviceSelect');
+  if (select) {
+    select.innerHTML = inv.filter(i => i.currentQty > 0).map(i => `
+      <option value="${i.itemId}">${i.name} (المتاح: ${i.currentQty} - السعر: ${i.cashPrice.toLocaleString()} ج)</option>
+    `).join('');
+  }
+  const dateIn = document.getElementById('bookDateInput');
+  if (dateIn) dateIn.value = new Date().toISOString().split('T')[0];
+  openModal('bookingDeviceModal');
+}
+
+function handleSaveBooking() {
+  const customerName = document.getElementById('bookCustomerName').value.trim();
+  const customerPhone = document.getElementById('bookCustomerPhone').value.trim();
+  const itemId = document.getElementById('bookDeviceSelect').value;
+  const deposit = parseFloat(document.getElementById('bookDepositAmount').value) || 0;
+  const date = document.getElementById('bookDateInput').value;
+  const notes = document.getElementById('bookNotes').value.trim();
+
+  if (!customerName || !customerPhone || deposit <= 0 || !itemId) {
+    alert('يرجى ملء جميع الحقول وتحديد مبلغ العربون.');
+    return;
+  }
+
+  const inventory = buildDynamicInventory();
+  const item = inventory.find(i => i.itemId === itemId);
+  if (!item) return;
+
+  const bookings = getStoredBookings();
+  bookings.unshift({
+    id: 'BK-' + Date.now(),
+    customerName,
+    customerPhone,
+    itemId: item.itemId,
+    itemName: item.name,
+    cashPrice: item.cashPrice,
+    deposit,
+    date,
+    notes,
+    status: 'ساري'
+  });
+  setStoredBookings(bookings);
+
+  closeModal('bookingDeviceModal');
+  alert(`تم حجز الجهاز للعميل (${customerName}) واستلام عربون ${deposit.toLocaleString()} ج.م.`);
+  renderDashboard();
+}
+
+// ==========================================
+// 3. نظام المرتجع والاستبدال
+// ==========================================
+let currentReturnSaleId = null;
+
+function openReturnItemModal(saleId) {
+  const sales = getStoredSales();
+  const sale = sales.find(s => s.id === saleId);
+  if (!sale) return;
+
+  currentReturnSaleId = saleId;
+  document.getElementById('returnModalInvoiceId').innerText = `#${sale.id}`;
+  document.getElementById('returnModalCustomerName').innerText = sale.customerName;
+  document.getElementById('returnModalDeviceName').innerText = sale.deviceName;
+  document.getElementById('returnRefundAmount').value = sale.paidImmediately || sale.totalPrice;
+
+  openModal('returnItemModal');
+}
+
+function confirmReturnProcess() {
+  if (!currentReturnSaleId) return;
+  const refundAmount = parseFloat(document.getElementById('returnRefundAmount').value) || 0;
+  const reason = document.getElementById('returnReasonInput').value.trim() || 'مرتجع عادي';
+
+  const sales = getStoredSales();
+  const saleIndex = sales.findIndex(s => s.id === currentReturnSaleId);
+  if (saleIndex === -1) return;
+  const sale = sales[saleIndex];
+
+  // إذا كان مربوطاً بعقد تقسيط يتم إلغاء أو تسوية العقد
+  if (sale.contractId) {
+    let contracts = getStoredContracts().filter(c => c.id !== sale.contractId);
+    setStoredContracts(contracts);
+  }
+
+  // حذف الفاتورة أو وضع علامة مرتجع
+  sales.splice(saleIndex, 1);
+  setStoredSales(sales);
+
+  // تسجيل المبلغ المردود كمصروف/خارج من الخزينة لضبط الدرج
+  if (refundAmount > 0) {
+    const expenses = getStoredExpenses();
+    expenses.unshift({
+      id: 'EXP-RET-' + Date.now(),
+      date: new Date().toISOString().split('T')[0],
+      title: `مرتجع جهاز: ${sale.deviceName} (فاتورة #${sale.id})`,
+      category: 'صيانة وهوالك',
+      amount: refundAmount,
+      notes: reason
+    });
+    setStoredExpenses(expenses);
+  }
+
+  closeModal('returnItemModal');
+  alert('تم تسجيل المرتجع بنجاح وعاد الجهاز تلقائياً إلى رصيد المخزن.');
+  renderDashboard();
+  renderInventoryTable();
+  renderSalesTable();
+  renderInstallmentsTable();
+}
