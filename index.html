@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>معرض أولاد العبد للأجهزة الكهربائية - النسخة الثلجية</title>
+  <title>معرض أولاد العبد للأجهزة الكهربائية والمنزلية</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@500;700;900&display=swap" rel="stylesheet">
@@ -26,8 +26,8 @@
               400: '#38bdf8',
               500: '#0ea5e9',
               600: '#0284c7',
-              deep: '#040b17',
-              card: '#0a1528',
+              deep: '#030814',
+              card: '#081427',
               border: 'rgba(56, 189, 248, 0.25)'
             }
           }
@@ -38,7 +38,7 @@
   <style>
     body {
       font-family: 'Cairo', sans-serif;
-      background: radial-gradient(circle at 50% 0%, #0c203b 0%, #061122 50%, #030813 100%);
+      background: radial-gradient(circle at 50% 0%, #081d38 0%, #040e1d 55%, #02060f 100%);
       background-attachment: fixed;
     }
     .display-font { font-family: 'Tajawal', sans-serif; }
@@ -46,33 +46,56 @@
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 6px; }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
     #barcode-scanner-box video { width: 100% !important; height: auto !important; border-radius: 1.25rem; }
-    
-    /* تأثيرات الزجاج الثلجي المصنفر Frosted Glass */
-    .ice-card {
-      background: linear-gradient(135deg, rgba(14, 28, 52, 0.8) 0%, rgba(6, 17, 34, 0.9) 100%);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border: 1px solid rgba(56, 189, 248, 0.2);
-      box-shadow: 0 10px 30px -5px rgba(2, 132, 199, 0.15);
-    }
-    .ice-glow {
-      position: absolute;
-      width: 350px;
-      height: 350px;
-      background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+
+    /* خلفية البلورات الجليدية والبوكيه مثل الصورة الثانية */
+    .frost-bokeh-bg {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 20% 30%, rgba(56, 189, 248, 0.12) 0%, transparent 40%),
+                  radial-gradient(circle at 80% 20%, rgba(186, 230, 253, 0.10) 0%, transparent 45%),
+                  radial-gradient(circle at 50% 80%, rgba(14, 165, 233, 0.08) 0%, transparent 50%);
       pointer-events: none;
-      filter: blur(60px);
+      z-index: 0;
     }
+
+    /* كروت زجاجية ثلجية Frosted Glass */
+    .ice-window-card {
+      position: relative;
+      background: linear-gradient(135deg, rgba(11, 25, 48, 0.85) 0%, rgba(5, 14, 28, 0.92) 100%);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(125, 211, 252, 0.22);
+      box-shadow: 0 12px 35px -5px rgba(2, 132, 199, 0.18);
+    }
+
+    /* طبقة الثلج المتراكم أعلى المربعات والشباك مثل الصورة الأولى */
+    .snow-cap {
+      position: relative;
+    }
+    .snow-cap::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      right: 14px;
+      left: 14px;
+      height: 10px;
+      background: linear-gradient(180deg, #ffffff 0%, rgba(224, 242, 254, 0.95) 70%, rgba(186, 230, 253, 0.4) 100%);
+      border-radius: 14px 14px 6px 6px;
+      box-shadow: 0 2px 10px rgba(255, 255, 255, 0.7), 0 0 16px rgba(56, 189, 248, 0.5);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* زر التدرج الثلجي */
     .ice-btn-gradient {
       background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 50%, #38bdf8 100%);
     }
   </style>
 </head>
-<body class="text-slate-100 min-h-screen pb-16 md:pb-0 flex flex-col md:flex-row relative selection:bg-cyan-500 selection:text-black">
+<body class="text-slate-100 min-h-screen pb-16 md:pb-0 flex flex-col md:flex-row relative selection:bg-cyan-400 selection:text-black">
 
-  <!-- إضاءات ثلجية عميقة في الخلفية -->
-  <div class="ice-glow top-0 right-10"></div>
-  <div class="ice-glow bottom-20 left-10" style="background: radial-gradient(circle, rgba(14, 165, 233, 0.12) 0%, rgba(0, 0, 0, 0) 70%);"></div>
+  <!-- طبقة البوكيه الجليدية الهادئة -->
+  <div class="frost-bokeh-bg"></div>
 
   <!-- حاوية الإشعارات العصرية -->
   <div id="toastNotificationBox" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] transition-all duration-300 transform -translate-y-24 opacity-0 pointer-events-none flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border backdrop-blur-md max-w-sm w-[90%] md:w-auto">
@@ -84,12 +107,12 @@
   </div>
 
   <!-- القائمة الجانبية الثلجية -->
-  <aside id="sidebar" class="fixed inset-y-0 right-0 z-50 w-64 bg-[#050e1d]/95 backdrop-blur-2xl border-l border-cyan-500/20 flex flex-col shrink-0 transform translate-x-full md:translate-x-0 transition-transform duration-300 md:static shadow-2xl">
+  <aside id="sidebar" class="relative z-50 fixed inset-y-0 right-0 w-64 bg-[#050e1d]/95 backdrop-blur-2xl border-l border-cyan-500/20 flex flex-col shrink-0 transform translate-x-full md:translate-x-0 transition-transform duration-300 md:static shadow-2xl">
     <div class="p-4 border-b border-cyan-500/20 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-cyan-600 to-sky-300 p-0.5 shadow-lg shadow-cyan-500/30">
           <div class="w-full h-full bg-[#050e1d] rounded-2xl flex items-center justify-center text-cyan-300 text-lg">
-            <i class="fa-solid fa-snowflake text-lg animate-spin" style="animation-duration: 12s;"></i>
+            <i class="fa-solid fa-snowflake text-lg animate-spin" style="animation-duration: 14s;"></i>
           </div>
         </div>
         <div>
@@ -103,8 +126,8 @@
       <button onclick="toggleSidebar()" class="md:hidden text-cyan-400 hover:text-white p-1 rounded-xl hover:bg-slate-800 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
     </div>
 
-    <!-- كارت إدارة الإكسيل اليدوي بتصميم ثلجي -->
-    <div class="p-3.5 mx-3 my-3 rounded-2xl bg-gradient-to-br from-cyan-950/40 via-slate-900 to-[#050e1d] border border-cyan-500/30 space-y-2.5 shadow-lg shadow-cyan-950/30">
+    <!-- كارت إدارة الإكسيل اليدوي بتصميم ثلجي متراكم -->
+    <div class="snow-cap p-3.5 mx-3 my-3 rounded-2xl bg-gradient-to-br from-cyan-950/40 via-slate-900 to-[#050e1d] border border-cyan-500/30 space-y-2.5 shadow-lg shadow-cyan-950/30">
       <div class="flex items-center justify-between text-xs">
         <span class="text-cyan-300 font-bold flex items-center gap-1.5"><i class="fa-solid fa-file-excel text-emerald-400"></i> قاعدة بيانات إكسيل</span>
         <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
@@ -156,10 +179,10 @@
   <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-40 hidden md:hidden"></div>
 
   <!-- المحتوى الرئيسي -->
-  <main class="flex-1 p-3.5 md:p-6 max-w-6xl w-full mx-auto space-y-5">
+  <main class="relative z-10 flex-1 p-3.5 md:p-6 max-w-6xl w-full mx-auto space-y-6">
 
-    <!-- شريط علوي للهواتف بتصميم ثلجي -->
-    <header class="flex md:hidden items-center justify-between p-3.5 ice-card rounded-2xl shadow-xl">
+    <!-- شريط علوي للهواتف -->
+    <header class="flex md:hidden items-center justify-between p-3.5 ice-window-card rounded-2xl shadow-xl">
       <button onclick="toggleSidebar()" class="text-cyan-300 p-1.5 rounded-xl hover:bg-slate-800 transition"><i class="fa-solid fa-bars text-lg"></i></button>
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
@@ -170,14 +193,16 @@
       </button>
     </header>
 
-    <!-- VIEW 1: الرئيسية (Frost Dashboard) -->
-    <section id="view-dashboard" class="space-y-4">
-      <div class="relative overflow-hidden rounded-3xl ice-card p-5 md:p-7 shadow-2xl space-y-6">
+    <!-- VIEW 1: الرئيسية بنمط شباك الثلج -->
+    <section id="view-dashboard" class="space-y-6">
+      
+      <!-- الكارت الرئيسي بحافة ثلجية علوية -->
+      <div class="snow-cap relative overflow-hidden rounded-3xl ice-window-card p-5 md:p-7 shadow-2xl space-y-6">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <div class="flex items-center gap-2 mb-1.5">
-              <span class="px-3 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 text-[11px] font-bold flex items-center gap-1.5">
-                <i class="fa-solid fa-snowflake text-[10px]"></i> حركة الصندوق وحسابات المعرض
+              <span class="px-3 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 text-[11px] font-bold flex items-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-snowflake text-[10px]"></i> شاشة الخزينة وموقف الحسابات
               </span>
             </div>
             <div class="flex items-baseline gap-2.5 mt-1">
@@ -198,9 +223,10 @@
           </div>
         </div>
 
-        <!-- كروت مؤشرات الأداء 4 كروت بتصميم ثلجي متطور -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div class="p-4 rounded-2xl bg-[#071326]/90 border border-cyan-900/60 hover:border-emerald-400/50 transition group shadow-md">
+        <!-- كروت الإحصائيات الأربعة وعليها الثلج المتراكم (مثل الشباك) -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5 pt-2">
+          <!-- كارت 1: المحصل -->
+          <div class="snow-cap p-4 rounded-2xl bg-[#071326]/90 border border-cyan-900/60 hover:border-emerald-400/50 transition group shadow-md">
             <div class="flex items-center justify-between mb-2">
               <span class="text-[11px] text-cyan-200/80 font-bold">المحصل بالخزينة</span>
               <div class="w-7 h-7 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs"><i class="fa-solid fa-vault"></i></div>
@@ -208,7 +234,8 @@
             <b class="text-base md:text-xl font-black text-emerald-400 block" id="dashCashCollectedVal">0 ج.م</b>
           </div>
 
-          <div class="p-4 rounded-2xl bg-[#071326]/90 border border-cyan-900/60 hover:border-amber-400/50 transition group shadow-md">
+          <!-- كارت 2: أقساط بالخارج -->
+          <div class="snow-cap p-4 rounded-2xl bg-[#071326]/90 border border-cyan-900/60 hover:border-amber-400/50 transition group shadow-md">
             <div class="flex items-center justify-between mb-2">
               <span class="text-[11px] text-cyan-200/80 font-bold">أقساط بالخارج</span>
               <div class="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs"><i class="fa-solid fa-hand-holding-dollar"></i></div>
@@ -216,7 +243,8 @@
             <b class="text-base md:text-xl font-black text-amber-300 block" id="dashInstallmentsRemainingVal">0 ج.م</b>
           </div>
 
-          <div class="p-4 rounded-2xl bg-[#071326]/90 border border-cyan-900/60 hover:border-rose-400/50 transition group shadow-md">
+          <!-- كارت 3: ديون الموردين -->
+          <div class="snow-cap p-4 rounded-2xl bg-[#071326]/90 border border-cyan-900/60 hover:border-rose-400/50 transition group shadow-md">
             <div class="flex items-center justify-between mb-2">
               <span class="text-[11px] text-cyan-200/80 font-bold">ديون للموردين</span>
               <div class="w-7 h-7 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs"><i class="fa-solid fa-truck"></i></div>
@@ -224,7 +252,8 @@
             <b class="text-base md:text-xl font-black text-rose-400 block" id="dashSuppliersDebtsVal">0 ج.م</b>
           </div>
 
-          <div class="p-4 rounded-2xl bg-[#071326]/90 border border-cyan-900/60 hover:border-cyan-400/50 transition group shadow-md">
+          <!-- كارت 4: المصاريف والهوالك -->
+          <div class="snow-cap p-4 rounded-2xl bg-[#071326]/90 border border-cyan-900/60 hover:border-cyan-400/50 transition group shadow-md">
             <div class="flex items-center justify-between mb-2">
               <span class="text-[11px] text-cyan-200/80 font-bold">المصاريف والهوالك</span>
               <div class="w-7 h-7 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs"><i class="fa-solid fa-receipt"></i></div>
@@ -242,7 +271,7 @@
       </div>
 
       <!-- تقرير الحركة والأكثر طلباً بالشهر -->
-      <div class="ice-card rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
+      <div class="snow-cap ice-window-card rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-cyan-500/20 pb-3">
           <h3 class="text-xs md:text-sm font-bold text-white flex items-center gap-2">
             <i class="fa-solid fa-fire text-amber-400"></i> الأجهزة الأكثر طلباً وسحباً
@@ -256,7 +285,7 @@
       </div>
 
       <!-- الأقساط المستحقة بالشهر -->
-      <div class="ice-card rounded-3xl p-4 md:p-5 space-y-3.5 shadow-xl">
+      <div class="snow-cap ice-window-card rounded-3xl p-4 md:p-5 space-y-3.5 shadow-xl">
         <div class="flex justify-between items-center border-b border-cyan-500/20 pb-3">
           <h3 class="text-xs md:text-sm font-bold text-white flex items-center gap-2">
             <i class="fa-solid fa-bell text-rose-400"></i> تحصيل الأقساط المستحقة للشهر الحالي
@@ -282,7 +311,7 @@
 
     <!-- VIEW 2: تقارير المبيعات الشهرية والسنوية -->
     <section id="view-reports" class="hidden space-y-4">
-      <div class="ice-card rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
+      <div class="snow-cap ice-window-card rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-cyan-500/20 pb-3">
           <div>
             <h3 class="text-sm md:text-base font-bold text-white flex items-center gap-2">
@@ -347,7 +376,7 @@
 
     <!-- VIEW 3: الموردين والمشتريات -->
     <section id="view-suppliers" class="hidden space-y-4">
-      <div class="ice-card rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
+      <div class="snow-cap ice-window-card rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-cyan-500/20 pb-3">
           <div>
             <h3 class="text-sm md:text-base font-bold text-white flex items-center gap-2">
@@ -375,7 +404,7 @@
 
     <!-- VIEW 4: سجل الأقساط -->
     <section id="view-installments" class="hidden space-y-4">
-      <div class="ice-card rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
+      <div class="snow-cap ice-window-card rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-cyan-500/20 pb-3">
           <div>
             <h3 class="text-sm md:text-base font-bold text-white flex items-center gap-2">
@@ -410,7 +439,7 @@
 
     <!-- VIEW 5: المخزن -->
     <section id="view-inventory" class="hidden space-y-4">
-      <div class="ice-card rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
+      <div class="snow-cap ice-window-card rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
         <div class="flex justify-between items-center border-b border-cyan-500/20 pb-3">
           <div>
             <h3 class="text-sm md:text-base font-bold text-white flex items-center gap-2">
@@ -443,7 +472,7 @@
 
     <!-- VIEW 6: فواتير البيع -->
     <section id="view-sales" class="hidden space-y-4">
-      <div class="ice-card rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
+      <div class="snow-cap ice-window-card rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
         <div class="flex justify-between items-center border-b border-cyan-500/20 pb-3">
           <h3 class="text-sm md:text-base font-bold text-white flex items-center gap-2">
             <i class="fa-solid fa-receipt text-cyan-400"></i> فواتير المبيعات المسجلة
@@ -474,7 +503,7 @@
 
     <!-- VIEW 7: المصاريف -->
     <section id="view-expenses" class="hidden space-y-4">
-      <div class="ice-card rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
+      <div class="snow-cap ice-window-card rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
         <div class="flex justify-between items-center border-b border-cyan-500/20 pb-3">
           <div>
             <h3 class="text-sm md:text-base font-bold text-white flex items-center gap-2">
@@ -507,12 +536,12 @@
   </main>
 
   <!-- ========================================== -->
-  <!-- MODALS: النوافذ المنبثقة بتصميم ثلجي فخم -->
+  <!-- MODALS: النوافذ المنبثقة -->
   <!-- ========================================== -->
 
   <!-- Modal 1: فاتورة بيع جديدة -->
   <div id="newSaleModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-[#09152b] border border-cyan-500/30 w-full max-w-2xl rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
+    <div class="snow-cap bg-[#09152b] border border-cyan-500/30 w-full max-w-2xl rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-center border-b border-cyan-900/60 pb-3">
         <h3 class="font-bold text-white text-base flex items-center gap-2.5">
           <span class="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-sm"><i class="fa-solid fa-cart-plus"></i></span>
@@ -680,7 +709,7 @@
 
   <!-- Modal 2: إضافة مورد جديد -->
   <div id="addNewSupplierProfileModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-[#09152b] border border-cyan-500/30 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+    <div class="snow-cap bg-[#09152b] border border-cyan-500/30 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-cyan-900/60 pb-3">
         <h3 class="font-bold text-white text-sm flex items-center gap-2.5">
           <span class="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-sm"><i class="fa-solid fa-truck-ramp-box"></i></span>
@@ -711,7 +740,7 @@
 
   <!-- Modal 3: تنزيل فاتورة توريد من مورد -->
   <div id="addSupplierShipmentModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-[#09152b] border border-cyan-500/30 w-full max-w-2xl rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
+    <div class="snow-cap bg-[#09152b] border border-cyan-500/30 w-full max-w-2xl rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-center border-b border-cyan-900/60 pb-3">
         <div>
           <h3 class="font-bold text-white text-sm flex items-center gap-2">
@@ -796,7 +825,7 @@
 
   <!-- Modal 4: ملف العميل المتكامل -->
   <div id="customerProfileModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-[#09152b] border border-cyan-500/30 w-full max-w-3xl rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
+    <div class="snow-cap bg-[#09152b] border border-cyan-500/30 w-full max-w-3xl rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-start border-b border-cyan-900/60 pb-3">
         <div>
           <div class="flex items-center gap-2">
@@ -837,7 +866,7 @@
 
   <!-- Modal 5: تحصيل قسط -->
   <div id="collectInstallmentModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-[#09152b] border border-cyan-500/30 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+    <div class="snow-cap bg-[#09152b] border border-cyan-500/30 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-cyan-900/60 pb-3">
         <div>
           <h3 class="font-bold text-white text-sm flex items-center gap-2">
@@ -884,7 +913,7 @@
 
   <!-- Modal 6: قوالب رسائل الواتساب -->
   <div id="chooseWhatsAppTemplateModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-[#09152b] border border-cyan-500/30 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+    <div class="snow-cap bg-[#09152b] border border-cyan-500/30 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-cyan-900/60 pb-3">
         <div>
           <h3 class="font-bold text-white text-sm flex items-center gap-2">
@@ -977,7 +1006,7 @@
 
   <!-- Modal 10: تعديل الفاتورة -->
   <div id="editSaleInvoiceModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-[#09152b] border border-cyan-500/30 w-full max-w-lg rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
+    <div class="snow-cap bg-[#09152b] border border-cyan-500/30 w-full max-w-lg rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-center border-b border-cyan-900/60 pb-3">
         <h3 class="font-bold text-white text-sm flex items-center gap-2">
           <i class="fa-solid fa-pen-to-square text-amber-400"></i> تعديل بيانات الفاتورة <span id="editInvoiceIdLabel" class="text-cyan-300 font-mono">--</span>
@@ -1054,7 +1083,7 @@
 
   <!-- Modal 11: إضافة مصروف جديد -->
   <div id="addExpenseModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-[#09152b] border border-cyan-500/30 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+    <div class="snow-cap bg-[#09152b] border border-cyan-500/30 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-cyan-900/60 pb-3">
         <h3 class="font-bold text-white text-sm flex items-center gap-2">
           <i class="fa-solid fa-money-bill-transfer text-rose-400"></i> تسجيل مصروف أو نولون جديد
@@ -1100,6 +1129,6 @@
 
   <script src="excel-engine.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="app.js?v=ice_edition_v15"></script>
+  <script src="app.js?v=snow_window_v16"></script>
 </body>
 </html>
