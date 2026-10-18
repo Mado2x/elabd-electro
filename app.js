@@ -1,4 +1,22 @@
-// ==========================================
+// ==========================================// استبدال تنبيهات المتصفح الافتراضية بنوافذ فخمة وعصرية
+window.alert = function(msg) {
+  const isError = msg.includes('يرجى') || msg.includes('عفواً') || msg.includes('أكبر') || msg.includes('تعذر');
+  if (window.Swal) {
+    Swal.fire({
+      title: isError ? 'تنبيه' : 'تمت العملية',
+      text: msg,
+      icon: isError ? 'warning' : 'success',
+      confirmButtonText: 'تمام',
+      confirmButtonColor: '#2563eb',
+      background: '#111726',
+      color: '#ffffff',
+      customClass: { popup: 'rounded-3xl border border-slate-800' }
+    });
+  } else {
+    prompt(msg);
+  }
+};
+
 // المحرك التشغيلي الشامل (app.js)
 // معرض أولاد العبد للأجهزة الكهربائية
 // نظام التنبيهات المودرن (Toast) وبدون حفظ تلقائي
