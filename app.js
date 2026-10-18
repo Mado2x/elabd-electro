@@ -1,8 +1,10 @@
 // ==========================================
 // المحرك التشغيلي المتطور (app.js)
 // معرض أولاد العبد للأجهزة الكهربائية
+// يشمل: الطباعة الحرارية، تقفيل الوردية، تنبيه النواقص، وإيصالات واتساب
 // ==========================================
 
+// إدارة وضع الرؤية (Light / Dark)
 function initThemeMode() {
   const savedTheme = localStorage.getItem('elabd_theme_mode') || 'dark';
   applyTheme(savedTheme);
@@ -36,6 +38,7 @@ function applyTheme(theme) {
   }
 }
 
+// نظام التنبيهات العصري
 window.alert = function(msg) {
   const isError = msg.includes('يرجى') || msg.includes('عفواً') || msg.includes('أكبر') || msg.includes('تعذر');
   if (window.Swal) {
@@ -89,8 +92,6 @@ const STORAGE_KEY_SALES = 'elabd_clean_sales_v6';
 const STORAGE_KEY_CONTRACTS = 'elabd_clean_contracts_v6';
 const STORAGE_KEY_EXPENSES = 'elabd_clean_expenses_v6';
 const STORAGE_KEY_CURRENT_TAB = 'elabd_clean_tab_v6';
-const STORAGE_KEY_BOOKINGS = 'elabd_device_bookings';
-const STORAGE_KEY_NOTES = 'elabd_promissory_notes';
 
 let currentSupplierShipmentCart = [];
 let currentSaleInvoiceCart = [];
@@ -105,8 +106,6 @@ let activeInvoiceIdInProfile = null;
 let currentEditingInvoiceId = null;
 let currentStrictSelectedDevice = null;
 let currentViewedSaleIdForPrint = null;
-let currentReturnSaleId = null;
-let activeConvertingBookingId = null;
 
 let html5QrCodeScannerInstance = null;
 let currentTargetInputIdForScanner = null;
@@ -127,12 +126,6 @@ function setStoredSales(d) { localStorage.setItem(STORAGE_KEY_SALES, JSON.string
 function getStoredExpenses() { try { const d = localStorage.getItem(STORAGE_KEY_EXPENSES); if (d) return JSON.parse(d); } catch (e) {} return []; }
 function setStoredExpenses(d) { localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(d)); }
 
-function getStoredBookings() { try { const d = localStorage.getItem(STORAGE_KEY_BOOKINGS); if (d) return JSON.parse(d); } catch (e) {} return []; }
-function setStoredBookings(d) { localStorage.setItem(STORAGE_KEY_BOOKINGS, JSON.stringify(d)); }
-
-function getStoredNotes() { try { const d = localStorage.getItem(STORAGE_KEY_NOTES); if (d) return JSON.parse(d); } catch (e) {} return {}; }
-function setStoredNotes(d) { localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(d)); }
-
 function calculateAllSuppliersTotalRemaining() {
   const suppliers = getDetailedSuppliers();
   let totalRemaining = 0;
@@ -148,7 +141,6 @@ function calculateTotalExpenses() {
 function buildDynamicInventory() {
   const suppliers = getDetailedSuppliers();
   const sales = getStoredSales();
-  const bookings = getStoredBookings().filter(b => b.status === 'ساري');
   const sellingPrices = getSellingPrices();
   const inventoryMap = {};
 
@@ -187,12 +179,6 @@ function buildDynamicInventory() {
     }
   });
 
-  // خصم الكميات المحجوزة سارياً لكي لا تباع مرتين بالخطأ
-  bookings.forEach(b => {
-    const itemEntry = Object.values(inventoryMap).find(x => x.itemId === b.itemId || x.name === b.itemName);
-    if (itemEntry) itemEntry.currentQty = Math.max(0, itemEntry.currentQty - 1);
-  });
-
   return Object.values(inventoryMap);
 }
 
@@ -212,6 +198,7 @@ function parseItemsFromRecord(record) {
   });
 }
 
+// التهيئة
 window.addEventListener('DOMContentLoaded', () => {
   initThemeMode();
   const today = new Date().toISOString().split('T')[0];
@@ -273,164 +260,13 @@ function openModal(id) { const el = document.getElementById(id); if (el) { el.cl
 function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.add('hidden'); }
 
 // ==========================================
-// دورة الحجز المتكاملة
-// ==========================================
-function openBookingModal() {
-  const inv = buildDynamicInventory();
-  const select = document.getElementById('bookDeviceSelect');
-  if (select) {
-    select.innerHTML = inv.filter(i => i.currentQty > 0).map(i => `
-      <option value="${i.itemId}">${i.name} (المتاح بالمخزن: ${i.currentQty} - السعر: ${i.cashPrice.toLocaleString()} ج)</option>
-    `).join('');
-  }
-  const dateIn = document.getElementById('bookDateInput');
-  if (dateIn) dateIn.value = new Date().toISOString().split('T')[0];
-  openModal('bookingDeviceModal');
-}
-
-function handleSaveBooking() {
-  const customerName = document.getElementById('bookCustomerName').value.trim();
-  const customerPhone = document.getElementById('bookCustomerPhone').value.trim();
-  const itemId = document.getElementById('bookDeviceSelect').value;
-  const deposit = parseFloat(document.getElementById('bookDepositAmount').value) || 0;
-  const date = document.getElementById('bookDateInput').value || new Date().toISOString().split('T')[0];
-  const notes = document.getElementById('bookNotes').value.trim();
-
-  if (!customerName || !customerPhone || deposit <= 0 || !itemId) {
-    alert('يرجى ملء جميع الحقول وتحديد مبلغ العربون.');
-    return;
-  }
-
-  const inventory = buildDynamicInventory();
-  const item = inventory.find(i => i.itemId === itemId);
-  if (!item) return;
-
-  const bookings = getStoredBookings();
-  bookings.unshift({
-    id: 'BK-' + Date.now(),
-    customerName,
-    customerPhone,
-    itemId: item.itemId,
-    itemName: item.name,
-    cashPrice: item.cashPrice,
-    deposit,
-    date,
-    notes,
-    status: 'ساري'
-  });
-  setStoredBookings(bookings);
-
-  closeModal('bookingDeviceModal');
-  alert(`تم حجز الجهاز للعميل (${customerName}) وإيداع عربون ${deposit.toLocaleString()} ج.م في الخزينة.`);
-  renderDashboard();
-}
-
-function renderBookingsTable() {
-  const bookings = getStoredBookings();
-  const tbody = document.getElementById('bookingsTableBody');
-  const badge = document.getElementById('activeBookingsBadge');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  const activeBookings = bookings.filter(b => b.status === 'ساري');
-  if (badge) badge.innerText = `${activeBookings.length} جهاز محجوز`;
-
-  if (activeBookings.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">لا توجد أجهزة محجوزة حالياً.</td></tr>`;
-    return;
-  }
-
-  activeBookings.forEach(b => {
-    tbody.innerHTML += `
-      <tr>
-        <td class="p-2.5 font-bold text-slate-900 dark:text-white">
-          ${b.customerName}
-          <span class="block text-[10px] text-slate-400 font-normal">${b.customerPhone}</span>
-        </td>
-        <td class="p-2.5 font-bold text-blue-600 dark:text-cyan-400">
-          ${b.itemName}
-          <span class="block text-[10px] text-slate-500 dark:text-slate-400 font-normal">إجمالي السعر: ${b.cashPrice.toLocaleString()} ج</span>
-        </td>
-        <td class="p-2.5 text-slate-500 dark:text-slate-400">${b.date}</td>
-        <td class="p-2.5 font-black text-emerald-600 dark:text-emerald-400 text-sm">${b.deposit.toLocaleString()} ج.م</td>
-        <td class="p-2.5 text-slate-400 text-[11px]">${b.notes || '--'}</td>
-        <td class="p-2.5 text-center space-x-1.5 space-x-reverse">
-          <button onclick="convertBookingToSaleInvoice('${b.id}')" class="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white rounded-xl text-[11px] font-bold shadow">
-            🛒 إتمام البيع
-          </button>
-          <button onclick="cancelBookingPrompt('${b.id}')" class="px-2 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-xl text-[11px] font-bold">
-            إلغاء ✕
-          </button>
-        </td>
-      </tr>
-    `;
-  });
-}
-
-function convertBookingToSaleInvoice(bookingId) {
-  const bookings = getStoredBookings();
-  const b = bookings.find(x => x.id === bookingId);
-  if (!b) return;
-
-  activeConvertingBookingId = bookingId;
-  openModal('newSaleModal');
-
-  const nameInput = document.getElementById('saleCustomerName');
-  const phoneInput = document.getElementById('saleCustomerPhone');
-  if (nameInput) nameInput.value = b.customerName;
-  if (phoneInput) phoneInput.value = b.customerPhone;
-
-  currentSaleInvoiceCart = [{
-    itemId: b.itemId,
-    name: b.itemName,
-    rawName: b.itemName,
-    qty: 1,
-    unitPrice: b.cashPrice,
-    total: b.cashPrice,
-    serial: 'SN-AUTO'
-  }];
-  renderSaleCartTbody();
-
-  const dpInput = document.getElementById('instDownPayment');
-  if (dpInput) dpInput.value = b.deposit;
-
-  alert(`تم تجهيز فاتورة الحجز للعميل (${b.customerName}). العربون المسدد (${b.deposit.toLocaleString()} ج) مسجل تلقائياً.`);
-}
-
-function cancelBookingPrompt(bookingId) {
-  const bookings = getStoredBookings();
-  const b = bookings.find(x => x.id === bookingId);
-  if (!b) return;
-
-  if (confirm(`هل تريد إلغاء حجز (${b.itemName}) للعميل (${b.customerName}) ورد العربون (${b.deposit.toLocaleString()} ج)؟`)) {
-    const expenses = getStoredExpenses();
-    expenses.unshift({
-      id: 'EXP-CAN-' + Date.now(),
-      date: new Date().toISOString().split('T')[0],
-      title: `رد عربون حجز ملغي: ${b.customerName} (${b.itemName})`,
-      category: 'أخرى',
-      amount: b.deposit,
-      notes: 'إلغاء حجز'
-    });
-    setStoredExpenses(expenses);
-
-    const updated = bookings.filter(x => x.id !== bookingId);
-    setStoredBookings(updated);
-
-    renderDashboard();
-    alert('تم إلغاء الحجز ورد العربون وتحديث الخزينة.');
-  }
-}
-
-// ==========================================
-// تقفيل الوردية اليومية (Z-Report)
+// ميزة 1: تقفيل الوردية اليومية (Z-Report)
 // ==========================================
 function openDailyShiftModal() {
   const today = new Date().toISOString().split('T')[0];
   const sales = getStoredSales();
   const contracts = getStoredContracts();
   const expenses = getStoredExpenses();
-  const bookings = getStoredBookings();
 
   let todaySalesCash = 0;
   sales.forEach(s => {
@@ -444,21 +280,15 @@ function openDailyShiftModal() {
     });
   });
 
-  // إضافة العربونات المقبوضة اليوم
-  let todayBookingsCash = 0;
-  bookings.forEach(b => {
-    if (b.date === today && b.status === 'ساري') todayBookingsCash += (parseFloat(b.deposit) || 0);
-  });
-
   let todayExpenses = 0;
   expenses.forEach(e => {
     if (e.date === today) todayExpenses += (parseFloat(e.amount) || 0);
   });
 
-  const netDrawerCash = (todaySalesCash + todayInstCash + todayBookingsCash) - todayExpenses;
+  const netDrawerCash = (todaySalesCash + todayInstCash) - todayExpenses;
 
   const sSales = document.getElementById('shiftTodaySalesCash');
-  if (sSales) sSales.innerText = `${(todaySalesCash + todayBookingsCash).toLocaleString()} ج.م`;
+  if (sSales) sSales.innerText = `${todaySalesCash.toLocaleString()} ج.م`;
 
   const sInst = document.getElementById('shiftTodayInstCash');
   if (sInst) sInst.innerText = `${todayInstCash.toLocaleString()} ج.م`;
@@ -473,7 +303,7 @@ function openDailyShiftModal() {
 }
 
 // ==========================================
-// الطباعة الحرارية
+// ميزة 2: طباعة الإيصالات الحرارية (80mm)
 // ==========================================
 function windowPrintReceiptHTML(contentHtml) {
   const printArea = document.getElementById('printableReceiptArea');
@@ -534,6 +364,7 @@ function printCurrentViewedSaleInvoice() {
       </div>
       <div style="border-bottom: 1px dashed #666; margin: 10px 0;"></div>
       <p style="font-size: 10px; margin: 4px 0;">شكراً لتعاملكم مع معرض أولاد العبد 🌸</p>
+      <p style="font-size: 9px; color: #666;">خدمة العملاء: ${sale.customerPhone}</p>
     </div>
   `;
 
@@ -563,6 +394,7 @@ function printInstallmentReceipt(contract, instNum, paidAmount, remainingOnContr
       </div>
       <div style="border-bottom: 1px dashed #666; margin: 10px 0;"></div>
       <p style="font-size: 10px; margin: 4px 0;">توقيع المستلم (الخزينة): ....................</p>
+      <p style="font-size: 9px; color: #666;">معرض أولاد العبد يرحب بكم دائماً</p>
     </div>
   `;
   windowPrintReceiptHTML(html);
@@ -597,12 +429,6 @@ function renderDashboard() {
       filteredMonthPiecesCount += qtySold;
       salesCountMap[cleanName] = (salesCountMap[cleanName] || 0) + qtySold;
     }
-  });
-
-  // إضافة مبالغ العربونات المقبوضة للخزينة
-  const activeBookingsList = getStoredBookings().filter(b => b.status === 'ساري');
-  activeBookingsList.forEach(b => {
-    cashCollectedVal += (parseFloat(b.deposit) || 0);
   });
 
   contracts.forEach(cnt => {
@@ -642,7 +468,6 @@ function renderDashboard() {
   const elNetProfit = document.getElementById('dashNetProfitVal');
   if (elNetProfit) elNetProfit.innerText = `${netProfitVal.toLocaleString()} ج.م`;
 
-  renderBookingsTable();
   renderTopSellingProductsReport(salesCountMap, filteredMonthPiecesCount);
 
   const dueTableBody = document.getElementById('dueInstallmentsTableBody');
@@ -719,6 +544,7 @@ function renderTopSellingProductsReport(salesCountMap, totalPiecesCount) {
   });
 }
 
+// المخزن وتنبيه النواقص
 function renderInventoryTable() {
   const inventory = buildDynamicInventory();
   const tbody = document.getElementById('inventoryTableBody');
@@ -785,6 +611,7 @@ function exportInventoryToExcel() {
   XLSX.writeFile(wb, `جرد_مخزن_أولاد_العبد_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
+// المبيعات والفواتير
 function viewSingleInvoiceDetails(saleId) {
   currentViewedSaleIdForPrint = saleId;
   const sales = getStoredSales();
@@ -840,68 +667,13 @@ function renderSalesTable() {
           <button onclick="openEditInvoiceModal('${s.id}')" class="px-2 py-1 bg-amber-100 dark:bg-amber-600/20 text-amber-700 dark:text-amber-400 rounded-lg text-xs font-bold">
             تعديل ✏️
           </button>
-          <button onclick="openReturnItemModal('${s.id}')" class="px-2 py-1 bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 rounded-lg text-xs font-bold" title="مرتجع جهاز">
-            مرتجع 🔄
-          </button>
         </td>
       </tr>
     `;
   });
 }
 
-function openReturnItemModal(saleId) {
-  const sales = getStoredSales();
-  const sale = sales.find(s => s.id === saleId);
-  if (!sale) return;
-
-  currentReturnSaleId = saleId;
-  document.getElementById('returnModalInvoiceId').innerText = `#${sale.id}`;
-  document.getElementById('returnModalCustomerName').innerText = sale.customerName;
-  document.getElementById('returnModalDeviceName').innerText = sale.deviceName;
-  document.getElementById('returnRefundAmount').value = sale.paidImmediately || sale.totalPrice;
-
-  openModal('returnItemModal');
-}
-
-function confirmReturnProcess() {
-  if (!currentReturnSaleId) return;
-  const refundAmount = parseFloat(document.getElementById('returnRefundAmount').value) || 0;
-  const reason = document.getElementById('returnReasonInput').value.trim() || 'مرتجع عادي';
-
-  const sales = getStoredSales();
-  const saleIndex = sales.findIndex(s => s.id === currentReturnSaleId);
-  if (saleIndex === -1) return;
-  const sale = sales[saleIndex];
-
-  if (sale.contractId) {
-    let contracts = getStoredContracts().filter(c => c.id !== sale.contractId);
-    setStoredContracts(contracts);
-  }
-
-  sales.splice(saleIndex, 1);
-  setStoredSales(sales);
-
-  if (refundAmount > 0) {
-    const expenses = getStoredExpenses();
-    expenses.unshift({
-      id: 'EXP-RET-' + Date.now(),
-      date: new Date().toISOString().split('T')[0],
-      title: `مرتجع جهاز: ${sale.deviceName} (فاتورة #${sale.id})`,
-      category: 'صيانة وهوالك',
-      amount: refundAmount,
-      notes: reason
-    });
-    setStoredExpenses(expenses);
-  }
-
-  closeModal('returnItemModal');
-  alert('تم تسجيل المرتجع بنجاح وعاد الجهاز تلقائياً إلى رصيد المخزن.');
-  renderDashboard();
-  renderInventoryTable();
-  renderSalesTable();
-  renderInstallmentsTable();
-}
-
+// السداد والتحصيل + الإيصالات وواتساب السداد
 function confirmCollectInstallment() {
   if (!currentCollectingContractId || !currentCollectingInstallmentNum) return;
   const paidInput = document.getElementById('colModalPaidInput');
@@ -951,6 +723,7 @@ function confirmCollectInstallment() {
   renderDashboard();
   renderInstallmentsTable();
 
+  // تنبيه بعد السداد مع خيار طباعة أو إرسال الإيصال
   if (window.Swal) {
     Swal.fire({
       title: 'تم تحصيل القسط بنجاح! 💰',
@@ -996,6 +769,7 @@ function sendInstantPaymentWhatsAppReceipt(contract, instNum, paidVal) {
   window.open(`https://wa.me/2${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
+// البحث التوقعي المباشر من المخزن
 function handleDeviceSearchInput(term) {
   const dropdown = document.getElementById('deviceSearchResultsList');
   if (!dropdown) return;
@@ -1235,13 +1009,6 @@ function handleSaveSaleInvoice() {
     setStoredSales(sales);
     closeModal('newSaleModal');
     clearSaleModalFields();
-
-    if (activeConvertingBookingId) {
-      const bks = getStoredBookings().filter(b => b.id !== activeConvertingBookingId);
-      setStoredBookings(bks);
-      activeConvertingBookingId = null;
-    }
-
     renderDashboard();
     renderInventoryTable();
     renderSalesTable();
@@ -1314,13 +1081,6 @@ function handleSaveSaleInvoice() {
     setStoredSales(sales);
     closeModal('newSaleModal');
     clearSaleModalFields();
-
-    if (activeConvertingBookingId) {
-      const bks = getStoredBookings().filter(b => b.id !== activeConvertingBookingId);
-      setStoredBookings(bks);
-      activeConvertingBookingId = null;
-    }
-
     renderDashboard();
     renderInventoryTable();
     renderInstallmentsTable();
@@ -1329,7 +1089,7 @@ function handleSaveSaleInvoice() {
   }
 }
 
-// الأقساط وملفات العملاء وإيصالات الأمانة
+// الأقساط وملفات العملاء
 function renderInstallmentsTable() {
   const contracts = getStoredContracts();
   const tbody = document.getElementById('installmentsContractsTableBody');
@@ -1469,11 +1229,6 @@ function renderActiveInvoiceDetailsInProfile() {
   const container = document.getElementById('cpModalSelectedInvoiceContainer');
   if (!container || !cnt) return;
 
-  const notesMap = getStoredNotes();
-  const currentNote = notesMap[cnt.id] || { noteNumber: '', folderLocation: '' };
-
-  const isContractFullyPaid = cnt.remainingAmount <= 0;
-
   const purchasedItems = parseItemsFromRecord(cnt);
   const itemsTableRows = purchasedItems.map(item => `
     <tr>
@@ -1487,19 +1242,6 @@ function renderActiveInvoiceDetailsInProfile() {
 
   container.innerHTML = `
     <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 space-y-3.5">
-      
-      <!-- إشعار إيصال الأمانة -->
-      <div class="p-3 rounded-2xl border ${isContractFullyPaid ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500/40 text-emerald-700 dark:text-emerald-300' : 'bg-amber-50 dark:bg-amber-950/40 border-amber-500/40 text-amber-800 dark:text-amber-300'} flex justify-between items-center text-xs">
-        <div>
-          <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-file-signature"></i> إيصال الأمانة / الشيك:</span>
-          <p class="text-[11px] mt-0.5">رقم الإيصال: <b>${currentNote.noteNumber || 'لم يسجل'}</b> | مكان الحفظ: <b>${currentNote.folderLocation || 'غير محدد'}</b></p>
-          ${isContractFullyPaid ? '<p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-black mt-1">✔ تم سداد الفاتورة بالكامل! يرجى تسليم إيصال الأمانة للعميل فوراً.</p>' : ''}
-        </div>
-        <button onclick="updatePromissoryNoteInfo('${cnt.id}')" class="px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-[11px] font-bold shadow-sm">
-          تعديل الإيصال ✍️
-        </button>
-      </div>
-
       <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-950/60">
         <table class="w-full text-right text-xs">
           <thead class="bg-slate-100 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
@@ -1580,21 +1322,6 @@ function renderActiveInvoiceDetailsInProfile() {
   `;
 }
 
-function updatePromissoryNoteInfo(contractId) {
-  const notes = getStoredNotes();
-  const current = notes[contractId] || { noteNumber: '', folderLocation: '' };
-  
-  const noteNum = prompt('أدخل رقم إيصال الأمانة / الشيك:', current.noteNumber);
-  if (noteNum === null) return;
-  const folderLoc = prompt('أين تم حفظ الإيصال؟ (مثال: دوسيه A بالخزينة):', current.folderLocation);
-  if (folderLoc === null) return;
-
-  notes[contractId] = { noteNumber: noteNum.trim(), folderLocation: folderLoc.trim() };
-  setStoredNotes(notes);
-  alert('تم حفظ وتوثيق بيانات إيصال الأمانة بنجاح.');
-  if (activeCustomerPhoneForProfile) openCustomerProfileModal(activeCustomerPhoneForProfile, contractId);
-}
-
 function openCollectInstallmentModal(contractId, installmentNumber) {
   currentCollectingContractId = contractId;
   currentCollectingInstallmentNum = installmentNumber;
@@ -1640,6 +1367,7 @@ function updateCollectModalPreview() {
   }
 }
 
+// تعديل الفواتير
 function openEditInvoiceModal(identifier) {
   const sales = getStoredSales();
   const contracts = getStoredContracts();
@@ -1801,6 +1529,7 @@ function handleSaveInvoiceEdits() {
   showToast('تم حفظ التعديلات بنجاح.', 'success');
 }
 
+// الموردين والتوريدات
 function renderSuppliersTable() {
   const suppliers = getDetailedSuppliers();
   const listContainer = document.getElementById('suppliersMasterList');
@@ -2044,6 +1773,7 @@ function paySupplierPrompt(supId) {
   }
 }
 
+// تقارير المبيعات السنوية
 function renderAnnualReportsView() {
   const year = document.getElementById('annualReportYearSelect').value || '2026';
   const searchTxt = (document.getElementById('annualReportSearchInput').value || '').trim().toLowerCase();
@@ -2115,6 +1845,7 @@ function exportAnnualReportToExcel() {
   XLSX.writeFile(wb, `تقرير_مبيعات_أولاد_العبد_${year}.xlsx`);
 }
 
+// المصاريف
 function renderExpensesTable() {
   const expenses = getStoredExpenses();
   const tbody = document.getElementById('expensesTableBody');
@@ -2164,6 +1895,7 @@ function deleteExpense(expId) {
   }
 }
 
+// واتساب التذكير الدوري
 function openChooseWhatsAppModal(contractId) {
   const contracts = getStoredContracts();
   currentContractForWhatsApp = contracts.find(x => x.id === contractId);
@@ -2188,6 +1920,7 @@ function executeSendWhatsAppTemplate(type) {
   window.open(`https://wa.me/2${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
+// ماسح الكاميرا
 function openBarcodeScanner(targetMode) {
   currentTargetInputIdForScanner = targetMode;
   openModal('barcodeScannerModal');
