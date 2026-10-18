@@ -1125,5 +1125,18 @@
   <script src="excel-engine.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="app.js?v=final_fix_v22"></script>
+  <!-- كود تشغيل وتفعيل العمل بدون إنترنت (Offline Mode) -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((reg) => console.log('تم تفعيل وضع العمل بدون نت بنجاح ✔', reg.scope))
+          .catch((err) => console.log('فشل تفعيل وضع الأوفلاين:', err));
+      });
+    }
+  </script>
+</body>
+</html>
+
 </body>
 </html>
