@@ -26,6 +26,12 @@
     .dark .glass-card { background: linear-gradient(135deg, rgba(19, 29, 51, 0.75) 0%, rgba(13, 20, 36, 0.85) 100%); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
     .glass-card { background: #ffffff; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
     .ambient-glow-blue { position: absolute; width: 320px; height: 320px; background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(0,0,0,0) 70%); pointer-events: none; filter: blur(50px); }
+    
+    @media print {
+      body * { visibility: hidden; }
+      #printableReceiptArea, #printableReceiptArea * { visibility: visible; }
+      #printableReceiptArea { position: absolute; left: 0; top: 0; width: 80mm; background: white; color: black; padding: 10px; font-family: 'Cairo', sans-serif; }
+    }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 dark:bg-[#080c15] dark:text-slate-100 min-h-screen pb-16 md:pb-0 flex flex-col md:flex-row relative selection:bg-blue-600 selection:text-white">
@@ -164,7 +170,6 @@
             </div>
           </div>
           <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-            <!-- أزرار حجز وفحص وكاش جديدة واضحة في الواجهة -->
             <button onclick="openBookingModal()" class="flex-1 md:flex-none px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center justify-center gap-2 transition shadow">
               <i class="fa-solid fa-clock"></i> حجز جهاز بعربون
             </button>
@@ -220,6 +225,31 @@
             <i class="fa-solid fa-sack-dollar text-indigo-500 dark:text-indigo-400"></i> صافي الأرباح التقديرية (بعد خصم تكلفة البضائع والمصاريف):
           </span>
           <b class="text-sm md:text-base font-black text-indigo-600 dark:text-indigo-300" id="dashNetProfitVal">0 ج.م</b>
+        </div>
+      </div>
+
+      <!-- جدول الحجوزات السارية والعربونات -->
+      <div class="glass-card border border-amber-500/30 rounded-3xl p-4 md:p-5 space-y-3.5 shadow-xl">
+        <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+          <h3 class="text-xs md:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i class="fa-solid fa-clock text-amber-500"></i> سجل الأجهزة المحجوزة بالعربون
+          </h3>
+          <span id="activeBookingsBadge" class="text-[11px] px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-500/30 font-bold">0 جهاز محجوز</span>
+        </div>
+        <div class="overflow-x-auto custom-scrollbar">
+          <table class="w-full text-right text-xs">
+            <thead class="bg-slate-100 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400">
+              <tr>
+                <th class="p-3">العميل</th>
+                <th class="p-3">الجهاز المحجوز</th>
+                <th class="p-3">تاريخ الحجز</th>
+                <th class="p-3 text-emerald-600 dark:text-emerald-400">العربون المقبوض</th>
+                <th class="p-3">ملاحظات</th>
+                <th class="p-3 text-center">إجراء البيع / الإلغاء</th>
+              </tr>
+            </thead>
+            <tbody id="bookingsTableBody" class="divide-y divide-slate-200 dark:divide-slate-800/70 text-slate-700 dark:text-slate-300"></tbody>
+          </table>
         </div>
       </div>
 
@@ -363,7 +393,7 @@
             <h3 class="text-sm md:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <i class="fa-solid fa-folder-tree text-blue-600 dark:text-cyan-400"></i> سجل ملفات العملاء وعقود الأقساط
             </h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">ملف متكامل لكل عميل مع أرشيف الفواتير ومواعيد الأقساط والتحصيل.</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">ملف متكامل لكل عميل مع أرشيف الفواتير ومواعيد الأقساط والتحصيل وإيصالات الأمانة.</p>
           </div>
         </div>
         <div>
@@ -423,7 +453,7 @@
       </div>
     </section>
 
-    <!-- VIEW 6: فواتير البيع (مع زر المرتجع الجديد في الجدول) -->
+    <!-- VIEW 6: فواتير البيع -->
     <section id="view-sales" class="hidden space-y-4">
       <div class="glass-card border border-slate-200 dark:border-slate-800/90 rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
         <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
@@ -489,7 +519,7 @@
   </main>
 
   <!-- ========================================== -->
-  <!-- النوافذ المنبثقة -->
+  <!-- MODALS: النوافذ المنبثقة -->
   <!-- ========================================== -->
 
   <!-- Modal: حجز جهاز بعربون -->
@@ -604,6 +634,9 @@
       </div>
     </div>
   </div>
+
+  <!-- منطقة الطباعة المخفية -->
+  <div id="printableReceiptArea" class="hidden"></div>
 
   <!-- Modal 1: فاتورة بيع جديدة -->
   <div id="newSaleModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
@@ -1194,6 +1227,6 @@
 
   <script src="excel-engine.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="app.js?v=refresh_all_v20"></script>
+  <script src="app.js?v=booking_integrated_v21"></script>
 </body>
 </html>
