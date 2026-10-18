@@ -1,10 +1,8 @@
 // ==========================================
 // المحرك التشغيلي المتطور (app.js)
 // معرض أولاد العبد للأجهزة الكهربائية
-// يشمل: الطباعة الحرارية، تقفيل الوردية، تنبيه النواقص، وإيصالات واتساب
 // ==========================================
 
-// إدارة وضع الرؤية (Light / Dark)
 function initThemeMode() {
   const savedTheme = localStorage.getItem('elabd_theme_mode') || 'dark';
   applyTheme(savedTheme);
@@ -38,7 +36,6 @@ function applyTheme(theme) {
   }
 }
 
-// نظام التنبيهات العصري
 window.alert = function(msg) {
   const isError = msg.includes('يرجى') || msg.includes('عفواً') || msg.includes('أكبر') || msg.includes('تعذر');
   if (window.Swal) {
@@ -198,7 +195,6 @@ function parseItemsFromRecord(record) {
   });
 }
 
-// التهيئة
 window.addEventListener('DOMContentLoaded', () => {
   initThemeMode();
   const today = new Date().toISOString().split('T')[0];
@@ -260,7 +256,7 @@ function openModal(id) { const el = document.getElementById(id); if (el) { el.cl
 function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.add('hidden'); }
 
 // ==========================================
-// ميزة 1: تقفيل الوردية اليومية (Z-Report)
+// تقفيل الوردية اليومية (Z-Report)
 // ==========================================
 function openDailyShiftModal() {
   const today = new Date().toISOString().split('T')[0];
@@ -302,8 +298,51 @@ function openDailyShiftModal() {
   openModal('dailyShiftModal');
 }
 
+// دالة طباعة تقرير تقفيل الوردية التي تم تفعيلها
+function printDailyShiftReport() {
+  const today = new Date().toISOString().split('T')[0];
+  const sSales = document.getElementById('shiftTodaySalesCash')?.innerText || '0 ج.م';
+  const sInst = document.getElementById('shiftTodayInstCash')?.innerText || '0 ج.م';
+  const sExp = document.getElementById('shiftTodayExpenses')?.innerText || '0 ج.م';
+  const sNet = document.getElementById('shiftNetDrawerCash')?.innerText || '0 ج.م';
+
+  const html = `
+    <div style="text-align: center; font-size: 13px; line-height: 1.6; direction: rtl; font-family: 'Cairo', sans-serif;">
+      <h2 style="margin: 0; font-size: 16px; font-weight: bold;">معرض أولاد العبد</h2>
+      <p style="margin: 2px 0; font-size: 12px; font-weight: bold;">تقرير تقفيل الوردية اليومية (Z-Report)</p>
+      <p style="margin: 2px 0; font-size: 11px; color: #555;">التاريخ: ${today}</p>
+      <div style="border-bottom: 1px dashed #000; margin: 8px 0;"></div>
+      
+      <table style="width: 100%; font-size: 12px; text-align: right; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 5px 0;">مبيعات كاش اليوم:</td>
+          <td style="text-align: left; font-weight: bold;">${sSales}</td>
+        </tr>
+        <tr>
+          <td style="padding: 5px 0;">أقساط محصلة اليوم:</td>
+          <td style="text-align: left; font-weight: bold;">${sInst}</td>
+        </tr>
+        <tr>
+          <td style="padding: 5px 0;">مصاريف ونولون خارج:</td>
+          <td style="text-align: left; font-weight: bold; color: #dc2626;">-${sExp}</td>
+        </tr>
+      </table>
+      
+      <div style="border-bottom: 1px solid #000; margin: 8px 0;"></div>
+      <div style="text-align: right; font-size: 14px; font-weight: bold;">
+        <span>الصافي بالدرج: </span>
+        <span style="float: left; font-size: 15px;">${sNet}</span>
+      </div>
+      <div style="border-bottom: 1px dashed #000; margin: 10px 0;"></div>
+      <p style="font-size: 10px; margin: 4px 0;">توقيع المسؤول: ....................</p>
+    </div>
+  `;
+
+  windowPrintReceiptHTML(html);
+}
+
 // ==========================================
-// ميزة 2: طباعة الإيصالات الحرارية (80mm)
+// الطباعة الحرارية للإيصالات (80mm)
 // ==========================================
 function windowPrintReceiptHTML(contentHtml) {
   const printArea = document.getElementById('printableReceiptArea');
@@ -364,7 +403,6 @@ function printCurrentViewedSaleInvoice() {
       </div>
       <div style="border-bottom: 1px dashed #666; margin: 10px 0;"></div>
       <p style="font-size: 10px; margin: 4px 0;">شكراً لتعاملكم مع معرض أولاد العبد 🌸</p>
-      <p style="font-size: 9px; color: #666;">خدمة العملاء: ${sale.customerPhone}</p>
     </div>
   `;
 
@@ -394,7 +432,6 @@ function printInstallmentReceipt(contract, instNum, paidAmount, remainingOnContr
       </div>
       <div style="border-bottom: 1px dashed #666; margin: 10px 0;"></div>
       <p style="font-size: 10px; margin: 4px 0;">توقيع المستلم (الخزينة): ....................</p>
-      <p style="font-size: 9px; color: #666;">معرض أولاد العبد يرحب بكم دائماً</p>
     </div>
   `;
   windowPrintReceiptHTML(html);
@@ -544,7 +581,6 @@ function renderTopSellingProductsReport(salesCountMap, totalPiecesCount) {
   });
 }
 
-// المخزن وتنبيه النواقص
 function renderInventoryTable() {
   const inventory = buildDynamicInventory();
   const tbody = document.getElementById('inventoryTableBody');
@@ -611,7 +647,6 @@ function exportInventoryToExcel() {
   XLSX.writeFile(wb, `جرد_مخزن_أولاد_العبد_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
-// المبيعات والفواتير
 function viewSingleInvoiceDetails(saleId) {
   currentViewedSaleIdForPrint = saleId;
   const sales = getStoredSales();
@@ -673,7 +708,6 @@ function renderSalesTable() {
   });
 }
 
-// السداد والتحصيل + الإيصالات وواتساب السداد
 function confirmCollectInstallment() {
   if (!currentCollectingContractId || !currentCollectingInstallmentNum) return;
   const paidInput = document.getElementById('colModalPaidInput');
@@ -723,7 +757,6 @@ function confirmCollectInstallment() {
   renderDashboard();
   renderInstallmentsTable();
 
-  // تنبيه بعد السداد مع خيار طباعة أو إرسال الإيصال
   if (window.Swal) {
     Swal.fire({
       title: 'تم تحصيل القسط بنجاح! 💰',
@@ -769,7 +802,6 @@ function sendInstantPaymentWhatsAppReceipt(contract, instNum, paidVal) {
   window.open(`https://wa.me/2${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-// البحث التوقعي المباشر من المخزن
 function handleDeviceSearchInput(term) {
   const dropdown = document.getElementById('deviceSearchResultsList');
   if (!dropdown) return;
@@ -1367,7 +1399,6 @@ function updateCollectModalPreview() {
   }
 }
 
-// تعديل الفواتير
 function openEditInvoiceModal(identifier) {
   const sales = getStoredSales();
   const contracts = getStoredContracts();
@@ -1529,7 +1560,6 @@ function handleSaveInvoiceEdits() {
   showToast('تم حفظ التعديلات بنجاح.', 'success');
 }
 
-// الموردين والتوريدات
 function renderSuppliersTable() {
   const suppliers = getDetailedSuppliers();
   const listContainer = document.getElementById('suppliersMasterList');
@@ -1773,7 +1803,6 @@ function paySupplierPrompt(supId) {
   }
 }
 
-// تقارير المبيعات السنوية
 function renderAnnualReportsView() {
   const year = document.getElementById('annualReportYearSelect').value || '2026';
   const searchTxt = (document.getElementById('annualReportSearchInput').value || '').trim().toLowerCase();
@@ -1845,7 +1874,6 @@ function exportAnnualReportToExcel() {
   XLSX.writeFile(wb, `تقرير_مبيعات_أولاد_العبد_${year}.xlsx`);
 }
 
-// المصاريف
 function renderExpensesTable() {
   const expenses = getStoredExpenses();
   const tbody = document.getElementById('expensesTableBody');
@@ -1895,7 +1923,6 @@ function deleteExpense(expId) {
   }
 }
 
-// واتساب التذكير الدوري
 function openChooseWhatsAppModal(contractId) {
   const contracts = getStoredContracts();
   currentContractForWhatsApp = contracts.find(x => x.id === contractId);
@@ -1920,7 +1947,6 @@ function executeSendWhatsAppTemplate(type) {
   window.open(`https://wa.me/2${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-// ماسح الكاميرا
 function openBarcodeScanner(targetMode) {
   currentTargetInputIdForScanner = targetMode;
   openModal('barcodeScannerModal');
