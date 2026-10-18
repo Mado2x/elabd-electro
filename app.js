@@ -1,3 +1,44 @@
+// ==========================================
+// إدارة وضع الرؤية (Light / Dark Mode Switcher)
+// ==========================================
+function initThemeMode() {
+  const savedTheme = localStorage.getItem('elabd_theme_mode') || 'dark';
+  applyTheme(savedTheme);
+}
+
+function toggleThemeMode() {
+  const isDark = document.documentElement.classList.contains('dark');
+  const targetTheme = isDark ? 'light' : 'dark';
+  applyTheme(targetTheme);
+  localStorage.setItem('elabd_theme_mode', targetTheme);
+}
+
+function applyTheme(theme) {
+  const html = document.documentElement;
+  const statusText = document.getElementById('themeStatusText');
+  const switchIcon = document.getElementById('themeSwitchIcon');
+  const mobileBtn = document.getElementById('mobileThemeToggleBtn');
+
+  if (theme === 'dark') {
+    html.classList.add('dark');
+    html.classList.remove('light');
+    if (statusText) statusText.innerHTML = '<i class="fa-solid fa-moon text-indigo-400"></i> الوضع الليلي';
+    if (switchIcon) switchIcon.innerText = 'تغيير ☀️';
+    if (mobileBtn) mobileBtn.innerText = '🌙';
+  } else {
+    html.classList.remove('dark');
+    html.classList.add('light');
+    if (statusText) statusText.innerHTML = '<i class="fa-solid fa-sun text-amber-500"></i> الوضع الفاتح';
+    if (switchIcon) switchIcon.innerText = 'تغيير 🌙';
+    if (mobileBtn) mobileBtn.innerText = '☀️';
+  }
+}
+
+// تشغيل الثيم تلقائياً عند تحميل الصفحة
+window.addEventListener('DOMContentLoaded', () => {
+  initThemeMode();
+});
+
 // ==========================================// استبدال تنبيهات المتصفح الافتراضية بنوافذ فخمة وعصرية
 window.alert = function(msg) {
   const isError = msg.includes('يرجى') || msg.includes('عفواً') || msg.includes('أكبر') || msg.includes('تعذر');
