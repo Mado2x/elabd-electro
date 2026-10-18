@@ -344,7 +344,57 @@ function printDailyShiftReport() {
 // ==========================================
 // الطباعة الحرارية للإيصالات (80mm)
 // ==========================================
+function printCurrentViewedSaleInvoice() {
+```[span_1](start_span)[span_1](end_span)
+
+
+```javascript
 function windowPrintReceiptHTML(contentHtml) {
+  const printWindow = window.open('', '_blank', 'width=450,height=600');
+  if (!printWindow) {
+    alert('يرجى السماح بالنوافذ المنبثقة (Popups) من إعدادات المتصفح للطباعة.');
+    return;
+  }
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>طباعة إيصال - معرض أولاد العبد</title>
+      <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+      <style>
+        body {
+          font-family: 'Cairo', sans-serif;
+          margin: 0;
+          padding: 10px;
+          background: #fff;
+          color: #000;
+          direction: rtl;
+        }
+        @media print {
+          @page { margin: 0; size: auto; }
+          body { margin: 0; padding: 5px; }
+        }
+      </style>
+    </head>
+    <body>
+      ${contentHtml}
+      <script>
+        window.onload = function() {
+          window.focus();
+          setTimeout(function() {
+            window.print();
+            window.close();
+          }, 300);
+        };
+      <\/script>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
+
   const printArea = document.getElementById('printableReceiptArea');
   if (!printArea) return;
   printArea.innerHTML = contentHtml;
