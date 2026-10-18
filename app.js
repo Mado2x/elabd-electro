@@ -1,7 +1,49 @@
 // ==========================================
-// المحرك التشغيلي الشامل (app.js) - نسخة الحفظ اليدوي v7
+// المحرك التشغيلي الشامل (app.js)
 // معرض أولاد العبد للأجهزة الكهربائية
+// نظام التنبيهات المودرن (Toast) وبدون حفظ تلقائي
 // ==========================================
+
+// نظام الإشعارات العصري البديل لـ alert
+let toastTimeoutInstance = null;
+
+function showToast(message, type = 'success', title = '') {
+  const box = document.getElementById('toastNotificationBox');
+  const iconBox = document.getElementById('toastIconBox');
+  const titleEl = document.getElementById('toastTitle');
+  const msgEl = document.getElementById('toastMessage');
+
+  if (!box) return;
+
+  msgEl.innerText = message;
+  titleEl.innerText = title || (type === 'success' ? 'عملية ناجحة' : (type === 'error' ? 'تنبيه' : 'إشعار'));
+
+  if (type === 'success') {
+    box.className = "fixed top-5 left-1/2 -translate-x-1/2 z-[100] transition-all duration-300 transform translate-y-0 opacity-100 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border backdrop-blur-md max-w-sm w-[90%] md:w-auto bg-slate-900/95 border-emerald-500/40 text-emerald-400";
+    iconBox.className = "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 bg-emerald-500/20 text-emerald-400 text-sm";
+    iconBox.innerHTML = '<i class="fa-solid fa-check"></i>';
+  } else if (type === 'error') {
+    box.className = "fixed top-5 left-1/2 -translate-x-1/2 z-[100] transition-all duration-300 transform translate-y-0 opacity-100 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border backdrop-blur-md max-w-sm w-[90%] md:w-auto bg-slate-900/95 border-rose-500/40 text-rose-400";
+    iconBox.className = "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 bg-rose-500/20 text-rose-400 text-sm";
+    iconBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+  } else {
+    box.className = "fixed top-5 left-1/2 -translate-x-1/2 z-[100] transition-all duration-300 transform translate-y-0 opacity-100 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border backdrop-blur-md max-w-sm w-[90%] md:w-auto bg-slate-900/95 border-blue-500/40 text-blue-400";
+    iconBox.className = "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 bg-blue-500/20 text-blue-400 text-sm";
+    iconBox.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
+  }
+
+  if (toastTimeoutInstance) clearTimeout(toastTimeoutInstance);
+  toastTimeoutInstance = setTimeout(() => {
+    box.classList.remove('translate-y-0', 'opacity-100');
+    box.classList.add('-translate-y-24', 'opacity-0');
+  }, 2500);
+}
+
+// استبدال دالة المتصفح alert بالنظام الجديد
+window.alert = function(msg) {
+  const isError = msg.includes('عفواً') || msg.includes('يرجى') || msg.includes('أكبر') || msg.includes('تعذر');
+  showToast(msg, isError ? 'error' : 'success');
+};
 
 const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_clean_suppliers_v6';
 const STORAGE_KEY_SELLING_PRICES = 'elabd_clean_prices_v6';
@@ -452,7 +494,7 @@ function getAnnualReportData(year) {
     const saleMonth = parseInt(sale.date.split('-')[1], 10);
     if (isNaN(saleMonth) || saleMonth < 1 || saleMonth > 12) return;
 
-    const rawName = sale.rawDeviceName || (sale.deviceName ? sale.deviceName.split(' (عدد')[0].trim() : 'جهاز');
+    const rawName = sale.rawDeviceName || (sale.deviceName ? sale.deviceName.split(' (عدد')[0] : 'جهاز');
     const qty = parseInt(sale.quantity) || 1;
     const totalAmount = parseFloat(sale.totalPrice) || 0;
 
@@ -1273,7 +1315,7 @@ function renderActiveInvoiceDetailsInProfile() {
               <tr>
                 <th class="p-2 text-center">العدد</th>
                 <th class="p-2">الصنف والموديل</th>
-                <th class="p-2">السيريال نمبر</th>
+                <th class="p-2.5">السيريال نمبر</th>
                 <th class="p-2">سعر الوحدة</th>
                 <th class="p-2">السعر الإجمالي</th>
               </tr>
@@ -1800,7 +1842,7 @@ function handleSaveSaleInvoice() {
     renderDashboard();
     renderInventoryTable();
     renderSalesTable();
-    alert(`تم حفظ فاتورة البيع الكاش (${newInvoiceId}) بنجاح وخصم الرصيد من المخزن.`);
+    showToast(`تم حفظ فاتورة البيع الكاش (${newInvoiceId}) وخصم الرصيد بنجاح!`, 'success');
   } else {
     const math = calculateInstallmentMath();
     const contracts = getStoredContracts();
@@ -1891,7 +1933,7 @@ function handleSaveSaleInvoice() {
     renderInventoryTable();
     renderInstallmentsTable();
     renderSalesTable();
-    alert(`تم حفظ فاتورة التقسيط للعميل (${customerName}) تحت الكود (#${clientCodeToUse}) وخصم الرصيد من المخزن.`);
+    showToast(`تم حفظ فاتورة التقسيط للعميل (${customerName}) كود (#${clientCodeToUse}) بنجاح!`, 'success');
   }
 }
 
@@ -2023,7 +2065,7 @@ function confirmCollectInstallment() {
 
   renderDashboard();
   renderInstallmentsTable();
-  alert(`تم بنجاح تسجيل تحصيل مبلغ ${paidVal.toLocaleString()} ج.م للعميل (${cnt.customerName}).`);
+  showToast(`تم بنجاح تحصيل مبلغ ${paidVal.toLocaleString()} ج.م للعميل (${cnt.customerName})`, 'success');
 }
 
 function openEditInvoiceModal(identifier) {
@@ -2232,7 +2274,7 @@ function handleSaveInvoiceEdits() {
   renderInstallmentsTable();
   renderSalesTable();
   renderInventoryTable();
-  alert('تم بنجاح تعديل الفاتورة وحفظ التغييرات.');
+  showToast('تم بنجاح تعديل الفاتورة وحفظ التغييرات.', 'success');
 }
 
 // ==========================================
@@ -2314,7 +2356,7 @@ function handleSaveExpense() {
 
   renderExpensesTable();
   renderDashboard();
-  alert(`تم بنجاح تسجيل مصروف (${title}) بمبلغ ${amount.toLocaleString()} ج.م.`);
+  showToast(`تم بنجاح تسجيل مصروف (${title}) بمبلغ ${amount.toLocaleString()} ج.م.`, 'success');
 }
 
 function deleteExpense(expId) {
