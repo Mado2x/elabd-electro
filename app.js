@@ -1,5 +1,5 @@
 // ==========================================
-// المحرك التشغيلي المتطور (app.js)
+// المحرك التشغيلي المتطور (app.js) - الجزء الأول
 // معرض أولاد العبد للأجهزة الكهربائية
 // ==========================================
 
@@ -83,12 +83,16 @@ function showToast(message, type = 'success', title = '') {
   }, 2500);
 }
 
+// مفاتيح التخزين الدائم
 const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_clean_suppliers_v6';
 const STORAGE_KEY_SELLING_PRICES = 'elabd_clean_prices_v6';
 const STORAGE_KEY_SALES = 'elabd_clean_sales_v6';
 const STORAGE_KEY_CONTRACTS = 'elabd_clean_contracts_v6';
 const STORAGE_KEY_EXPENSES = 'elabd_clean_expenses_v6';
 const STORAGE_KEY_CURRENT_TAB = 'elabd_clean_tab_v6';
+const STORAGE_KEY_OWNER_PIN = 'elabd_owner_pin_v6';
+const STORAGE_KEY_SHIFTS_ARCHIVE = 'elabd_shifts_archive_v6';
+const STORAGE_KEY_PROMO_TEMPLATE = 'elabd_promo_template_v6';
 
 let currentSupplierShipmentCart = [];
 let currentSaleInvoiceCart = [];
@@ -108,6 +112,106 @@ let html5QrCodeScannerInstance = null;
 let currentTargetInputIdForScanner = null;
 let lastInquiredDeviceObject = null;
 
+// ==========================================
+// 1. نظام حماية المالك برقم سري (PIN)
+// ==========================================
+function getOwnerPin() {
+  return localStorage.getItem(STORAGE_KEY_OWNER_PIN) || '1234';
+}
+
+function requireOwnerAuth(actionCallback) {
+  const currentPin = getOwnerPin();
+
+  if (window.Swal) {
+    Swal.fire({
+      title: 'صلاحيات المالك 🔒',
+      text: 'يرجى إدخال الرقم السري لتأكيد العملية:',
+      input: 'password',
+      inputPlaceholder: 'أدخل الباسورد...',
+      showCancelButton: true,
+      confirmButtonText: 'تأكيد',
+      cancelButtonText: 'إلغاء',
+      confirmButtonColor: '#2563eb',
+      cancelButtonColor: '#64748b',
+      background: document.documentElement.classList.contains('dark') ? '#111726' : '#ffffff',
+      color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#1e293b',
+      customClass: { popup: 'rounded-3xl border border-slate-700' },
+      preConfirm: (enteredPin) => {
+        if (!enteredPin) {
+          Swal.showValidationMessage('يرجى كتابة الرقم السري!');
+        } else if (enteredPin !== currentPin) {
+          Swal.showValidationMessage('الرقم السري غير صحيح!');
+        }
+        return enteredPin;
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        actionCallback();
+      }
+    });
+  } else {
+    const entered = prompt('صلاحيات المالك 🔒\nأدخل الرقم السري:');
+    if (entered === currentPin) {
+      actionCallback();
+    } else if (entered !== null) {
+      alert('عفواً، الرقم السري غير صحيح!');
+    }
+  }
+}
+
+function changeOwnerPasswordPrompt() {
+  requireOwnerAuth(() => {
+    if (window.Swal) {
+      Swal.fire({
+        title: 'تغيير باسورد المالك 🔑',
+        input: 'password',
+        inputLabel: 'أدخل الرقم السري الجديد:',
+        inputPlaceholder: 'أرقام جديدة...',
+        showCancelButton: true,
+        confirmButtonText: 'حفظ الباسورد',
+        cancelButtonText: 'إلغاء',
+        confirmButtonColor: '#16a34a',
+        background: document.documentElement.classList.contains('dark') ? '#111726' : '#ffffff',
+        color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#1e293b',
+        customClass: { popup: 'rounded-3xl border border-slate-700' },
+        preConfirm: (val) => {
+          if (!val || val.trim().length < 2) {
+            Swal.showValidationMessage('يرجى إدخال رقم سري مكون من رقمين على الأقل!');
+          }
+          return val.trim();
+        }
+      }).then((res) => {
+        if (res.isConfirmed && res.value) {
+          localStorage.setItem(STORAGE_KEY_OWNER_PIN, res.value);
+          showToast('تم تغيير باسورد المالك بنجاح ✔', 'success');
+        }
+      });
+    } else {
+      const p = prompt('أدخل الرقم السري الجديد:');
+      if (p && p.trim()) {
+        localStorage.setItem(STORAGE_KEY_OWNER_PIN, p.trim());
+        alert('تم تغيير باسورد المالك بنجاح.');
+      }
+    }
+  });
+}
+
+// ==========================================
+// 7. دالة الوقت والتاريخ الدقيق (الساعة + التاريخ)
+// ==========================================
+function getFormattedDateTimeNow() {
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+  let hours = now.getHours();
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const ampm = hours >= 12 ? 'م' : 'ص';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const timeStr = `${hours}:${minutes} ${ampm}`;
+  return { date: dateStr, time: timeStr, full: `${dateStr} (${timeStr})` };
+}
+
+// قراءة وحفظ البيانات من localStorage
 function getDetailedSuppliers() { try { const d = localStorage.getItem(STORAGE_KEY_DETAILED_SUPPLIERS); if (d) return JSON.parse(d); } catch (e) {} return []; }
 function setDetailedSuppliers(d) { localStorage.setItem(STORAGE_KEY_DETAILED_SUPPLIERS, JSON.stringify(d)); }
 
@@ -122,6 +226,9 @@ function setStoredSales(d) { localStorage.setItem(STORAGE_KEY_SALES, JSON.string
 
 function getStoredExpenses() { try { const d = localStorage.getItem(STORAGE_KEY_EXPENSES); if (d) return JSON.parse(d); } catch (e) {} return []; }
 function setStoredExpenses(d) { localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(d)); }
+
+function getStoredShiftsArchive() { try { const d = localStorage.getItem(STORAGE_KEY_SHIFTS_ARCHIVE); if (d) return JSON.parse(d); } catch (e) {} return []; }
+function setStoredShiftsArchive(d) { localStorage.setItem(STORAGE_KEY_SHIFTS_ARCHIVE, JSON.stringify(d)); }
 
 function calculateAllSuppliersTotalRemaining() {
   const suppliers = getDetailedSuppliers();
@@ -197,14 +304,14 @@ function parseItemsFromRecord(record) {
 
 window.addEventListener('DOMContentLoaded', () => {
   initThemeMode();
-  const today = new Date().toISOString().split('T')[0];
+  const dt = getFormattedDateTimeNow();
   const startDateInput = document.getElementById('instStartDate');
-  if (startDateInput) startDateInput.value = today;
+  if (startDateInput) startDateInput.value = dt.date;
 
   const expenseDate = document.getElementById('expenseDateInput');
-  if (expenseDate) expenseDate.value = today;
+  if (expenseDate) expenseDate.value = dt.date;
 
-  const currentYearMonth = today.substring(0, 7);
+  const currentYearMonth = dt.date.substring(0, 7);
   const reportMonthInput = document.getElementById('selectedReportMonthInput');
   if (reportMonthInput && !reportMonthInput.value) reportMonthInput.value = currentYearMonth;
 
@@ -230,7 +337,7 @@ function switchView(viewName) {
   }
   localStorage.setItem(STORAGE_KEY_CURRENT_TAB, viewName);
 
-  ['dashboard', 'reports', 'suppliers', 'installments', 'inventory', 'sales', 'expenses'].forEach(v => {
+  ['dashboard', 'reports', 'suppliers', 'installments', 'inventory', 'sales', 'expenses', 'customers', 'shifts-archive'].forEach(v => {
     const section = document.getElementById(`view-${v}`);
     if (section) section.classList.add('hidden');
     const navBtn = document.getElementById(`nav-${v}`);
@@ -250,35 +357,37 @@ function switchView(viewName) {
   if (viewName === 'inventory') renderInventoryTable();
   if (viewName === 'sales') renderSalesTable();
   if (viewName === 'expenses') renderExpensesTable();
+  if (viewName === 'customers') renderCustomersDirectory();
+  if (viewName === 'shifts-archive') renderShiftsArchive();
 }
 
 function openModal(id) { const el = document.getElementById(id); if (el) { el.classList.remove('hidden'); if (id === 'newSaleModal') clearSaleModalFields(); } }
 function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.add('hidden'); }
 
 // ==========================================
-// تقفيل الوردية اليومية (Z-Report)
+// 6. تقفيل الوردية اليومية وحفظها في الأرشيف
 // ==========================================
 function openDailyShiftModal() {
-  const today = new Date().toISOString().split('T')[0];
+  const dt = getFormattedDateTimeNow();
   const sales = getStoredSales();
   const contracts = getStoredContracts();
   const expenses = getStoredExpenses();
 
   let todaySalesCash = 0;
   sales.forEach(s => {
-    if (s.date === today) todaySalesCash += (parseFloat(s.paidImmediately) || 0);
+    if (s.date && s.date.startsWith(dt.date)) todaySalesCash += (parseFloat(s.paidImmediately) || 0);
   });
 
   let todayInstCash = 0;
   contracts.forEach(cnt => {
     (cnt.installments || []).forEach(inst => {
-      if (inst.paidDate === today && inst.paidActual > 0) todayInstCash += parseFloat(inst.paidActual);
+      if (inst.paidDate && inst.paidDate.startsWith(dt.date) && inst.paidActual > 0) todayInstCash += parseFloat(inst.paidActual);
     });
   });
 
   let todayExpenses = 0;
   expenses.forEach(e => {
-    if (e.date === today) todayExpenses += (parseFloat(e.amount) || 0);
+    if (e.date && e.date.startsWith(dt.date)) todayExpenses += (parseFloat(e.amount) || 0);
   });
 
   const netDrawerCash = (todaySalesCash + todayInstCash) - todayExpenses;
@@ -298,9 +407,113 @@ function openDailyShiftModal() {
   openModal('dailyShiftModal');
 }
 
-// دالة طباعة تقرير تقفيل الوردية التي تم تفعيلها
+function closeDailyShiftAndArchive() {
+  const dt = getFormattedDateTimeNow();
+  const sales = getStoredSales();
+  const contracts = getStoredContracts();
+  const expenses = getStoredExpenses();
+
+  let todaySalesCash = 0;
+  sales.forEach(s => {
+    if (s.date && s.date.startsWith(dt.date)) todaySalesCash += (parseFloat(s.paidImmediately) || 0);
+  });
+
+  let todayInstCash = 0;
+  contracts.forEach(cnt => {
+    (cnt.installments || []).forEach(inst => {
+      if (inst.paidDate && inst.paidDate.startsWith(dt.date) && inst.paidActual > 0) todayInstCash += parseFloat(inst.paidActual);
+    });
+  });
+
+  let todayExpenses = 0;
+  expenses.forEach(e => {
+    if (e.date && e.date.startsWith(dt.date)) todayExpenses += (parseFloat(e.amount) || 0);
+  });
+
+  const netDrawerCash = (todaySalesCash + todayInstCash) - todayExpenses;
+
+  const archive = getStoredShiftsArchive();
+  const shiftRecord = {
+    id: 'SHIFT-' + (archive.length + 1),
+    date: dt.date,
+    time: dt.time,
+    fullDateTime: dt.full,
+    directSalesCash: todaySalesCash,
+    installmentsCash: todayInstCash,
+    expensesDeducted: todayExpenses,
+    netDrawerCash: netDrawerCash
+  };
+
+  archive.unshift(shiftRecord);
+  setStoredShiftsArchive(archive);
+
+  exportCurrentDatabaseToExcel(true);
+  closeModal('dailyShiftModal');
+  renderShiftsArchive();
+  showToast(`تم تقفيل الوردية وحفظ الصافي (${netDrawerCash.toLocaleString()} ج) في الأرشيف`, 'success');
+}
+
+function renderShiftsArchive() {
+  const archive = getStoredShiftsArchive();
+  const tbody = document.getElementById('shiftsArchiveTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  let totalNet = 0, totalExp = 0;
+  archive.forEach(s => {
+    totalNet += (parseFloat(s.netDrawerCash) || 0);
+    totalExp += (parseFloat(s.expensesDeducted) || 0);
+  });
+
+  const elNet = document.getElementById('archiveTotalNetCash');
+  if (elNet) elNet.innerText = `${totalNet.toLocaleString()} ج.م`;
+  const elCount = document.getElementById('archiveTotalShiftsCount');
+  if (elCount) elCount.innerText = `${archive.length} وردية`;
+  const elExp = document.getElementById('archiveTotalExpensesDeducted');
+  if (elExp) elExp.innerText = `${totalExp.toLocaleString()} ج.م`;
+
+  if (archive.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500">لا يوجد تقفيلات وردية مسجلة بعد.</td></tr>`;
+    return;
+  }
+
+  archive.forEach(s => {
+    tbody.innerHTML += `
+      <tr>
+        <td class="p-2.5 font-bold font-mono text-blue-600 dark:text-cyan-400">#${s.id}</td>
+        <td class="p-2.5 text-slate-800 dark:text-slate-200">${s.fullDateTime}</td>
+        <td class="p-2.5 font-bold text-emerald-600">${s.directSalesCash.toLocaleString()} ج</td>
+        <td class="p-2.5 font-bold text-blue-600 dark:text-cyan-400">${s.installmentsCash.toLocaleString()} ج</td>
+        <td class="p-2.5 font-bold text-rose-600">-${s.expensesDeducted.toLocaleString()} ج</td>
+        <td class="p-2.5 font-black text-emerald-600 dark:text-emerald-400 text-sm">${s.netDrawerCash.toLocaleString()} ج.م</td>
+        <td class="p-2.5 text-center">
+          <button onclick="printArchivedShiftReport('${s.id}')" class="px-2.5 py-1 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-white rounded-lg text-xs font-bold shadow">
+            طباعة 🖨️
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function exportShiftsArchiveToExcel() {
+  const archive = getStoredShiftsArchive();
+  const data = archive.map(s => ({
+    "رقم الوردية": s.id,
+    "التاريخ والوقت": s.fullDateTime,
+    "كاش المبيعات المباشرة": s.directSalesCash,
+    "أقساط محصلة": s.installmentsCash,
+    "المصاريف المخصومة": s.expensesDeducted,
+    "الصافي الفعلي بالدرج": s.netDrawerCash
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "أرشيف تقفيلات الوردية");
+  XLSX.writeFile(wb, `أرشيف_ورديات_أولاد_العبد_${getFormattedDateTimeNow().date}.xlsx`);
+}
+
 function printDailyShiftReport() {
-  const today = new Date().toISOString().split('T')[0];
+  const dt = getFormattedDateTimeNow();
   const sSales = document.getElementById('shiftTodaySalesCash')?.innerText || '0 ج.م';
   const sInst = document.getElementById('shiftTodayInstCash')?.innerText || '0 ج.م';
   const sExp = document.getElementById('shiftTodayExpenses')?.innerText || '0 ج.م';
@@ -310,7 +523,7 @@ function printDailyShiftReport() {
     <div style="text-align: center; font-size: 13px; line-height: 1.6; direction: rtl; font-family: 'Cairo', sans-serif;">
       <h2 style="margin: 0; font-size: 16px; font-weight: bold;">معرض أولاد العبد</h2>
       <p style="margin: 2px 0; font-size: 12px; font-weight: bold;">تقرير تقفيل الوردية اليومية (Z-Report)</p>
-      <p style="margin: 2px 0; font-size: 11px; color: #555;">التاريخ: ${today}</p>
+      <p style="margin: 2px 0; font-size: 11px; color: #555;">الوقت: ${dt.full}</p>
       <div style="border-bottom: 1px dashed #000; margin: 8px 0;"></div>
       
       <table style="width: 100%; font-size: 12px; text-align: right; border-collapse: collapse;">
@@ -338,6 +551,44 @@ function printDailyShiftReport() {
     </div>
   `;
 
+  windowPrintReceiptHTML(html);
+}
+
+function printArchivedShiftReport(shiftId) {
+  const archive = getStoredShiftsArchive();
+  const s = archive.find(x => x.id === shiftId);
+  if (!s) return;
+
+  const html = `
+    <div style="text-align: center; font-size: 13px; line-height: 1.6; direction: rtl; font-family: 'Cairo', sans-serif;">
+      <h2 style="margin: 0; font-size: 16px; font-weight: bold;">معرض أولاد العبد</h2>
+      <p style="margin: 2px 0; font-size: 12px; font-weight: bold;">إيصال وردية مؤرشفة #${s.id}</p>
+      <p style="margin: 2px 0; font-size: 11px; color: #555;">الوقت والتاريخ: ${s.fullDateTime}</p>
+      <div style="border-bottom: 1px dashed #000; margin: 8px 0;"></div>
+      
+      <table style="width: 100%; font-size: 12px; text-align: right; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 4px 0;">كاش مبيعات مباشرة:</td>
+          <td style="text-align: left; font-weight: bold;">${s.directSalesCash.toLocaleString()} ج</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0;">أقساط محصلة:</td>
+          <td style="text-align: left; font-weight: bold;">${s.installmentsCash.toLocaleString()} ج</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0;">مصاريف مخصومة:</td>
+          <td style="text-align: left; font-weight: bold; color: #dc2626;">-${s.expensesDeducted.toLocaleString()} ج</td>
+        </tr>
+      </table>
+      
+      <div style="border-bottom: 1px solid #000; margin: 8px 0;"></div>
+      <div style="text-align: right; font-size: 14px; font-weight: bold;">
+        <span>الصافي المقفل: </span>
+        <span style="float: left; font-size: 15px;">${s.netDrawerCash.toLocaleString()} ج.م</span>
+      </div>
+      <div style="border-bottom: 1px dashed #000; margin: 10px 0;"></div>
+    </div>
+  `;
   windowPrintReceiptHTML(html);
 }
 
@@ -378,7 +629,7 @@ function printCurrentViewedSaleInvoice() {
       <div style="border-bottom: 1px solid #000; margin: 8px 0;"></div>
       <div style="text-align: right; font-size: 11px;">
         <p style="margin: 2px 0;"><b>رقم الفاتورة:</b> #${sale.id}</p>
-        <p style="margin: 2px 0;"><b>التاريخ:</b> ${sale.date}</p>
+        <p style="margin: 2px 0;"><b>التاريخ والوقت:</b> ${sale.date}</p>
         <p style="margin: 2px 0;"><b>العميل:</b> ${sale.customerName}</p>
         <p style="margin: 2px 0;"><b>الهاتف:</b> ${sale.customerPhone}</p>
         <p style="margin: 2px 0;"><b>نظام البيع:</b> ${sale.type}</p>
@@ -410,6 +661,7 @@ function printCurrentViewedSaleInvoice() {
 }
 
 function printInstallmentReceipt(contract, instNum, paidAmount, remainingOnContract) {
+  const dt = getFormattedDateTimeNow();
   const html = `
     <div style="text-align: center; font-size: 13px; line-height: 1.5; direction: rtl;">
       <h2 style="margin: 0; font-size: 16px; font-weight: bold;">معرض أولاد العبد</h2>
@@ -418,7 +670,7 @@ function printInstallmentReceipt(contract, instNum, paidAmount, remainingOnContr
       <div style="text-align: right; font-size: 11px;">
         <p style="margin: 2px 0;"><b>كود العميل:</b> #${contract.clientCode || 1}</p>
         <p style="margin: 2px 0;"><b>اسم العميل:</b> ${contract.customerName}</p>
-        <p style="margin: 2px 0;"><b>التاريخ:</b> ${new Date().toISOString().split('T')[0]}</p>
+        <p style="margin: 2px 0;"><b>الوقت والتاريخ:</b> ${dt.full}</p>
         <p style="margin: 2px 0;"><b>الأجهزة:</b> ${contract.deviceName}</p>
       </div>
       <div style="border-bottom: 1px solid #000; margin: 8px 0;"></div>
@@ -436,10 +688,10 @@ function printInstallmentReceipt(contract, instNum, paidAmount, remainingOnContr
   `;
   windowPrintReceiptHTML(html);
 }
+// ==========================================
+// المحرك التشغيلي المتطور (app.js) - الجزء الثاني
+// ==========================================
 
-// ==========================================
-// الريندر والوظائف الأساسية
-// ==========================================
 function renderDashboard() {
   const sales = getStoredSales();
   const contracts = getStoredContracts();
@@ -594,11 +846,14 @@ function renderInventoryTable() {
 
   inventory.forEach(item => {
     const isOutOfStock = item.currentQty <= 0;
-    const isLow = item.currentQty > 0 && item.currentQty <= 2;
+    const isLow = item.currentQty > 0 && item.currentQty <= 3; // إنذار عند 3 قطع فأقل
 
     let qtyBadge = `<span class="font-black text-emerald-600 dark:text-emerald-400 text-base">${item.currentQty}</span>`;
-    if (isOutOfStock) qtyBadge = `<span class="px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold text-[10px]">نفذ (0) ❌</span>`;
-    else if (isLow) qtyBadge = `<span class="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-[10px]">نواقص (${item.currentQty}) ⚠️</span>`;
+    if (isOutOfStock) {
+      qtyBadge = `<span class="px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold text-[10px]">نفذ تماماً (0) 🛑</span>`;
+    } else if (isLow) {
+      qtyBadge = `<span class="px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-500/25 text-amber-600 dark:text-amber-300 font-extrabold text-[11px] border border-amber-500/40">⚠️ نواقص بالمخزن (${item.currentQty})</span>`;
+    }
 
     tbody.innerHTML += `
       <tr>
@@ -644,7 +899,7 @@ function exportInventoryToExcel() {
   const ws = XLSX.utils.json_to_sheet(data);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "جرد المخزن");
-  XLSX.writeFile(wb, `جرد_مخزن_أولاد_العبد_${new Date().toISOString().split('T')[0]}.xlsx`);
+  XLSX.writeFile(wb, `جرد_مخزن_أولاد_العبد_${getFormattedDateTimeNow().date}.xlsx`);
 }
 
 function viewSingleInvoiceDetails(saleId) {
@@ -689,7 +944,7 @@ function renderSalesTable() {
     tbody.innerHTML += `
       <tr>
         <td class="p-2.5 font-bold text-slate-900 dark:text-white cursor-pointer hover:text-blue-500" onclick="viewSingleInvoiceDetails('${s.id}')">#${s.id}</td>
-        <td class="p-2.5 text-slate-500 dark:text-slate-400">${s.date}</td>
+        <td class="p-2.5 text-slate-500 dark:text-slate-400 font-mono text-xs">${s.date}</td>
         <td class="p-2.5 font-bold">${s.customerName}<br><span class="text-[10px] text-slate-400 font-normal">${s.customerPhone}</span></td>
         <td class="p-2.5 cursor-pointer hover:underline" onclick="viewSingleInvoiceDetails('${s.id}')">${s.deviceName}</td>
         <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.type === 'كاش' ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400' : 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'}">${s.type}</span></td>
@@ -721,29 +976,29 @@ function confirmCollectInstallment() {
   const instIndex = cnt.installments.findIndex(i => i.number === currentCollectingInstallmentNum);
   if (instIndex === -1) return;
   const inst = cnt.installments[instIndex];
-  const today = new Date().toISOString().split('T')[0];
+  const dt = getFormattedDateTimeNow();
   const diff = currentCollectingRemainingAmount - paidVal;
 
   inst.paidActual = (inst.paidActual || 0) + paidVal;
 
   if (diff === 0) {
     inst.status = 'مدفوع بالكامل';
-    inst.paidDate = today;
+    inst.paidDate = dt.date;
   } else if (diff > 0) {
     const checkedRadio = document.querySelector('input[name="partialActionType"]:checked');
     const actionType = checkedRadio ? checkedRadio.value : 'keep_open';
     if (actionType === 'keep_open') {
       inst.status = 'مدفوع جزئياً';
-      inst.paidDate = today;
+      inst.paidDate = dt.date;
     } else {
       inst.status = 'مدفوع بالكامل';
-      inst.paidDate = today;
+      inst.paidDate = dt.date;
       const nextInst = cnt.installments[instIndex + 1];
       if (nextInst) nextInst.amount += diff;
     }
   } else {
     inst.status = 'مدفوع بالكامل';
-    inst.paidDate = today;
+    inst.paidDate = dt.date;
     const nextInst = cnt.installments[instIndex + 1];
     if (nextInst) nextInst.amount = Math.max(0, nextInst.amount - Math.abs(diff));
   }
@@ -783,6 +1038,7 @@ function confirmCollectInstallment() {
 
 function sendInstantPaymentWhatsAppReceipt(contract, instNum, paidVal) {
   const cleanPhone = (contract.customerPhone || '').toString().replace(/[^0-9]/g, '');
+  const dt = getFormattedDateTimeNow();
   const msg = 
 `إيصال استلام نقدية وسداد قسط 🧾
 معرض أولاد العبد للأجهزة الكهربائية والمنزلية 🏢
@@ -793,7 +1049,7 @@ function sendInstantPaymentWhatsAppReceipt(contract, instNum, paidVal) {
 💵 المبلغ المسدد: ${paidVal.toLocaleString()} ج.م
 📌 بيان السداد: القسط رقم (#${instNum})
 📦 الأجهزة المشتراة: ${contract.deviceName}
-📅 تاريخ السداد: ${new Date().toISOString().split('T')[0]}
+📅 توقيت السداد: ${dt.full}
 ━━━━━━━━━━━━━━━━━━━
 💰 إجمالي المتبقي لإغلاق حسابك: ${contract.remainingAmount.toLocaleString()} ج.م
 
@@ -986,6 +1242,9 @@ function calculateInstallmentMath() {
   return { cashPrice: cashTotal, downPayment, months, interestRate, grandTotalContract: Math.round(grandTotalContract), monthlyAmount, totalRemainingWithInterest: Math.round(remainingBase + interestAmount) };
 }
 
+// ==========================================
+// 3. حفظ الفاتورة (كاش أو تقسيط) مع الساعة والتاريخ
+// ==========================================
 function handleSaveSaleInvoice() {
   if (currentSaleInvoiceCart.length === 0) { alert('يرجى إضافة جهاز واحد على الأقل للسلة.'); return; }
   const nameInput = document.getElementById('saleCustomerName');
@@ -1006,7 +1265,7 @@ function handleSaveSaleInvoice() {
 
   const typeSelect = document.getElementById('saleTypeSelect');
   const saleType = typeSelect ? typeSelect.value : 'cash';
-  const today = new Date().toISOString().split('T')[0];
+  const dt = getFormattedDateTimeNow();
   const sales = getStoredSales();
   const newInvoiceId = 'INV-' + (sales.length + 1);
 
@@ -1019,7 +1278,9 @@ function handleSaveSaleInvoice() {
   if (saleType === 'cash') {
     const newSale = {
       id: newInvoiceId,
-      date: today,
+      date: dt.full, // التاريخ والساعة بالدقيقة
+      rawDate: dt.date,
+      time: dt.time,
       customerName,
       customerPhone,
       nationalId: '--',
@@ -1044,16 +1305,19 @@ function handleSaveSaleInvoice() {
     renderDashboard();
     renderInventoryTable();
     renderSalesTable();
+    renderCustomersDirectory();
     showToast(`تم حفظ الفاتورة الكاش (${newInvoiceId}) بنجاح`, 'success');
   } else {
     const math = calculateInstallmentMath();
     const contracts = getStoredContracts();
+    
+    // ربط الفواتير الجديدة بنفس كود العميل إن كان مسجلاً من قبل
     const existingClient = contracts.find(c => (c.customerPhone || '').toString().trim() === customerPhone.trim());
     const clientCodeToUse = existingClient && existingClient.clientCode ? existingClient.clientCode : (contracts.length > 0 ? (Math.max(...contracts.map(c => c.clientCode || 0)) + 1) : 1);
 
     const contractId = 'CNT-' + (contracts.length + 1);
     const stDateInput = document.getElementById('instStartDate');
-    const startDateStr = (stDateInput && stDateInput.value) ? stDateInput.value : today;
+    const startDateStr = (stDateInput && stDateInput.value) ? stDateInput.value : dt.date;
 
     const installmentsList = [];
     let currentMonthDate = new Date(startDateStr);
@@ -1065,13 +1329,15 @@ function handleSaveSaleInvoice() {
     contracts.unshift({
       clientCode: clientCodeToUse,
       id: contractId,
-      invoiceDate: today,
+      invoiceDate: dt.full, // الوقت والتاريخ
+      rawDate: dt.date,
+      time: dt.time,
       customerName,
       customerPhone,
-      nationalId,
-      guarantorName,
-      guarantorPhone,
-      guarantorNationalId,
+      nationalId: (nationalId !== '--') ? nationalId : (existingClient?.nationalId || '--'),
+      guarantorName: (guarantorName !== '--') ? guarantorName : (existingClient?.guarantorName || '--'),
+      guarantorPhone: (guarantorPhone !== '--') ? guarantorPhone : (existingClient?.guarantorPhone || '--'),
+      guarantorNationalId: (guarantorNationalId !== '--') ? guarantorNationalId : (existingClient?.guarantorNationalId || '--'),
       items: [...currentSaleInvoiceCart],
       deviceName: deviceNamesCombined,
       rawDeviceName: currentSaleInvoiceCart[0].name,
@@ -1092,7 +1358,9 @@ function handleSaveSaleInvoice() {
 
     sales.unshift({
       id: newInvoiceId,
-      date: today,
+      date: dt.full,
+      rawDate: dt.date,
+      time: dt.time,
       customerName,
       customerPhone,
       nationalId,
@@ -1117,11 +1385,14 @@ function handleSaveSaleInvoice() {
     renderInventoryTable();
     renderInstallmentsTable();
     renderSalesTable();
+    renderCustomersDirectory();
     showToast(`تم حفظ عقد التقسيط للعميل (${customerName}) كود (#${clientCodeToUse}) بنجاح`, 'success');
   }
 }
 
-// الأقساط وملفات العملاء
+// ==========================================
+// سجل وإدارة ملفات العملاء والأقساط
+// ==========================================
 function renderInstallmentsTable() {
   const contracts = getStoredContracts();
   const tbody = document.getElementById('installmentsContractsTableBody');
@@ -1253,6 +1524,29 @@ function openCustomerProfileModal(phone, preferredInvoiceId = null) {
 function selectInvoiceTabInProfile(invoiceId) {
   activeInvoiceIdInProfile = invoiceId;
   openCustomerProfileModal(activeCustomerPhoneForProfile, invoiceId);
+}
+
+function openNewSaleForThisCustomer() {
+  if (!activeCustomerPhoneForProfile) return;
+  const contracts = getStoredContracts().filter(c => (c.customerPhone || '').toString().trim() === activeCustomerPhoneForProfile.trim());
+  if (contracts.length === 0) return;
+  const cl = contracts[0];
+
+  closeModal('customerProfileModal');
+  openModal('newSaleModal');
+
+  const nameInput = document.getElementById('saleCustomerName');
+  if (nameInput) nameInput.value = cl.customerName || '';
+  const phoneInput = document.getElementById('saleCustomerPhone');
+  if (phoneInput) phoneInput.value = cl.customerPhone || '';
+  const natInput = document.getElementById('saleCustomerNationalId');
+  if (natInput) natInput.value = cl.nationalId || '';
+  const gName = document.getElementById('saleGuarantorName');
+  if (gName) gName.value = cl.guarantorName || '';
+  const gPhone = document.getElementById('saleGuarantorPhone');
+  if (gPhone) gPhone.value = cl.guarantorPhone || '';
+  const gNat = document.getElementById('saleGuarantorNationalId');
+  if (gNat) gNat.value = cl.guarantorNationalId || '';
 }
 
 function renderActiveInvoiceDetailsInProfile() {
@@ -1399,53 +1693,58 @@ function updateCollectModalPreview() {
   }
 }
 
+// ==========================================
+// حماية فتح شاشة تعديل الفاتورة بالرقم السري للمالك
+// ==========================================
 function openEditInvoiceModal(identifier) {
-  const sales = getStoredSales();
-  const contracts = getStoredContracts();
-  let targetSale = sales.find(s => s.id === identifier || s.contractId === identifier);
-  let targetContract = contracts.find(c => c.id === identifier || (targetSale && c.id === targetSale.contractId));
-  if (!targetSale && !targetContract) return;
+  requireOwnerAuth(() => {
+    const sales = getStoredSales();
+    const contracts = getStoredContracts();
+    let targetSale = sales.find(s => s.id === identifier || s.contractId === identifier);
+    let targetContract = contracts.find(c => c.id === identifier || (targetSale && c.id === targetSale.contractId));
+    if (!targetSale && !targetContract) return;
 
-  currentEditingInvoiceId = targetSale ? targetSale.id : targetContract.id;
-  const isInstallment = (targetSale && targetSale.type === 'تقسيط') || !!targetContract;
+    currentEditingInvoiceId = targetSale ? targetSale.id : targetContract.id;
+    const isInstallment = (targetSale && targetSale.type === 'تقسيط') || !!targetContract;
 
-  const lbl = document.getElementById('editInvoiceIdLabel');
-  if (lbl) lbl.innerText = `#${targetSale ? targetSale.id : targetContract.id}`;
-  const nameIn = document.getElementById('editCustomerNameInput');
-  if (nameIn) nameIn.value = targetSale ? targetSale.customerName : targetContract.customerName;
-  const phoneIn = document.getElementById('editCustomerPhoneInput');
-  if (phoneIn) phoneIn.value = targetSale ? targetSale.customerPhone : targetContract.customerPhone;
-  const serIn = document.getElementById('editSerialInput');
-  if (serIn) serIn.value = targetSale ? targetSale.serialNumber : targetContract.serialNumber;
+    const lbl = document.getElementById('editInvoiceIdLabel');
+    if (lbl) lbl.innerText = `#${targetSale ? targetSale.id : targetContract.id}`;
+    const nameIn = document.getElementById('editCustomerNameInput');
+    if (nameIn) nameIn.value = targetSale ? targetSale.customerName : targetContract.customerName;
+    const phoneIn = document.getElementById('editCustomerPhoneInput');
+    if (phoneIn) phoneIn.value = targetSale ? targetSale.customerPhone : targetContract.customerPhone;
+    const serIn = document.getElementById('editSerialInput');
+    if (serIn) serIn.value = targetSale ? targetSale.serialNumber : targetContract.serialNumber;
 
-  const rawDevice = targetContract ? targetContract.rawDeviceName : (targetSale.rawDeviceName || (targetSale.deviceName ? targetSale.deviceName.split(' (عدد')[0] : ''));
-  const rawDevIn = document.getElementById('editDeviceRawNameInput');
-  if (rawDevIn) rawDevIn.value = rawDevice;
+    const rawDevice = targetContract ? targetContract.rawDeviceName : (targetSale.rawDeviceName || (targetSale.deviceName ? targetSale.deviceName.split(' (عدد')[0] : ''));
+    const rawDevIn = document.getElementById('editDeviceRawNameInput');
+    if (rawDevIn) rawDevIn.value = rawDevice;
 
-  const qty = targetSale ? (targetSale.quantity || 1) : (targetContract.quantity || 1);
-  const unitPrice = targetSale && targetSale.unitPrice ? targetSale.unitPrice : ((targetContract ? targetContract.cashPrice : targetSale.totalPrice) / qty);
+    const qty = targetSale ? (targetSale.quantity || 1) : (targetContract.quantity || 1);
+    const unitPrice = targetSale && targetSale.unitPrice ? targetSale.unitPrice : ((targetContract ? targetContract.cashPrice : targetSale.totalPrice) / qty);
 
-  const qtyIn = document.getElementById('editQuantityInput');
-  if (qtyIn) qtyIn.value = qty;
-  const upIn = document.getElementById('editUnitPriceInput');
-  if (upIn) upIn.value = unitPrice;
+    const qtyIn = document.getElementById('editQuantityInput');
+    if (qtyIn) qtyIn.value = qty;
+    const upIn = document.getElementById('editUnitPriceInput');
+    if (upIn) upIn.value = unitPrice;
 
-  const instBox = document.getElementById('editInstallmentBox');
-  if (instBox) {
-    if (isInstallment && targetContract) {
-      instBox.classList.remove('hidden');
-      const dpIn = document.getElementById('editDownPaymentInput');
-      if (dpIn) dpIn.value = targetContract.downPayment || 0;
-      const irIn = document.getElementById('editInterestRateInput');
-      if (irIn) irIn.value = targetContract.interestRate || 15;
-      const mIn = document.getElementById('editMonthsInput');
-      if (mIn) mIn.value = targetContract.months || 12;
-    } else {
-      instBox.classList.add('hidden');
+    const instBox = document.getElementById('editInstallmentBox');
+    if (instBox) {
+      if (isInstallment && targetContract) {
+        instBox.classList.remove('hidden');
+        const dpIn = document.getElementById('editDownPaymentInput');
+        if (dpIn) dpIn.value = targetContract.downPayment || 0;
+        const irIn = document.getElementById('editInterestRateInput');
+        if (irIn) irIn.value = targetContract.interestRate || 15;
+        const mIn = document.getElementById('editMonthsInput');
+        if (mIn) mIn.value = targetContract.months || 12;
+      } else {
+        instBox.classList.add('hidden');
+      }
     }
-  }
-  calculateEditInvoiceMath();
-  openModal('editSaleInvoiceModal');
+    calculateEditInvoiceMath();
+    openModal('editSaleInvoiceModal');
+  });
 }
 
 function calculateEditInvoiceMath() {
@@ -1560,6 +1859,9 @@ function handleSaveInvoiceEdits() {
   showToast('تم حفظ التعديلات بنجاح.', 'success');
 }
 
+// ==========================================
+// إدارة الموردين والمشتريات
+// ==========================================
 function renderSuppliersTable() {
   const suppliers = getDetailedSuppliers();
   const listContainer = document.getElementById('suppliersMasterList');
@@ -1614,7 +1916,7 @@ function renderSelectedSupplierDetails() {
     grandTotal += itemTot; grandPaid += itemPd;
     rowsHtml += `
       <tr>
-        <td class="p-2.5 text-slate-500 dark:text-slate-400">${it.date || '--'}</td>
+        <td class="p-2.5 text-slate-500 dark:text-slate-400 font-mono text-xs">${it.date || '--'}</td>
         <td class="p-2.5 font-bold text-slate-900 dark:text-white">${it.name}</td>
         <td class="p-2.5 text-center font-bold text-blue-600 dark:text-cyan-400">${it.qty}</td>
         <td class="p-2.5">${(parseFloat(it.unitPrice) || 0).toLocaleString()} ج</td>
@@ -1687,7 +1989,7 @@ function openAddShipmentModal(supId) {
   currentSupplierShipmentCart = [];
   renderSupplierCartTbody();
   const dateInput = document.getElementById('supplierCartDateInput');
-  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+  if (dateInput) dateInput.value = getFormattedDateTimeNow().date;
   openModal('addSupplierShipmentModal');
 }
 
@@ -1741,7 +2043,8 @@ function handleSaveMultiItemSupplierInvoice() {
   const sup = suppliers.find(s => s.id === selectedSupplierId);
   if (!sup) return;
 
-  const date = document.getElementById('supplierCartDateInput').value || new Date().toISOString().split('T')[0];
+  const dt = getFormattedDateTimeNow();
+  const date = document.getElementById('supplierCartDateInput').value || dt.date;
   const paidNow = parseFloat(document.getElementById('supplierCartPaidInput').value) || 0;
   let paidToDistribute = paidNow;
 
@@ -1767,17 +2070,21 @@ function handleSaveMultiItemSupplierInvoice() {
   alert('تم اعتماد فاتورة التوريد وإدخال البضاعة للمخزن بنجاح.');
 }
 
+// حماية حذف صنف مورد بالرقم السري للمالك
 function deleteSupplierItem(supId, itemId) {
-  if (confirm('هل أنت متأكد من حذف هذا الصنف من حساب المورد؟')) {
-    const suppliers = getDetailedSuppliers();
-    const sup = suppliers.find(s => s.id === supId);
-    if (sup) {
-      sup.items = sup.items.filter(it => it.id !== itemId);
-      setDetailedSuppliers(suppliers);
-      renderSuppliersTable();
-      renderDashboard();
+  requireOwnerAuth(() => {
+    if (confirm('هل أنت متأكد من حذف هذا الصنف من حساب المورد؟')) {
+      const suppliers = getDetailedSuppliers();
+      const sup = suppliers.find(s => s.id === supId);
+      if (sup) {
+        sup.items = sup.items.filter(it => it.id !== itemId);
+        setDetailedSuppliers(suppliers);
+        renderSuppliersTable();
+        renderDashboard();
+        showToast('تم حذف الصنف بنجاح', 'success');
+      }
     }
-  }
+  });
 }
 
 function paySupplierPrompt(supId) {
@@ -1803,13 +2110,15 @@ function paySupplierPrompt(supId) {
   }
 }
 
+// ==========================================
+// التقارير السنوية
+// ==========================================
 function renderAnnualReportsView() {
   const year = document.getElementById('annualReportYearSelect').value || '2026';
   const searchTxt = (document.getElementById('annualReportSearchInput').value || '').trim().toLowerCase();
   const sales = getStoredSales();
   const productMap = {};
   let totalRev = 0, totalPcs = 0;
-  const monthTotals = Array(13).fill(0);
 
   sales.forEach(sale => {
     if (!sale.date || !sale.date.startsWith(year)) return;
@@ -1823,7 +2132,7 @@ function renderAnnualReportsView() {
     productMap[rawName].monthly[m] += qty;
     productMap[rawName].totalQty += qty;
     productMap[rawName].totalRevenue += tot;
-    totalRev += tot; totalPcs += qty; monthTotals[m] += qty;
+    totalRev += tot; totalPcs += qty;
   });
 
   document.getElementById('annualTotalRevenueVal').innerText = `${totalRev.toLocaleString()} ج.م`;
@@ -1874,6 +2183,9 @@ function exportAnnualReportToExcel() {
   XLSX.writeFile(wb, `تقرير_مبيعات_أولاد_العبد_${year}.xlsx`);
 }
 
+// ==========================================
+// إدارة المصاريف وحمايتها بباسورد المالك
+// ==========================================
 function renderExpensesTable() {
   const expenses = getStoredExpenses();
   const tbody = document.getElementById('expensesTableBody');
@@ -1884,7 +2196,7 @@ function renderExpensesTable() {
   expenses.forEach(exp => {
     tbody.innerHTML += `
       <tr>
-        <td class="p-2.5 text-slate-500 font-mono">${exp.date}</td>
+        <td class="p-2.5 text-slate-500 font-mono text-xs">${exp.date}</td>
         <td class="p-2.5 font-bold">${exp.title}</td>
         <td class="p-2.5"><span class="px-2 py-0.5 rounded bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300 text-[10px] font-bold">${exp.category}</span></td>
         <td class="p-2.5 text-rose-600 dark:text-rose-400 font-black">${(parseFloat(exp.amount) || 0).toLocaleString()} ج.م</td>
@@ -1899,7 +2211,9 @@ function handleSaveExpense() {
   const title = document.getElementById('expenseTitleInput').value.trim();
   const amount = parseFloat(document.getElementById('expenseAmountInput').value);
   const category = document.getElementById('expenseCategorySelect').value;
-  const date = document.getElementById('expenseDateInput').value || new Date().toISOString().split('T')[0];
+  const dt = getFormattedDateTimeNow();
+  const dateInput = document.getElementById('expenseDateInput').value;
+  const date = dateInput ? `${dateInput} (${dt.time})` : dt.full;
   const notes = document.getElementById('expenseNotesInput').value.trim();
   if (!title || isNaN(amount) || amount <= 0) { alert('يرجى التحقق من بند ومبلغ المصروف.'); return; }
 
@@ -1914,15 +2228,22 @@ function handleSaveExpense() {
   showToast(`تم تسجيل مصروف (${title}) بمبلغ ${amount.toLocaleString()} ج`, 'success');
 }
 
+// حماية حذف المصروف بباسورد المالك
 function deleteExpense(expId) {
-  if (confirm('هل أنت متأكد من حذف هذا المصروف؟')) {
-    let exp = getStoredExpenses().filter(e => e.id !== expId);
-    setStoredExpenses(exp);
-    renderExpensesTable();
-    renderDashboard();
-  }
+  requireOwnerAuth(() => {
+    if (confirm('هل أنت متأكد من حذف هذا المصروف؟')) {
+      let exp = getStoredExpenses().filter(e => e.id !== expId);
+      setStoredExpenses(exp);
+      renderExpensesTable();
+      renderDashboard();
+      showToast('تم حذف المصروف بنجاح', 'success');
+    }
+  });
 }
 
+// ==========================================
+// 5. تعديل رسائل واتساب المطالبة بالأقساط
+// ==========================================
 function openChooseWhatsAppModal(contractId) {
   const contracts = getStoredContracts();
   currentContractForWhatsApp = contracts.find(x => x.id === contractId);
@@ -1935,18 +2256,139 @@ function executeSendWhatsAppTemplate(type) {
   if (!currentContractForWhatsApp) return;
   const c = currentContractForWhatsApp;
   const cleanPhone = (c.customerPhone || '').toString().replace(/[^0-9]/g, '');
+
+  const paidCount = (c.installments || []).filter(i => i.status === 'مدفوع بالكامل').length;
+  const totalInstallmentsCount = (c.installments || []).length;
+  const nextDueInst = (c.installments || []).find(i => i.status !== 'مدفوع بالكامل');
+
+  const instRequiredAmount = nextDueInst ? (nextDueInst.amount - (nextDueInst.paidActual || 0)) : (c.monthlyAmount || 0);
+  const instNumber = nextDueInst ? nextDueInst.number : (paidCount + 1);
+  const instDueDate = nextDueInst ? nextDueInst.dueDate : '--';
+
   let msg = '';
   if (type === 'friendly') {
-    msg = `تحية طيبة أستاذ ${c.customerName} من معرض أولاد العبد للأجهزة الكهربائية 🌸\nنود تذكير سيادتكم بميعاد القسط القادم لفاتورة (${c.deviceName}).\nالمتبقي الإجمالي: ${(c.remainingAmount || 0).toLocaleString()} ج.م.\nشاكرين لتعاملكم الراقي معنا 🤝`;
+    msg = `تحية طيبة أستاذ ${c.customerName} من معرض أولاد العبد للأجهزة الكهربائية 🌸\n` +
+          `نود تذكير سيادتكم بميعاد سداد القسط الشهري المستحق:\n` +
+          `━━━━━━━━━━━━━━━━━━━\n` +
+          `📌 القسط المطلوب سداده: القسط رقم (#${instNumber}) بمبلغ (${instRequiredAmount.toLocaleString()} ج.م)\n` +
+          `📅 تاريخ الاستحقاق: ${instDueDate}\n` +
+          `📦 عن شراء: ${c.deviceName}\n` +
+          `━━━━━━━━━━━━━━━━━━━\n` +
+          `📊 موقف العقد:\n` +
+          `• الأقساط المسددة: (${paidCount} من إجمالي ${totalInstallmentsCount} قسط)\n` +
+          `• إجمالي باقي العقد كاملاً: ${(c.remainingAmount || 0).toLocaleString()} ج.م\n\n` +
+          `شاكرين لحسن تعاونكم والتزامكم الراقي 🤝`;
   } else if (type === 'formal') {
-    msg = `إشعار استحقاق قسط ⚠️\nالسيد / ${c.customerName} المحترم (كود: #${c.clientCode || 1})\nيرجى التكرم بسداد القسط المستحق طرفكم لمعرض أولاد العبد للأجهزة الكهربائية عن (${c.deviceName}).\nالمتبقي الإجمالي: ${(c.remainingAmount || 0).toLocaleString()} ج.م.`;
+    msg = `إشعار رسمي باستحقاق قسط ⚠️\n` +
+          `السيد / ${c.customerName} المحترم (كود: #${c.clientCode || 1})\n` +
+          `يرجى التكرم بسداد القسط المستحق طرفكم لمعرض أولاد العبد:\n` +
+          `━━━━━━━━━━━━━━━━━━━\n` +
+          `💵 القسط المطلوب حالياً: (${instRequiredAmount.toLocaleString()} ج.م) - القسط (#${instNumber})\n` +
+          `📅 مستحق بتاريخ: ${instDueDate}\n` +
+          `📦 الأجهزة المشتراة: ${c.deviceName}\n` +
+          `━━━━━━━━━━━━━━━━━━━\n` +
+          `• إجمالي المسدد سابقاً: ${(c.paidAmount || 0).toLocaleString()} ج.م\n` +
+          `• إجمالي المتبقي لإغلاق الحساب: ${(c.remainingAmount || 0).toLocaleString()} ج.م\n\n` +
+          `شاكرين سرعة التوجه للمعرض للسداد.`;
   } else {
-    msg = `🛑 إنذار نهائي بالسداد\nإلى السيد / ${c.customerName} والضامن (${c.guarantorName || ''})\nنظراً لتأخركم في سداد الأقساط المستحقة لمعرض أولاد العبد، يرجى التوجه لمقر المعرض خلال 48 ساعة لتسوية المديونية (${(c.remainingAmount || 0).toLocaleString()} ج) تفادياً للإجراءات القانونية.`;
+    msg = `🛑 إنذار نهائي بالسداد قبل اتخاذ الإجراءات\n` +
+          `إلى العميل / ${c.customerName} والضامن (${c.guarantorName || 'المحترم'})\n` +
+          `نحيطكم علماً بتأخركم عن سداد القسط رقم (#${instNumber}) بمبلغ (${instRequiredAmount.toLocaleString()} ج.م) والخاص بشراء (${c.deviceName}).\n` +
+          `إجمالي المديونية المتبقية طرفكم: ${(c.remainingAmount || 0).toLocaleString()} ج.م.\n\n` +
+          `يرجى التوجه لمقر معرض أولاد العبد خلال 48 ساعة كحد أقصى لتسوية القسط تجنباً للإجراءات القانونية.`;
   }
+
   closeModal('chooseWhatsAppTemplateModal');
   window.open(`https://wa.me/2${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
+// ==========================================
+// 4. دليل العملاء والعروض الترويجية
+// ==========================================
+function renderCustomersDirectory() {
+  const contracts = getStoredContracts();
+  const sales = getStoredSales();
+  const tbody = document.getElementById('customersDirectoryTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  const search = (document.getElementById('customersSearchInput')?.value || '').trim().toLowerCase();
+  const clientsMap = {};
+
+  sales.forEach(s => {
+    const phone = (s.customerPhone || '').toString().trim();
+    if (!phone) return;
+    if (!clientsMap[phone]) {
+      clientsMap[phone] = {
+        name: s.customerName,
+        phone: phone,
+        type: s.type,
+        totalBought: 0,
+        devices: []
+      };
+    }
+    clientsMap[phone].totalBought += (parseFloat(s.totalPrice) || 0);
+    if (s.deviceName) clientsMap[phone].devices.push(s.deviceName);
+  });
+
+  contracts.forEach(c => {
+    const phone = (c.customerPhone || '').toString().trim();
+    if (phone && clientsMap[phone]) {
+      clientsMap[phone].code = c.clientCode;
+    }
+  });
+
+  const list = Object.values(clientsMap).filter(cl => {
+    return cl.name.toLowerCase().includes(search) || cl.phone.includes(search);
+  });
+
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500">لا يوجد عملاء مسجلين.</td></tr>`;
+    return;
+  }
+
+  list.forEach((cl, idx) => {
+    tbody.innerHTML += `
+      <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50">
+        <td class="p-3 font-mono font-bold text-blue-600 dark:text-cyan-400">#${cl.code || (idx + 1)}</td>
+        <td class="p-3 font-bold text-slate-900 dark:text-white">${cl.name}</td>
+        <td class="p-3 font-mono text-slate-600 dark:text-slate-300">${cl.phone}</td>
+        <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${cl.type === 'كاش' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}">${cl.type}</span></td>
+        <td class="p-3 font-bold text-slate-900 dark:text-white">${cl.totalBought.toLocaleString()} ج.م</td>
+        <td class="p-3 text-center">
+          <button onclick="sendPromoWhatsAppToCustomer('${cl.name}', '${cl.phone}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 mx-auto shadow">
+            <i class="fa-brands fa-whatsapp"></i> إرسال العرض
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function openBroadcastPromoModal() {
+  const saved = localStorage.getItem(STORAGE_KEY_PROMO_TEMPLATE) || 
+`عميلنا العزيز 🌸\nتحية طيبة من معرض أولاد العبد للأجهزة الكهربائية والمنزلية 🏢\nيسعدنا إبلاغ سيادتكم بوصول تشكيلة جديدة من الأجهزة الكهربائية (شاشات، غسالات، ثلاجات) بأفضل الأسعار وأنظمة تقسيط ميسرة وخصومات حصرية لعملائنا الكرام!\nتشرفنا زيارتكم في المعرض للاستفادة من العروض ✨`;
+  document.getElementById('promoCustomMessageInput').value = saved;
+  openModal('broadcastPromoModal');
+}
+
+function saveAndApplyPromoMessage() {
+  const text = document.getElementById('promoCustomMessageInput').value.trim();
+  localStorage.setItem(STORAGE_KEY_PROMO_TEMPLATE, text);
+  closeModal('broadcastPromoModal');
+  showToast('تم حفظ نص العرض الترويجي بنجاح ✔', 'success');
+}
+
+function sendPromoWhatsAppToCustomer(name, phone) {
+  const template = localStorage.getItem(STORAGE_KEY_PROMO_TEMPLATE) || 'أقوى العروض من معرض أولاد العبد للأجهزة الكهربائية!';
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  const finalMsg = `أهلاً بحضرتك أستاذ ${name} 🌸\n` + template;
+  window.open(`https://wa.me/2${cleanPhone}?text=${encodeURIComponent(finalMsg)}`, '_blank');
+}
+
+// ==========================================
+// ماسح الباركود بالكاميرا
+// ==========================================
 function openBarcodeScanner(targetMode) {
   currentTargetInputIdForScanner = targetMode;
   openModal('barcodeScannerModal');
