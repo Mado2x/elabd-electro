@@ -365,7 +365,7 @@ function openModal(id) { const el = document.getElementById(id); if (el) { el.cl
 function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.add('hidden'); }
 
 // ==========================================
-// 6. تقفيل الوردية اليومية وحفظها في الأرشيف
+// 6. تقفيل الوردية الذكي مع منع التكرار والأرشيف
 // ==========================================
 function openDailyShiftModal() {
   const dt = getFormattedDateTimeNow();
@@ -409,48 +409,66 @@ function openDailyShiftModal() {
 
 function closeDailyShiftAndArchive() {
   const dt = getFormattedDateTimeNow();
-  const sales = getStoredSales();
-  const contracts = getStoredContracts();
-  const expenses = getStoredExpenses();
-
-  let todaySalesCash = 0;
-  sales.forEach(s => {
-    if (s.date && s.date.startsWith(dt.date)) todaySalesCash += (parseFloat(s.paidImmediately) || 0);
-  });
-
-  let todayInstCash = 0;
-  contracts.forEach(cnt => {
-    (cnt.installments || []).forEach(inst => {
-      if (inst.paidDate && inst.paidDate.startsWith(dt.date) && inst.paidActual > 0) todayInstCash += parseFloat(inst.paidActual);
-    });
-  });
-
-  let todayExpenses = 0;
-  expenses.forEach(e => {
-    if (e.date && e.date.startsWith(dt.date)) todayExpenses += (parseFloat(e.amount) || 0);
-  });
-
-  const netDrawerCash = (todaySalesCash + todayInstCash) - todayExpenses;
-
   const archive = getStoredShiftsArchive();
-  const shiftRecord = {
-    id: 'SHIFT-' + (archive.length + 1),
-    date: dt.date,
-    time: dt.time,
-    fullDateTime: dt.full,
-    directSalesCash: todaySalesCash,
-    installmentsCash: todayInstCash,
-    expensesDeducted: todayExpenses,
-    netDrawerCash: netDrawerCash
+
+  // فحص هل يوجد وردية مسجلة بنفس التاريخ لمنع التكرار
+  const existingShiftIndex = archive.findIndex(s => s.date === dt.date);
+
+  const proceedWithSave = () => {
+    const sales = getStoredSales();
+    const contracts = getStoredContracts();
+    const expenses = getStoredExpenses();
+
+    let todaySalesCash = 0;
+    sales.forEach(s => {
+      if (s.date && s.date.startsWith(dt.date)) todaySalesCash += (parseFloat(s.paidImmediately) || 0);
+    });
+
+    let todayInstCash = 0;
+    contracts.forEach(cnt => {
+      (cnt.installments || []).forEach(inst => {
+        if (inst.paidDate && inst.paidDate.startsWith(dt.date) && inst.paidActual > 0) todayInstCash += parseFloat(inst.paidActual);
+      });
+    });
+
+    let todayExpenses = 0;
+    expenses.forEach(e => {
+      if (e.date && e.date.startsWith(dt.date)) todayExpenses += (parseFloat(e.amount) || 0);
+    });
+
+    const netDrawerCash = (todaySalesCash + todayInstCash) - todayExpenses;
+
+    const shiftRecord = {
+      id: existingShiftIndex !== -1 ? archive[existingShiftIndex].id : ('SHIFT-' + (archive.length + 1)),
+      date: dt.date,
+      time: dt.time,
+      fullDateTime: dt.full,
+      directSalesCash: todaySalesCash,
+      installmentsCash: todayInstCash,
+      expensesDeducted: todayExpenses,
+      netDrawerCash: netDrawerCash
+    };
+
+    if (existingShiftIndex !== -1) {
+      archive[existingShiftIndex] = shiftRecord;
+    } else {
+      archive.unshift(shiftRecord);
+    }
+
+    setStoredShiftsArchive(archive);
+    exportCurrentDatabaseToExcel(true);
+    closeModal('dailyShiftModal');
+    renderShiftsArchive();
+    showToast(`تم حفظ تقفيل الوردية بصافي (${netDrawerCash.toLocaleString()} ج.م)`, 'success');
   };
 
-  archive.unshift(shiftRecord);
-  setStoredShiftsArchive(archive);
-
-  exportCurrentDatabaseToExcel(true);
-  closeModal('dailyShiftModal');
-  renderShiftsArchive();
-  showToast(`تم تقفيل الوردية وحفظ الصافي (${netDrawerCash.toLocaleString()} ج) في الأرشيف`, 'success');
+  if (existingShiftIndex !== -1) {
+    if (confirm('تنبيه: تم تسجيل تقفيل وردية لهذا اليوم مسبقاً! هل تريد تحديث أرقام التقفيل بالمعاملات الحالية؟')) {
+      proceedWithSave();
+    }
+  } else {
+    proceedWithSave();
+  }
 }
 
 function renderShiftsArchive() {
@@ -473,7 +491,7 @@ function renderShiftsArchive() {
   if (elExp) elExp.innerText = `${totalExp.toLocaleString()} ج.م`;
 
   if (archive.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500">لا يوجد تقفيلات وردية مسجلة بعد.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-500">لا يوجد تقفيلات وردية مسجلة بعد.</td></tr>`;
     return;
   }
 
@@ -486,13 +504,28 @@ function renderShiftsArchive() {
         <td class="p-2.5 font-bold text-blue-600 dark:text-cyan-400">${s.installmentsCash.toLocaleString()} ج</td>
         <td class="p-2.5 font-bold text-rose-600">-${s.expensesDeducted.toLocaleString()} ج</td>
         <td class="p-2.5 font-black text-emerald-600 dark:text-emerald-400 text-sm">${s.netDrawerCash.toLocaleString()} ج.م</td>
-        <td class="p-2.5 text-center">
+        <td class="p-2.5 text-center space-x-1 space-x-reverse">
           <button onclick="printArchivedShiftReport('${s.id}')" class="px-2.5 py-1 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-white rounded-lg text-xs font-bold shadow">
             طباعة 🖨️
+          </button>
+          <button onclick="deleteArchivedShift('${s.id}')" class="px-2 py-1 bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-300 dark:border-rose-800 rounded-lg text-xs font-bold hover:bg-rose-600 hover:text-white transition">
+            <i class="fa-solid fa-trash-can"></i>
           </button>
         </td>
       </tr>
     `;
+  });
+}
+
+function deleteArchivedShift(shiftId) {
+  requireOwnerAuth(() => {
+    if (confirm(`هل أنت متأكد من حذف الوردية رقم (#${shiftId}) من الأرشيف؟`)) {
+      let archive = getStoredShiftsArchive();
+      archive = archive.filter(s => s.id !== shiftId);
+      setStoredShiftsArchive(archive);
+      renderShiftsArchive();
+      showToast('تم حذف الوردية وتحديث إجمالي الخزينة بنجاح', 'success');
+    }
   });
 }
 
@@ -846,7 +879,7 @@ function renderInventoryTable() {
 
   inventory.forEach(item => {
     const isOutOfStock = item.currentQty <= 0;
-    const isLow = item.currentQty > 0 && item.currentQty <= 3; // إنذار عند 3 قطع فأقل
+    const isLow = item.currentQty > 0 && item.currentQty <= 3;
 
     let qtyBadge = `<span class="font-black text-emerald-600 dark:text-emerald-400 text-base">${item.currentQty}</span>`;
     if (isOutOfStock) {
@@ -1278,7 +1311,7 @@ function handleSaveSaleInvoice() {
   if (saleType === 'cash') {
     const newSale = {
       id: newInvoiceId,
-      date: dt.full, // التاريخ والساعة بالدقيقة
+      date: dt.full,
       rawDate: dt.date,
       time: dt.time,
       customerName,
@@ -1311,7 +1344,6 @@ function handleSaveSaleInvoice() {
     const math = calculateInstallmentMath();
     const contracts = getStoredContracts();
     
-    // ربط الفواتير الجديدة بنفس كود العميل إن كان مسجلاً من قبل
     const existingClient = contracts.find(c => (c.customerPhone || '').toString().trim() === customerPhone.trim());
     const clientCodeToUse = existingClient && existingClient.clientCode ? existingClient.clientCode : (contracts.length > 0 ? (Math.max(...contracts.map(c => c.clientCode || 0)) + 1) : 1);
 
@@ -1329,7 +1361,7 @@ function handleSaveSaleInvoice() {
     contracts.unshift({
       clientCode: clientCodeToUse,
       id: contractId,
-      invoiceDate: dt.full, // الوقت والتاريخ
+      invoiceDate: dt.full,
       rawDate: dt.date,
       time: dt.time,
       customerName,
