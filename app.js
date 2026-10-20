@@ -1,815 +1,767 @@
-    <!-- VIEW 6: فواتير البيع -->
-    <section id="view-sales" class="hidden space-y-4">
-      <div class="glass-card border border-slate-200 dark:border-slate-800/90 rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
-        <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-          <h3 class="text-sm md:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <i class="fa-solid fa-receipt text-blue-600 dark:text-cyan-400"></i> فواتير المبيعات المسجلة
-          </h3>
-          <button onclick="openModal('newSaleModal')" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white rounded-2xl text-xs font-bold transition shadow flex items-center gap-2">
-            <i class="fa-solid fa-plus"></i> فاتورة بيع جديدة
+// ==========================================
+// المحرك التشغيلي المتطور (app.js) - الجزء الأول
+// معرض أولاد العبد للأجهزة الكهربائية
+// ==========================================
+
+const STORAGE_KEY_AUTH_SESSION = 'elabd_auth_session_v1';
+const STORAGE_KEY_SYSTEM_USERNAME = 'elabd_sys_user_v1';
+const STORAGE_KEY_OWNER_PIN = 'elabd_owner_pin_v6';
+
+function getOwnerPin() {
+  return localStorage.getItem(STORAGE_KEY_OWNER_PIN) || '1234';
+}
+
+function checkAuthSession() {
+  const isAuth = localStorage.getItem(STORAGE_KEY_AUTH_SESSION);
+  const overlay = document.getElementById('appLoginOverlay');
+  if (!overlay) return;
+
+  if (isAuth === 'true') {
+    overlay.style.display = 'none';
+  } else {
+    overlay.style.display = 'flex';
+    const uInput = document.getElementById('loginUsernameInput');
+    if (uInput) setTimeout(() => uInput.focus(), 150);
+  }
+}
+
+function handleSystemLogin(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const uInput = document.getElementById('loginUsernameInput');
+  const pInput = document.getElementById('loginPasswordInput');
+  const errEl = document.getElementById('loginErrorMsg');
+
+  const enteredUser = uInput ? uInput.value.trim().toLowerCase() : '';
+  const enteredPass = pInput ? pInput.value.trim() : '';
+
+  // قبول admin و 1234 أو باسورد المالك المعتمد
+  if ((enteredUser === 'admin' || enteredUser === '') && (enteredPass === '1234' || enteredPass === getOwnerPin())) {
+    localStorage.setItem(STORAGE_KEY_AUTH_SESSION, 'true');
+    const overlay = document.getElementById('appLoginOverlay');
+    if (overlay) overlay.style.display = 'none';
+    if (errEl) errEl.classList.add('hidden');
+    if (uInput) uInput.value = '';
+    if (pInput) pInput.value = '';
+    showToast('تم تسجيل الدخول بنجاح', 'success');
+  } else {
+    if (errEl) {
+      errEl.innerText = 'اسم المستخدم أو كلمة المرور غير صحيحة!';
+      errEl.classList.remove('hidden');
+    }
+  }
+}
+
+function handleSystemLogout() {
+  if (confirm('هل أنت متأكد من تسجيل الخروج وقفل النظام؟')) {
+    localStorage.removeItem(STORAGE_KEY_AUTH_SESSION);
+    const overlay = document.getElementById('appLoginOverlay');
+    if (overlay) overlay.style.display = 'flex';
+    showToast('تم تسجيل الخروج بنجاح', 'info');
+  }
+}
+
+function initThemeMode() {
+  const savedTheme = localStorage.getItem('elabd_theme_mode') || 'dark';
+  applyTheme(savedTheme);
+}
+
+function toggleThemeMode() {
+  const isDark = document.documentElement.classList.contains('dark');
+  const targetTheme = isDark ? 'light' : 'dark';
+  applyTheme(targetTheme);
+  localStorage.setItem('elabd_theme_mode', targetTheme);
+}
+
+function applyTheme(theme) {
+  const html = document.documentElement;
+  const statusText = document.getElementById('themeStatusText');
+  const switchIcon = document.getElementById('themeSwitchIcon');
+  const mobileBtn = document.getElementById('mobileThemeToggleBtn');
+
+  if (theme === 'dark') {
+    html.classList.add('dark');
+    html.classList.remove('light');
+    if (statusText) statusText.innerHTML = '<i class="fa-solid fa-moon text-indigo-400"></i> الوضع الليلي';
+    if (switchIcon) switchIcon.innerText = 'تغيير ☀️';
+    if (mobileBtn) mobileBtn.innerText = '🌙';
+  } else {
+    html.classList.remove('dark');
+    html.classList.add('light');
+    if (statusText) statusText.innerHTML = '<i class="fa-solid fa-sun text-amber-500"></i> الوضع النهاري';
+    if (switchIcon) switchIcon.innerText = 'تغيير 🌙';
+    if (mobileBtn) mobileBtn.innerText = '☀️';
+  }
+}
+
+window.alert = function(msg) {
+  const isError = msg.includes('يرجى') || msg.includes('عفواً') || msg.includes('أكبر') || msg.includes('تعذر');
+  if (window.Swal) {
+    Swal.fire({
+      title: isError ? 'تنبيه' : 'تمت العملية',
+      text: msg,
+      icon: isError ? 'warning' : 'success',
+      confirmButtonText: 'تمام',
+      confirmButtonColor: '#2563eb',
+      background: document.documentElement.classList.contains('dark') ? '#111726' : '#ffffff',
+      color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#1e293b',
+      customClass: { popup: 'rounded-3xl border border-slate-700' }
+    });
+  } else {
+    showToast(msg, isError ? 'error' : 'success');
+  }
+};
+
+let toastTimeoutInstance = null;
+function showToast(message, type = 'success', title = '') {
+  const box = document.getElementById('toastNotificationBox');
+  const iconBox = document.getElementById('toastIconBox');
+  const titleEl = document.getElementById('toastTitle');
+  const msgEl = document.getElementById('toastMessage');
+
+  if (!box) return;
+
+  msgEl.innerText = message;
+  titleEl.innerText = title || (type === 'success' ? 'عملية ناجحة' : (type === 'error' ? 'تنبيه' : 'إشعار'));
+
+  if (type === 'success') {
+    box.className = "fixed top-5 left-1/2 -translate-x-1/2 z-[100] transition-all duration-300 transform translate-y-0 opacity-100 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border backdrop-blur-md max-w-sm w-[90%] md:w-auto bg-slate-900/95 border-emerald-500/40 text-emerald-400";
+    iconBox.className = "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 bg-emerald-500/20 text-emerald-400 text-sm";
+    iconBox.innerHTML = '<i class="fa-solid fa-check"></i>';
+  } else {
+    box.className = "fixed top-5 left-1/2 -translate-x-1/2 z-[100] transition-all duration-300 transform translate-y-0 opacity-100 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border backdrop-blur-md max-w-sm w-[90%] md:w-auto bg-slate-900/95 border-rose-500/40 text-rose-400";
+    iconBox.className = "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 bg-rose-500/20 text-rose-400 text-sm";
+    iconBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+  }
+
+  if (toastTimeoutInstance) clearTimeout(toastTimeoutInstance);
+  toastTimeoutInstance = setTimeout(() => {
+    box.classList.remove('translate-y-0', 'opacity-100');
+    box.classList.add('-translate-y-24', 'opacity-0');
+  }, 2500);
+}
+
+const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_clean_suppliers_v6';
+const STORAGE_KEY_SELLING_PRICES = 'elabd_clean_prices_v6';
+const STORAGE_KEY_SALES = 'elabd_clean_sales_v6';
+const STORAGE_KEY_CONTRACTS = 'elabd_clean_contracts_v6';
+const STORAGE_KEY_EXPENSES = 'elabd_clean_expenses_v6';
+const STORAGE_KEY_CURRENT_TAB = 'elabd_clean_tab_v6';
+const STORAGE_KEY_SHIFTS_ARCHIVE = 'elabd_shifts_archive_v6';
+const STORAGE_KEY_PROMO_TEMPLATE = 'elabd_promo_template_v6';
+
+let currentSupplierShipmentCart = [];
+let currentSaleInvoiceCart = [];
+let selectedSupplierId = null;
+let currentCollectingContractId = null;
+let currentCollectingInstallmentNum = null;
+let currentCollectingFullAmount = 0;
+let currentCollectingRemainingAmount = 0;
+let currentContractForWhatsApp = null;
+let activeCustomerPhoneForProfile = null;
+let activeInvoiceIdInProfile = null;
+let currentEditingInvoiceId = null;
+let currentStrictSelectedDevice = null;
+let currentViewedSaleIdForPrint = null;
+
+let html5QrCodeScannerInstance = null;
+let currentTargetInputIdForScanner = null;
+let lastInquiredDeviceObject = null;
+
+function requireOwnerAuth(actionCallback) {
+  const currentPin = getOwnerPin();
+
+  if (window.Swal) {
+    Swal.fire({
+      title: 'صلاحيات المالك 🔒',
+      text: 'يرجى إدخال الرقم السري لتأكيد العملية:',
+      input: 'password',
+      inputPlaceholder: 'أدخل الباسورد...',
+      showCancelButton: true,
+      confirmButtonText: 'تأكيد',
+      cancelButtonText: 'إلغاء',
+      confirmButtonColor: '#2563eb',
+      cancelButtonColor: '#64748b',
+      background: document.documentElement.classList.contains('dark') ? '#111726' : '#ffffff',
+      color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#1e293b',
+      customClass: { popup: 'rounded-3xl border border-slate-700' },
+      preConfirm: (enteredPin) => {
+        if (!enteredPin) {
+          Swal.showValidationMessage('يرجى كتابة الرقم السري!');
+        } else if (enteredPin !== currentPin) {
+          Swal.showValidationMessage('الرقم السري غير صحيح!');
+        }
+        return enteredPin;
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        actionCallback();
+      }
+    });
+  } else {
+    const entered = prompt('صلاحيات المالك 🔒\nأدخل الرقم السري:');
+    if (entered === currentPin) {
+      actionCallback();
+    } else if (entered !== null) {
+      alert('عفواً، الرقم السري غير صحيح!');
+    }
+  }
+}
+
+function changeOwnerPasswordPrompt() {
+  requireOwnerAuth(() => {
+    if (window.Swal) {
+      Swal.fire({
+        title: 'تغيير باسورد المالك 🔑',
+        input: 'password',
+        inputLabel: 'أدخل الرقم السري الجديد:',
+        inputPlaceholder: 'أرقام جديدة...',
+        showCancelButton: true,
+        confirmButtonText: 'حفظ الباسورد',
+        cancelButtonText: 'إلغاء',
+        confirmButtonColor: '#16a34a',
+        background: document.documentElement.classList.contains('dark') ? '#111726' : '#ffffff',
+        color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#1e293b',
+        customClass: { popup: 'rounded-3xl border border-slate-700' },
+        preConfirm: (val) => {
+          if (!val || val.trim().length < 2) {
+            Swal.showValidationMessage('يرجى إدخال رقم سري مكون من رقمين على الأقل!');
+          }
+          return val.trim();
+        }
+      }).then((res) => {
+        if (res.isConfirmed && res.value) {
+          localStorage.setItem(STORAGE_KEY_OWNER_PIN, res.value);
+          showToast('تم تغيير باسورد المالك بنجاح ✔', 'success');
+        }
+      });
+    } else {
+      const p = prompt('أدخل الرقم السري الجديد:');
+      if (p && p.trim()) {
+        localStorage.setItem(STORAGE_KEY_OWNER_PIN, p.trim());
+        alert('تم تغيير باسورد المالك بنجاح.');
+      }
+    }
+  });
+}
+
+function getFormattedDateTimeNow() {
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+  let hours = now.getHours();
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const ampm = hours >= 12 ? 'م' : 'ص';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const timeStr = `${hours}:${minutes} ${ampm}`;
+  return { date: dateStr, time: timeStr, full: `${dateStr} (${timeStr})` };
+}
+
+function getDetailedSuppliers() { try { const d = localStorage.getItem(STORAGE_KEY_DETAILED_SUPPLIERS); if (d) return JSON.parse(d); } catch (e) {} return []; }
+function setDetailedSuppliers(d) { localStorage.setItem(STORAGE_KEY_DETAILED_SUPPLIERS, JSON.stringify(d)); }
+
+function getSellingPrices() { try { const d = localStorage.getItem(STORAGE_KEY_SELLING_PRICES); if (d) return JSON.parse(d); } catch (e) {} return {}; }
+function setSellingPrices(d) { localStorage.setItem(STORAGE_KEY_SELLING_PRICES, JSON.stringify(d)); }
+
+function getStoredContracts() { try { const d = localStorage.getItem(STORAGE_KEY_CONTRACTS); if (d) return JSON.parse(d); } catch (e) {} return []; }
+function setStoredContracts(d) { localStorage.setItem(STORAGE_KEY_CONTRACTS, JSON.stringify(d)); }
+
+function getStoredSales() { try { const d = localStorage.getItem(STORAGE_KEY_SALES); if (d) return JSON.parse(d); } catch (e) {} return []; }
+function setStoredSales(d) { localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(d)); }
+
+function getStoredExpenses() { try { const d = localStorage.getItem(STORAGE_KEY_EXPENSES); if (d) return JSON.parse(d); } catch (e) {} return []; }
+function setStoredExpenses(d) { localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(d)); }
+
+function getStoredShiftsArchive() { try { const d = localStorage.getItem(STORAGE_KEY_SHIFTS_ARCHIVE); if (d) return JSON.parse(d); } catch (e) {} return []; }
+function setStoredShiftsArchive(d) { localStorage.setItem(STORAGE_KEY_SHIFTS_ARCHIVE, JSON.stringify(d)); }
+
+function calculateAllSuppliersTotalRemaining() {
+  const suppliers = getDetailedSuppliers();
+  let totalRemaining = 0;
+  suppliers.forEach(sup => { (sup.items || []).forEach(it => { totalRemaining += Math.max(0, (parseFloat(it.total) || 0) - (parseFloat(it.paid) || 0)); }); });
+  return totalRemaining;
+}
+
+function calculateTotalExpenses() {
+  const expenses = getStoredExpenses();
+  return expenses.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+}
+
+function buildDynamicInventory() {
+  const suppliers = getDetailedSuppliers();
+  const sales = getStoredSales();
+  const sellingPrices = getSellingPrices();
+  const inventoryMap = {};
+
+  suppliers.forEach(sup => {
+    (sup.items || []).forEach(it => {
+      if (!inventoryMap[it.id]) {
+        inventoryMap[it.id] = {
+          itemId: it.id,
+          barcode: it.barcode || ('BAR-' + it.id),
+          name: it.name,
+          supplierId: sup.id,
+          supplierName: sup.name,
+          supplyDate: it.date || '',
+          buyPrice: parseFloat(it.unitPrice) || 0,
+          initialQty: parseInt(it.qty) || 0,
+          currentQty: parseInt(it.qty) || 0,
+          cashPrice: sellingPrices[it.name] || Math.round((parseFloat(it.unitPrice) || 0) * 1.2)
+        };
+      } else {
+        inventoryMap[it.id].initialQty += parseInt(it.qty) || 0;
+        inventoryMap[it.id].currentQty += parseInt(it.qty) || 0;
+      }
+    });
+  });
+
+  sales.forEach(sale => {
+    if (sale.items && Array.isArray(sale.items)) {
+      sale.items.forEach(soldItm => {
+        const itemEntry = Object.values(inventoryMap).find(x => x.itemId === soldItm.itemId || x.name === soldItm.name);
+        if (itemEntry) itemEntry.currentQty = Math.max(0, itemEntry.currentQty - (parseInt(soldItm.qty) || 1));
+      });
+    } else {
+      const qtySold = parseInt(sale.quantity) || 1;
+      const itemEntry = Object.values(inventoryMap).find(x => sale.deviceName && (sale.deviceName.includes(x.name) || x.name === sale.rawDeviceName));
+      if (itemEntry) itemEntry.currentQty = Math.max(0, itemEntry.currentQty - qtySold);
+    }
+  });
+
+  return Object.values(inventoryMap);
+}
+
+function parseItemsFromRecord(record) {
+  if (record.items && Array.isArray(record.items) && record.items.length > 0) return record.items;
+  const str = record.deviceName || '';
+  const parts = str.split('+');
+  return parts.map(part => {
+    const clean = part.trim();
+    const matchQty = clean.match(/\(عدد\s*(\d+)\)/);
+    const qty = matchQty ? parseInt(matchQty[1]) : 1;
+    const name = clean.replace(/\(عدد\s*\d+\)/, '').trim();
+    const totalCash = (record.cashPrice || record.totalPrice || 0);
+    const totalCount = (record.quantity || 1);
+    const unitPrice = Math.round(totalCash / totalCount);
+    return { name: name || clean, qty, unitPrice, total: unitPrice * qty, serial: record.serialNumber || 'SN-AUTO' };
+  });
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  checkAuthSession();
+  initThemeMode();
+  const dt = getFormattedDateTimeNow();
+  const startDateInput = document.getElementById('instStartDate');
+  if (startDateInput) startDateInput.value = dt.date;
+
+  const expenseDate = document.getElementById('expenseDateInput');
+  if (expenseDate) expenseDate.value = dt.date;
+
+  const currentYearMonth = dt.date.substring(0, 7);
+  const reportMonthInput = document.getElementById('selectedReportMonthInput');
+  if (reportMonthInput && !reportMonthInput.value) reportMonthInput.value = currentYearMonth;
+
+  toggleInstallmentFields();
+  const savedTab = localStorage.getItem(STORAGE_KEY_CURRENT_TAB) || 'dashboard';
+  switchView(savedTab);
+});
+
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  if (!sb) return;
+  const isClosed = sb.classList.contains('translate-x-full');
+  sb.classList.toggle('translate-x-full', !isClosed);
+  sb.classList.toggle('translate-x-0', isClosed);
+  if (ov) ov.classList.toggle('hidden', !isClosed);
+}
+
+function switchView(viewName) {
+  if (window.innerWidth < 768) {
+    const sb = document.getElementById('sidebar');
+    if (sb && !sb.classList.contains('translate-x-full')) toggleSidebar();
+  }
+  localStorage.setItem(STORAGE_KEY_CURRENT_TAB, viewName);
+
+  ['dashboard', 'reports', 'suppliers', 'installments', 'inventory', 'sales', 'expenses', 'customers', 'shifts-archive'].forEach(v => {
+    const section = document.getElementById(`view-${v}`);
+    if (section) section.classList.add('hidden');
+    const navBtn = document.getElementById(`nav-${v}`);
+    if (navBtn) navBtn.className = 'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition';
+  });
+
+  const targetSection = document.getElementById(`view-${viewName}`);
+  if (targetSection) targetSection.classList.remove('hidden');
+
+  const activeBtn = document.getElementById(`nav-${viewName}`);
+  if (activeBtn) activeBtn.className = 'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-blue-100 text-blue-700 dark:bg-blue-600/20 dark:text-cyan-400 border border-blue-200 dark:border-blue-500/30 font-bold transition';
+
+  if (viewName === 'dashboard') renderDashboard();
+  if (viewName === 'reports') renderAnnualReportsView();
+  if (viewName === 'suppliers') renderSuppliersTable();
+  if (viewName === 'installments') renderInstallmentsTable();
+  if (viewName === 'inventory') renderInventoryTable();
+  if (viewName === 'sales') renderSalesTable();
+  if (viewName === 'expenses') renderExpensesTable();
+  if (viewName === 'customers') renderCustomersDirectory();
+  if (viewName === 'shifts-archive') renderShiftsArchive();
+}
+
+function openModal(id) { const el = document.getElementById(id); if (el) { el.classList.remove('hidden'); if (id === 'newSaleModal') clearSaleModalFields(); } }
+function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.add('hidden'); }
+
+// ==========================================
+// تقفيل الوردية الذكي مع منع التكرار وحذف المكرر
+// ==========================================
+function openDailyShiftModal() {
+  const dt = getFormattedDateTimeNow();
+  const sales = getStoredSales();
+  const contracts = getStoredContracts();
+  const expenses = getStoredExpenses();
+
+  let todaySalesCash = 0;
+  sales.forEach(s => {
+    if (s.date && s.date.startsWith(dt.date)) todaySalesCash += (parseFloat(s.paidImmediately) || 0);
+  });
+
+  let todayInstCash = 0;
+  contracts.forEach(cnt => {
+    (cnt.installments || []).forEach(inst => {
+      if (inst.paidDate && inst.paidDate.startsWith(dt.date) && inst.paidActual > 0) todayInstCash += parseFloat(inst.paidActual);
+    });
+  });
+
+  let todayExpenses = 0;
+  expenses.forEach(e => {
+    if (e.date && e.date.startsWith(dt.date)) todayExpenses += (parseFloat(e.amount) || 0);
+  });
+
+  const netDrawerCash = (todaySalesCash + todayInstCash) - todayExpenses;
+
+  const sSales = document.getElementById('shiftTodaySalesCash');
+  if (sSales) sSales.innerText = `${todaySalesCash.toLocaleString()} ج.م`;
+
+  const sInst = document.getElementById('shiftTodayInstCash');
+  if (sInst) sInst.innerText = `${todayInstCash.toLocaleString()} ج.م`;
+
+  const sExp = document.getElementById('shiftTodayExpenses');
+  if (sExp) sExp.innerText = `${todayExpenses.toLocaleString()} ج.م`;
+
+  const sNet = document.getElementById('shiftNetDrawerCash');
+  if (sNet) sNet.innerText = `${netDrawerCash.toLocaleString()} ج.م`;
+
+  openModal('dailyShiftModal');
+}
+
+function closeDailyShiftAndArchive() {
+  const dt = getFormattedDateTimeNow();
+  const archive = getStoredShiftsArchive();
+
+  const existingShiftIndex = archive.findIndex(s => s.date === dt.date);
+
+  const proceedWithSave = () => {
+    const sales = getStoredSales();
+    const contracts = getStoredContracts();
+    const expenses = getStoredExpenses();
+
+    let todaySalesCash = 0;
+    sales.forEach(s => {
+      if (s.date && s.date.startsWith(dt.date)) todaySalesCash += (parseFloat(s.paidImmediately) || 0);
+    });
+
+    let todayInstCash = 0;
+    contracts.forEach(cnt => {
+      (cnt.installments || []).forEach(inst => {
+        if (inst.paidDate && inst.paidDate.startsWith(dt.date) && inst.paidActual > 0) todayInstCash += parseFloat(inst.paidActual);
+      });
+    });
+
+    let todayExpenses = 0;
+    expenses.forEach(e => {
+      if (e.date && e.date.startsWith(dt.date)) todayExpenses += (parseFloat(e.amount) || 0);
+    });
+
+    const netDrawerCash = (todaySalesCash + todayInstCash) - todayExpenses;
+
+    const shiftRecord = {
+      id: existingShiftIndex !== -1 ? archive[existingShiftIndex].id : ('SHIFT-' + (archive.length + 1)),
+      date: dt.date,
+      time: dt.time,
+      fullDateTime: dt.full,
+      directSalesCash: todaySalesCash,
+      installmentsCash: todayInstCash,
+      expensesDeducted: todayExpenses,
+      netDrawerCash: netDrawerCash
+    };
+
+    if (existingShiftIndex !== -1) {
+      archive[existingShiftIndex] = shiftRecord;
+    } else {
+      archive.unshift(shiftRecord);
+    }
+
+    setStoredShiftsArchive(archive);
+    exportCurrentDatabaseToExcel(true);
+    closeModal('dailyShiftModal');
+    renderShiftsArchive();
+    showToast(`تم حفظ تقفيل الوردية بصافي (${netDrawerCash.toLocaleString()} ج.م)`, 'success');
+  };
+
+  if (existingShiftIndex !== -1) {
+    if (confirm('تنبيه: تم تسجيل تقفيل وردية لهذا اليوم مسبقاً! هل تريد تحديث أرقام التقفيل بالمعاملات الحالية؟')) {
+      proceedWithSave();
+    }
+  } else {
+    proceedWithSave();
+  }
+}
+
+function renderShiftsArchive() {
+  const archive = getStoredShiftsArchive();
+  const tbody = document.getElementById('shiftsArchiveTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  let totalNet = 0, totalExp = 0;
+  archive.forEach(s => {
+    totalNet += (parseFloat(s.netDrawerCash) || 0);
+    totalExp += (parseFloat(s.expensesDeducted) || 0);
+  });
+
+  const elNet = document.getElementById('archiveTotalNetCash');
+  if (elNet) elNet.innerText = `${totalNet.toLocaleString()} ج.م`;
+  const elCount = document.getElementById('archiveTotalShiftsCount');
+  if (elCount) elCount.innerText = `${archive.length} وردية`;
+  const elExp = document.getElementById('archiveTotalExpensesDeducted');
+  if (elExp) elExp.innerText = `${totalExp.toLocaleString()} ج.م`;
+
+  if (archive.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-500">لا يوجد تقفيلات وردية مسجلة بعد.</td></tr>`;
+    return;
+  }
+
+  archive.forEach(s => {
+    tbody.innerHTML += `
+      <tr>
+        <td class="p-2.5 font-bold font-mono text-blue-600 dark:text-cyan-400">#${s.id}</td>
+        <td class="p-2.5 text-slate-800 dark:text-slate-200">${s.fullDateTime}</td>
+        <td class="p-2.5 font-bold text-emerald-600">${s.directSalesCash.toLocaleString()} ج</td>
+        <td class="p-2.5 font-bold text-blue-600 dark:text-cyan-400">${s.installmentsCash.toLocaleString()} ج</td>
+        <td class="p-2.5 font-bold text-rose-600">-${s.expensesDeducted.toLocaleString()} ج</td>
+        <td class="p-2.5 font-black text-emerald-600 dark:text-emerald-400 text-sm">${s.netDrawerCash.toLocaleString()} ج.م</td>
+        <td class="p-2.5 text-center space-x-1 space-x-reverse">
+          <button onclick="printArchivedShiftReport('${s.id}')" class="px-2.5 py-1 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-white rounded-lg text-xs font-bold shadow">
+            طباعة 🖨️
           </button>
-        </div>
-        <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl custom-scrollbar">
-          <table class="w-full text-right text-xs">
-            <thead class="bg-slate-100 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-              <tr>
-                <th class="p-3">رقم الفاتورة</th>
-                <th class="p-3">التاريخ والوقت</th>
-                <th class="p-3">العميل</th>
-                <th class="p-3">الأجهزة المباعة</th>
-                <th class="p-3">النوع</th>
-                <th class="p-3">الإجمالي</th>
-                <th class="p-3 text-emerald-600 dark:text-emerald-400">المدفوع فوراً</th>
-                <th class="p-3 text-center">إجراءات</th>
-              </tr>
-            </thead>
-            <tbody id="salesInvoicesTableBody" class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- VIEW 7: المصاريف -->
-    <section id="view-expenses" class="hidden space-y-4">
-      <div class="glass-card border border-slate-200 dark:border-slate-800/90 rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
-        <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-          <div>
-            <h3 class="text-sm md:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <i class="fa-solid fa-money-bill-transfer text-rose-500 dark:text-rose-400"></i> سجل المصاريف والنثريات والشحن
-            </h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">تسجيل نولون السيارات، الشحن، البوفيه، ومصاريف المعرض التشغيلية.</p>
-          </div>
-          <button onclick="openModal('addExpenseModal')" class="px-4 py-2 bg-gradient-to-r from-rose-600 to-pink-600 hover:brightness-110 text-white rounded-2xl text-xs font-bold transition shadow flex items-center gap-2">
-            <i class="fa-solid fa-plus"></i> تسجيل مصروف جديد
+          <button onclick="deleteArchivedShift('${s.id}')" class="px-2 py-1 bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-300 dark:border-rose-800 rounded-lg text-xs font-bold hover:bg-rose-600 hover:text-white transition">
+            <i class="fa-solid fa-trash-can"></i>
           </button>
-        </div>
-        <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl custom-scrollbar">
-          <table class="w-full text-right text-xs">
-            <thead class="bg-slate-100 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-              <tr>
-                <th class="p-3">التاريخ والوقت</th>
-                <th class="p-3">بند المصروف</th>
-                <th class="p-3">التصنيف</th>
-                <th class="p-3 text-rose-600 dark:text-rose-400">المبلغ</th>
-                <th class="p-3">ملاحظات</th>
-                <th class="p-3 text-center">حذف</th>
-              </tr>
-            </thead>
-            <tbody id="expensesTableBody" class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300"></tbody>
-          </table>
-        </div>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function deleteArchivedShift(shiftId) {
+  requireOwnerAuth(() => {
+    if (confirm(`هل أنت متأكد من حذف الوردية رقم (#${shiftId}) من الأرشيف؟`)) {
+      let archive = getStoredShiftsArchive();
+      archive = archive.filter(s => s.id !== shiftId);
+      setStoredShiftsArchive(archive);
+      renderShiftsArchive();
+      showToast('تم حذف الوردية وتحديث إجمالي الخزينة بنجاح', 'success');
+    }
+  });
+}
+
+function exportShiftsArchiveToExcel() {
+  const archive = getStoredShiftsArchive();
+  const data = archive.map(s => ({
+    "رقم الوردية": s.id,
+    "التاريخ والوقت": s.fullDateTime,
+    "كاش المبيعات المباشرة": s.directSalesCash,
+    "أقساط محصلة": s.installmentsCash,
+    "المصاريف المخصومة": s.expensesDeducted,
+    "الصافي الفعلي بالدرج": s.netDrawerCash
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "أرشيف تقفيلات الوردية");
+  XLSX.writeFile(wb, `أرشيف_ورديات_أولاد_العبد_${getFormattedDateTimeNow().date}.xlsx`);
+}
+
+function printDailyShiftReport() {
+  const dt = getFormattedDateTimeNow();
+  const sSales = document.getElementById('shiftTodaySalesCash')?.innerText || '0 ج.م';
+  const sInst = document.getElementById('shiftTodayInstCash')?.innerText || '0 ج.م';
+  const sExp = document.getElementById('shiftTodayExpenses')?.innerText || '0 ج.م';
+  const sNet = document.getElementById('shiftNetDrawerCash')?.innerText || '0 ج.م';
+
+  const html = `
+    <div style="text-align: center; font-size: 13px; line-height: 1.6; direction: rtl; font-family: 'Cairo', sans-serif;">
+      <h2 style="margin: 0; font-size: 16px; font-weight: bold;">معرض أولاد العبد</h2>
+      <p style="margin: 2px 0; font-size: 12px; font-weight: bold;">تقرير تقفيل الوردية اليومية (Z-Report)</p>
+      <p style="margin: 2px 0; font-size: 11px; color: #555;">الوقت: ${dt.full}</p>
+      <div style="border-bottom: 1px dashed #000; margin: 8px 0;"></div>
+      
+      <table style="width: 100%; font-size: 12px; text-align: right; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 5px 0;">مبيعات كاش اليوم:</td>
+          <td style="text-align: left; font-weight: bold;">${sSales}</td>
+        </tr>
+        <tr>
+          <td style="padding: 5px 0;">أقساط محصلة اليوم:</td>
+          <td style="text-align: left; font-weight: bold;">${sInst}</td>
+        </tr>
+        <tr>
+          <td style="padding: 5px 0;">مصاريف ونولون خارج:</td>
+          <td style="text-align: left; font-weight: bold; color: #dc2626;">-${sExp}</td>
+        </tr>
+      </table>
+      
+      <div style="border-bottom: 1px solid #000; margin: 8px 0;"></div>
+      <div style="text-align: right; font-size: 14px; font-weight: bold;">
+        <span>الصافي بالدرج: </span>
+        <span style="float: left; font-size: 15px;">${sNet}</span>
       </div>
-    </section>
-
-    <!-- VIEW 8: دليل العملاء وحملات الدعاية والواتساب -->
-    <section id="view-customers" class="hidden space-y-4">
-      <div class="glass-card border border-slate-200 dark:border-slate-800/90 rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-          <div>
-            <h3 class="text-sm md:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <i class="fa-solid fa-bullhorn text-emerald-500"></i> قاعدة بيانات العملاء والعروض الترويجية
-            </h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">تواصل مع عملائك وابعت أحدث عروض وأجهزة المعرض عبر واتساب.</p>
-          </div>
-          <button onclick="openBroadcastPromoModal()" class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-emerald-600/30">
-            <i class="fa-brands fa-whatsapp text-sm"></i> كتابة رسالة عروض جماعية
-          </button>
-        </div>
-
-        <div>
-          <input type="text" id="customersSearchInput" oninput="renderCustomersDirectory()" placeholder="بحث باسم العميل أو رقم الهاتف..." class="w-full bg-slate-50 dark:bg-[#0b101e] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition">
-        </div>
-
-        <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl custom-scrollbar">
-          <table class="w-full text-right text-xs">
-            <thead class="bg-slate-100 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-              <tr>
-                <th class="p-3">كود</th>
-                <th class="p-3">اسم العميل</th>
-                <th class="p-3">رقم الهاتف</th>
-                <th class="p-3">نوع التعامل</th>
-                <th class="p-3">إجمالي المسحوبات</th>
-                <th class="p-3 text-center">إرسال عرض ترويجي</th>
-              </tr>
-            </thead>
-            <tbody id="customersDirectoryTableBody" class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- VIEW 9: أرشيف تقفيلات الوردية والدرج -->
-    <section id="view-shifts-archive" class="hidden space-y-4">
-      <div class="glass-card border border-slate-200 dark:border-slate-800/90 rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-          <div>
-            <h3 class="text-sm md:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <i class="fa-solid fa-vault text-blue-500"></i> أرشيف تقفيلات الوردية وحركة الدرج اليومية
-            </h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">مراجعة تاريخية للدرج اليومي، الشهري، والسنوي مع الأوقات الدقيقة.</p>
-          </div>
-          <button onclick="exportShiftsArchiveToExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-bold flex items-center gap-1.5 shadow">
-            <i class="fa-solid fa-file-excel"></i> تصدير إكسيل
-          </button>
-        </div>
-
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-center text-xs">
-          <div class="p-3 bg-slate-50 dark:bg-[#0b101e] rounded-2xl border border-slate-200 dark:border-slate-800">
-            <span class="text-[10px] text-slate-500 block">إجمالي صافي الورديات المودعة</span>
-            <b id="archiveTotalNetCash" class="text-base font-black text-emerald-600 dark:text-emerald-400 mt-1 block">0 ج.م</b>
-          </div>
-          <div class="p-3 bg-slate-50 dark:bg-[#0b101e] rounded-2xl border border-slate-200 dark:border-slate-800">
-            <span class="text-[10px] text-slate-500 block">عدد الورديات المقفلة</span>
-            <b id="archiveTotalShiftsCount" class="text-base font-black text-blue-600 dark:text-cyan-400 mt-1 block">0 وردية</b>
-          </div>
-          <div class="col-span-2 md:col-span-1 p-3 bg-slate-50 dark:bg-[#0b101e] rounded-2xl border border-slate-200 dark:border-slate-800">
-            <span class="text-[10px] text-slate-500 block">إجمالي المصاريف المخصومة</span>
-            <b id="archiveTotalExpensesDeducted" class="text-base font-black text-rose-600 dark:text-rose-400 mt-1 block">0 ج.م</b>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl custom-scrollbar">
-          <table class="w-full text-right text-xs">
-            <thead class="bg-slate-100 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-              <tr>
-                <th class="p-3">رقم الوردية</th>
-                <th class="p-3">التاريخ والوقت</th>
-                <th class="p-3">كاش البيع المباشر</th>
-                <th class="p-3">تحصيل الأقساط</th>
-                <th class="p-3 text-rose-500">المصاريف</th>
-                <th class="p-3 text-emerald-600 font-bold">الصافي الفعلي</th>
-                <th class="p-3 text-center">إجراءات</th>
-              </tr>
-            </thead>
-            <tbody id="shiftsArchiveTableBody" class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- ========================================== -->
-  <!-- النوافذ المنبثقة والطباعة -->
-  <!-- ========================================== -->
-
-  <!-- Modal: تقفيل الوردية اليومية (Z-Report) -->
-  <div id="dailyShiftModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-        <h3 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
-          <i class="fa-solid fa-calculator text-blue-500"></i> تقفيل الوردية اليومية وحساب الدرج
-        </h3>
-        <button onclick="closeModal('dailyShiftModal')" class="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1 rounded-xl"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="space-y-2.5 text-xs">
-        <div class="p-3 bg-slate-50 dark:bg-[#080d19] rounded-2xl border border-slate-200 dark:border-slate-800 flex justify-between items-center">
-          <span class="text-slate-600 dark:text-slate-400">كاش المبيعات المباشرة اليوم:</span>
-          <b class="text-emerald-600 dark:text-emerald-400 text-sm font-bold" id="shiftTodaySalesCash">0 ج</b>
-        </div>
-        <div class="p-3 bg-slate-50 dark:bg-[#080d19] rounded-2xl border border-slate-200 dark:border-slate-800 flex justify-between items-center">
-          <span class="text-slate-600 dark:text-slate-400">أقساط محصلة في الدرج اليوم:</span>
-          <b class="text-emerald-600 dark:text-emerald-400 text-sm font-bold" id="shiftTodayInstCash">0 ج</b>
-        </div>
-        <div class="p-3 bg-slate-50 dark:bg-[#080d19] rounded-2xl border border-slate-200 dark:border-slate-800 flex justify-between items-center">
-          <span class="text-slate-600 dark:text-slate-400">مصاريف ونولون خرجت اليوم:</span>
-          <b class="text-rose-600 dark:text-rose-400 text-sm font-bold" id="shiftTodayExpenses">0 ج</b>
-        </div>
-        <div class="p-4 bg-blue-50 dark:bg-blue-950/40 rounded-2xl border border-blue-200 dark:border-blue-500/30 flex justify-between items-center">
-          <div>
-            <span class="block text-slate-500 dark:text-slate-400 text-[11px] font-semibold">الصافي الفعلي الواجب وجوده في الدرج:</span>
-            <b class="text-xl font-black text-blue-700 dark:text-cyan-400 mt-0.5 block" id="shiftNetDrawerCash">0 ج.م</b>
-          </div>
-          <button onclick="printDailyShiftReport()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow">
-            طباعة تقرير 🖨️
-          </button>
-        </div>
-      </div>
-      <div class="flex gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-        <button onclick="closeDailyShiftAndArchive()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold shadow">
-          حفظ إكسيل وتقفيل الوردية في الأرشيف
-        </button>
-        <button onclick="closeModal('dailyShiftModal')" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold">إلغاء</button>
-      </div>
+      <div style="border-bottom: 1px dashed #000; margin: 10px 0;"></div>
+      <p style="font-size: 10px; margin: 4px 0;">توقيع المسؤول: ....................</p>
     </div>
-  </div>
+  `;
 
-  <!-- منطقة الطباعة الحرارية للإيصالات (Thermal Printer 80mm) -->
-  <div id="printableReceiptArea" class="hidden"></div>
+  windowPrintReceiptHTML(html);
+}
 
-  <!-- Modal 1: فاتورة بيع جديدة -->
-  <div id="newSaleModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-2xl rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
-      <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-        <h3 class="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2.5">
-          <span class="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm"><i class="fa-solid fa-cart-plus"></i></span>
-          إنشاء فاتورة بيع جديدة
-        </h3>
-        <button onclick="closeModal('newSaleModal')" class="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1 rounded-xl transition">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
+function printArchivedShiftReport(shiftId) {
+  const archive = getStoredShiftsArchive();
+  const s = archive.find(x => x.id === shiftId);
+  if (!s) return;
+
+  const html = `
+    <div style="text-align: center; font-size: 13px; line-height: 1.6; direction: rtl; font-family: 'Cairo', sans-serif;">
+      <h2 style="margin: 0; font-size: 16px; font-weight: bold;">معرض أولاد العبد</h2>
+      <p style="margin: 2px 0; font-size: 12px; font-weight: bold;">إيصال وردية مؤرشفة #${s.id}</p>
+      <p style="margin: 2px 0; font-size: 11px; color: #555;">الوقت والتاريخ: ${s.fullDateTime}</p>
+      <div style="border-bottom: 1px dashed #000; margin: 8px 0;"></div>
+      
+      <table style="width: 100%; font-size: 12px; text-align: right; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 4px 0;">كاش مبيعات مباشرة:</td>
+          <td style="text-align: left; font-weight: bold;">${s.directSalesCash.toLocaleString()} ج</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0;">أقساط محصلة:</td>
+          <td style="text-align: left; font-weight: bold;">${s.installmentsCash.toLocaleString()} ج</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0;">مصاريف مخصومة:</td>
+          <td style="text-align: left; font-weight: bold; color: #dc2626;">-${s.expensesDeducted.toLocaleString()} ج</td>
+        </tr>
+      </table>
+      
+      <div style="border-bottom: 1px solid #000; margin: 8px 0;"></div>
+      <div style="text-align: right; font-size: 14px; font-weight: bold;">
+        <span>الصافي المقفل: </span>
+        <span style="float: left; font-size: 15px;">${s.netDrawerCash.toLocaleString()} ج.م</span>
       </div>
-
-      <div>
-        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">نظام البيع *</label>
-        <select id="saleTypeSelect" onchange="toggleInstallmentFields()" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-700 rounded-2xl p-3 text-slate-900 dark:text-white text-xs outline-none focus:border-blue-500 font-bold">
-          <option value="cash" selected>بيع كاش</option>
-          <option value="installment">بيع بالتقسيط</option>
-        </select>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">اسم العميل *</label>
-          <input type="text" id="saleCustomerName" placeholder="مثال: محمود محمد" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-3 text-slate-900 dark:text-white text-xs outline-none focus:border-blue-500 transition">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">هاتف العميل *</label>
-          <input type="tel" id="saleCustomerPhone" placeholder="010xxxxxxxx" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-3 text-slate-900 dark:text-white text-xs outline-none focus:border-blue-500 transition">
-        </div>
-      </div>
-
-      <div id="guarantorAndNationalIdBox" class="space-y-3 bg-slate-100 dark:bg-slate-900/60 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 hidden">
-        <div>
-          <label class="block text-xs font-semibold text-blue-600 dark:text-cyan-400 mb-1">الرقم القومي للعميل</label>
-          <input type="text" id="saleCustomerNationalId" maxlength="14" placeholder="الرقم القومي للعميل (14 رقم)" class="w-full bg-white dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs outline-none focus:border-cyan-500">
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
-          <div>
-            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">اسم الضامن</label>
-            <input type="text" id="saleGuarantorName" placeholder="الاسم رباعي" class="w-full bg-white dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs outline-none focus:border-cyan-500">
-          </div>
-          <div>
-            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">هاتف الضامن</label>
-            <input type="tel" id="saleGuarantorPhone" placeholder="هاتف الضامن" class="w-full bg-white dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs outline-none focus:border-cyan-500">
-          </div>
-          <div>
-            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">الرقم القومي للضامن</label>
-            <input type="text" id="saleGuarantorNationalId" maxlength="14" placeholder="14 رقم" class="w-full bg-white dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs outline-none focus:border-cyan-500">
-          </div>
-        </div>
-      </div>
-
-      <!-- اختيار الجهاز من المخزن -->
-      <div class="bg-slate-50 dark:bg-[#080d19] p-4 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-3.5 relative">
-        <div class="relative">
-          <label class="block text-xs font-semibold text-blue-600 dark:text-cyan-400 mb-1.5">ابحث عن صنف من المخزن *</label>
-          <div class="relative">
-            <input type="text" id="saleDeviceInput" oninput="handleDeviceSearchInput(this.value)" onfocus="handleDeviceSearchInput(this.value)" placeholder="اكتب حرف (ت، غ، ش...) للاختيار من المخزن..." autocomplete="off" class="w-full bg-white dark:bg-[#0e1628] border border-slate-300 dark:border-slate-700/80 rounded-2xl p-3 text-slate-900 dark:text-white text-xs outline-none focus:border-cyan-500 pr-10 transition">
-            <span class="absolute right-3.5 top-3.5 text-slate-400"><i class="fa-solid fa-magnifying-glass"></i></span>
-          </div>
-          <div id="deviceSearchResultsList" class="absolute z-50 right-0 left-0 mt-1.5 bg-white dark:bg-[#0b101e] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl max-h-48 overflow-y-auto custom-scrollbar hidden"></div>
-          <p id="selectedDeviceBadge" class="text-xs text-slate-500 dark:text-slate-400 mt-1"></p>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2.5">
-          <div>
-            <label class="block text-xs text-slate-600 dark:text-slate-400 mb-1">الكمية المطلوبة</label>
-            <input type="number" id="saleItemQtyInput" value="1" min="1" oninput="calculateInstallmentMath()" class="w-full bg-white dark:bg-[#0e1628] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs outline-none focus:border-cyan-500 text-center font-black">
-          </div>
-          <div>
-            <label class="block text-xs text-slate-600 dark:text-slate-400 mb-1">سعر القطعة كاش (ج.م)</label>
-            <input type="number" id="saleItemPriceInput" placeholder="0" class="w-full bg-white dark:bg-[#0e1628] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-emerald-600 dark:text-emerald-400 text-xs outline-none focus:border-cyan-500 font-bold">
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs text-slate-600 dark:text-slate-400 mb-1">السيريال نمبر للأجهزة (اختياري)</label>
-          <div class="flex gap-2">
-            <input type="text" id="saleItemSerialInput" placeholder="اكتب السيريال أو افحصه بالكاميرا" class="flex-1 bg-white dark:bg-[#0e1628] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs outline-none focus:border-cyan-500">
-            <button type="button" onclick="openBarcodeScanner('saleItemSerialInput')" class="px-3.5 py-2.5 bg-slate-200 dark:bg-slate-800 text-blue-600 dark:text-cyan-400 rounded-2xl border border-slate-300 dark:border-slate-700 text-xs">
-              <i class="fa-solid fa-camera"></i>
-            </button>
-          </div>
-        </div>
-
-        <button type="button" onclick="addItemToSaleCart()" class="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white rounded-2xl text-xs font-bold shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition">
-          <i class="fa-solid fa-plus"></i> إضافة الجهاز للسلة
-        </button>
-      </div>
-
-      <!-- سلة الفاتورة -->
-      <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50 dark:bg-[#080d19]/60 custom-scrollbar">
-        <table class="w-full text-right text-xs">
-          <thead class="bg-slate-100 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-            <tr>
-              <th class="p-2.5">الجهاز</th>
-              <th class="p-2.5">السيريال</th>
-              <th class="p-2.5 text-center">العدد</th>
-              <th class="p-2.5">السعر</th>
-              <th class="p-2.5">الإجمالي</th>
-              <th class="p-2.5 text-center">حذف</th>
-            </tr>
-          </thead>
-          <tbody id="saleCartTbody" class="divide-y divide-slate-200 dark:divide-slate-800/80 text-slate-800 dark:text-slate-300">
-            <tr><td colspan="6" class="p-4 text-center text-slate-400">السلة فارغة. اختر صنفاً من المخزن لإضافته.</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="flex justify-between items-center p-3 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs">
-        <span class="font-bold text-slate-700 dark:text-slate-300">إجمالي الأجهزة بالسلة:</span>
-        <b id="saleCartGrandTotalDisplay" class="text-sm font-black text-emerald-600 dark:text-emerald-400">0 ج.م</b>
-      </div>
-
-      <!-- حقول التقسيط -->
-      <div id="installmentFieldsBox" class="space-y-3 bg-blue-50 dark:bg-gradient-to-r dark:from-blue-950/30 dark:to-indigo-950/30 p-4 rounded-3xl border border-blue-200 dark:border-blue-500/20 hidden">
-        <div class="grid grid-cols-2 gap-2.5">
-          <div>
-            <label class="block text-xs text-slate-700 dark:text-slate-300 mb-1">المقدم المدفوع (ج.م)</label>
-            <input type="number" id="instDownPayment" value="0" oninput="calculateInstallmentMath()" class="w-full bg-white dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-emerald-600 dark:text-emerald-400 font-bold text-xs outline-none focus:border-blue-500">
-          </div>
-          <div>
-            <label class="block text-xs text-slate-700 dark:text-slate-300 mb-1">مدة التقسيط (شهور)</label>
-            <input type="number" id="instMonths" value="12" min="1" oninput="calculateInstallmentMath()" class="w-full bg-white dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white font-bold text-xs outline-none focus:border-blue-500">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2.5">
-          <div>
-            <label class="block text-xs text-slate-700 dark:text-slate-300 mb-1">نسبة الفائدة السنوية (%)</label>
-            <input type="number" id="instInterestRate" value="15" oninput="calculateInstallmentMath()" class="w-full bg-white dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-blue-600 dark:text-cyan-400 font-bold text-xs outline-none focus:border-blue-500">
-          </div>
-          <div>
-            <label class="block text-xs text-slate-700 dark:text-slate-300 mb-1">تاريخ أول قسط</label>
-            <input type="date" id="instStartDate" class="w-full bg-white dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs outline-none focus:border-blue-500">
-          </div>
-        </div>
-
-        <div class="p-3 bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 flex justify-between items-center text-xs">
-          <div>
-            <span class="text-slate-500 dark:text-slate-400 block text-[10px]">إجمالي العقد بالفوائد:</span>
-            <b id="instCalculatedTotal" class="text-slate-900 dark:text-white text-sm font-black">0 ج.م</b>
-          </div>
-          <div class="text-left">
-            <span class="text-slate-500 dark:text-slate-400 block text-[10px]">القسط الشهري:</span>
-            <b id="instCalculatedMonthly" class="text-blue-600 dark:text-cyan-400 text-sm font-black">0 ج / شهر</b>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex gap-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
-        <button type="button" onclick="handleSaveSaleInvoice()" class="flex-1 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:brightness-110 text-white rounded-2xl text-xs font-black shadow-xl shadow-blue-600/30 transition">
-          حفظ الفاتورة
-        </button>
-        <button type="button" onclick="closeModal('newSaleModal')" class="px-5 py-3 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold transition">
-          إلغاء
-        </button>
-      </div>
+      <div style="border-bottom: 1px dashed #000; margin: 10px 0;"></div>
     </div>
-  </div>
+  `;
+  windowPrintReceiptHTML(html);
+}
 
-  <!-- Modal 2: إضافة مورد جديد -->
-  <div id="addNewSupplierProfileModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-        <h3 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2.5">
-          <span class="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-600/20 text-purple-600 dark:text-purple-400 flex items-center justify-center text-sm"><i class="fa-solid fa-truck-ramp-box"></i></span>
-          إضافة حساب مورد جديد
-        </h3>
-        <button onclick="closeModal('addNewSupplierProfileModal')" class="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1 rounded-xl"><i class="fa-solid fa-xmark"></i></button>
+function windowPrintReceiptHTML(contentHtml) {
+  const printArea = document.getElementById('printableReceiptArea');
+  if (!printArea) return;
+  printArea.innerHTML = contentHtml;
+  printArea.classList.remove('hidden');
+  window.print();
+  setTimeout(() => {
+    printArea.classList.add('hidden');
+    printArea.innerHTML = '';
+  }, 1000);
+}
+
+function printCurrentViewedSaleInvoice() {
+  if (!currentViewedSaleIdForPrint) return;
+  const sales = getStoredSales();
+  const sale = sales.find(s => s.id === currentViewedSaleIdForPrint);
+  if (!sale) return;
+
+  const items = parseItemsFromRecord(sale);
+  const rows = items.map(it => `
+    <tr>
+      <td style="border-bottom: 1px dashed #ccc; padding: 4px 0;">${it.name}<br><small>SN: ${it.serial || '--'}</small></td>
+      <td style="border-bottom: 1px dashed #ccc; padding: 4px 0; text-align: center;">${it.qty}</td>
+      <td style="border-bottom: 1px dashed #ccc; padding: 4px 0; text-align: left;">${it.total.toLocaleString()} ج</td>
+    </tr>
+  `).join('');
+
+  const html = `
+    <div style="text-align: center; font-size: 13px; line-height: 1.5; direction: rtl;">
+      <h2 style="margin: 0; font-size: 16px; font-weight: bold;">معرض أولاد العبد</h2>
+      <p style="margin: 2px 0; font-size: 11px;">للأجهزة الكهربائية والمنزلية</p>
+      <div style="border-bottom: 1px solid #000; margin: 8px 0;"></div>
+      <div style="text-align: right; font-size: 11px;">
+        <p style="margin: 2px 0;"><b>رقم الفاتورة:</b> #${sale.id}</p>
+        <p style="margin: 2px 0;"><b>التاريخ والوقت:</b> ${sale.date}</p>
+        <p style="margin: 2px 0;"><b>العميل:</b> ${sale.customerName}</p>
+        <p style="margin: 2px 0;"><b>الهاتف:</b> ${sale.customerPhone}</p>
+        <p style="margin: 2px 0;"><b>نظام البيع:</b> ${sale.type}</p>
       </div>
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">اسم المورد أو الشركة *</label>
-          <input type="text" id="newSupNameInput" placeholder="مثال: شركة العربي جروب" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-3 text-slate-900 dark:text-white text-xs outline-none focus:border-purple-500 transition">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">رقم الهاتف *</label>
-          <input type="tel" id="newSupPhoneInput" placeholder="010xxxxxxxx" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-3 text-slate-900 dark:text-white text-xs outline-none focus:border-purple-500 transition">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">العنوان أو مكان المخزن</label>
-          <input type="text" id="newSupAddressInput" placeholder="مثال: مخازن بنها" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-3 text-slate-900 dark:text-white text-xs outline-none focus:border-purple-500 transition">
-        </div>
+      <div style="border-bottom: 1px solid #000; margin: 8px 0;"></div>
+      <table style="width: 100%; font-size: 11px; text-align: right; border-collapse: collapse;">
+        <thead>
+          <tr style="border-bottom: 1px solid #000;">
+            <th>الصنف</th>
+            <th style="text-align: center;">العدد</th>
+            <th style="text-align: left;">الإجمالي</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+      <div style="border-bottom: 1px solid #000; margin: 8px 0;"></div>
+      <div style="text-align: left; font-size: 13px; font-weight: bold;">
+        <p style="margin: 3px 0;">الإجمالي: ${sale.totalPrice.toLocaleString()} ج.م</p>
+        <p style="margin: 3px 0; color: #16a34a;">المدفوع: ${sale.paidImmediately.toLocaleString()} ج.م</p>
       </div>
-      <div class="flex gap-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
-        <button onclick="handleCreateSupplierProfile()" class="flex-1 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:brightness-110 text-white rounded-2xl text-xs font-bold transition shadow-lg shadow-purple-600/30">حفظ المورد</button>
-        <button onclick="closeModal('addNewSupplierProfileModal')" class="px-5 py-3 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold">إلغاء</button>
-      </div>
+      <div style="border-bottom: 1px dashed #666; margin: 10px 0;"></div>
+      <p style="font-size: 10px; margin: 4px 0;">شكراً لتعاملكم مع معرض أولاد العبد 🌸</p>
     </div>
-  </div>
+  `;
 
-  <!-- Modal 3: تنزيل فاتورة توريد من مورد -->
-  <div id="addSupplierShipmentModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-2xl rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
-      <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-        <div>
-          <h3 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
-            <i class="fa-solid fa-boxes-packing text-purple-600 dark:text-purple-400"></i> تنزيل فاتورة توريد جديدة
-          </h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">المورد: <b class="text-purple-600 dark:text-purple-300" id="shipmentSupplierName">--</b></p>
-        </div>
-        <button onclick="closeModal('addSupplierShipmentModal')" class="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1"><i class="fa-solid fa-xmark"></i></button>
+  windowPrintReceiptHTML(html);
+}
+
+function printInstallmentReceipt(contract, instNum, paidAmount, remainingOnContract) {
+  const dt = getFormattedDateTimeNow();
+  const html = `
+    <div style="text-align: center; font-size: 13px; line-height: 1.5; direction: rtl;">
+      <h2 style="margin: 0; font-size: 16px; font-weight: bold;">معرض أولاد العبد</h2>
+      <p style="margin: 2px 0; font-size: 11px;">إيصال استلام وسداد قسط رسمي 🧾</p>
+      <div style="border-bottom: 1px solid #000; margin: 8px 0;"></div>
+      <div style="text-align: right; font-size: 11px;">
+        <p style="margin: 2px 0;"><b>كود العميل:</b> #${contract.clientCode || 1}</p>
+        <p style="margin: 2px 0;"><b>اسم العميل:</b> ${contract.customerName}</p>
+        <p style="margin: 2px 0;"><b>الوقت والتاريخ:</b> ${dt.full}</p>
+        <p style="margin: 2px 0;"><b>الأجهزة:</b> ${contract.deviceName}</p>
       </div>
-
-      <div class="bg-slate-50 dark:bg-[#080d19] p-4 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-3">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">اسم الصنف والموديل *</label>
-            <input type="text" id="shipItemNameInput" placeholder="مثال: غسالة إل جي 9 كيلو" class="w-full bg-white dark:bg-[#0e1628] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs outline-none focus:border-purple-500">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">الباركود (اختياري)</label>
-            <div class="flex gap-2">
-              <input type="text" id="shipItemBarcodeInput" placeholder="الباركود المطبوع" class="flex-1 bg-white dark:bg-[#0e1628] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs outline-none focus:border-purple-500">
-              <button onclick="openBarcodeScanner('shipItemBarcodeInput')" class="px-3 py-2 bg-slate-200 dark:bg-slate-800 text-cyan-600 dark:text-cyan-400 rounded-2xl border border-slate-300 dark:border-slate-700 text-xs">📷</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2.5">
-          <div>
-            <label class="block text-xs text-slate-600 dark:text-slate-400 mb-1">الكمية الموردة *</label>
-            <input type="number" id="shipItemQtyInput" value="1" min="1" class="w-full bg-white dark:bg-[#0e1628] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs text-center font-bold">
-          </div>
-          <div>
-            <label class="block text-xs text-slate-600 dark:text-slate-400 mb-1">سعر شراء القطعة (ج.م) *</label>
-            <input type="number" id="shipItemPriceInput" placeholder="0" class="w-full bg-white dark:bg-[#0e1628] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs font-bold">
-          </div>
-        </div>
-
-        <button onclick="addItemToSupplierCart()" class="w-full py-2.5 bg-purple-600/20 hover:bg-purple-600 text-purple-700 dark:text-purple-300 hover:text-white border border-purple-500/30 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2">
-          <i class="fa-solid fa-plus"></i> إضافة الصنف للفاتورة
-        </button>
+      <div style="border-bottom: 1px solid #000; margin: 8px 0;"></div>
+      <div style="padding: 6px 0; font-size: 14px; font-weight: bold;">
+        <p style="margin: 3px 0;">المبلغ المستلم: <span style="font-size: 16px;">${paidAmount.toLocaleString()} ج.م</span></p>
+        <p style="margin: 3px 0; font-size: 11px; font-weight: normal;">(سداد القسط رقم #${instNum})</p>
       </div>
-
-      <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50 dark:bg-[#080d19]/60 custom-scrollbar">
-        <table class="w-full text-right text-xs">
-          <thead class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-            <tr>
-              <th class="p-2.5">الصنف</th>
-              <th class="p-2.5">الباركود</th>
-              <th class="p-2.5 text-center">الكمية</th>
-              <th class="p-2.5">سعر الشراء</th>
-              <th class="p-2.5">الإجمالي</th>
-              <th class="p-2.5 text-center">حذف</th>
-            </tr>
-          </thead>
-          <tbody id="supplierCartTbody" class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-800 dark:text-slate-300"></tbody>
-        </table>
+      <div style="border-bottom: 1px solid #000; margin: 8px 0;"></div>
+      <div style="text-align: right; font-size: 11px;">
+        <p style="margin: 2px 0;"><b>إجمالي المتبقي بالكامل طرفكم:</b> <span style="color: #dc2626; font-weight: bold;">${remainingOnContract.toLocaleString()} ج.م</span></p>
       </div>
-
-      <div class="flex justify-between items-center p-3 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs">
-        <span class="text-slate-700 dark:text-slate-300 font-bold">إجمالي الفاتورة:</span>
-        <b id="supplierCartGrandTotal" class="text-sm font-black text-slate-900 dark:text-white">0 ج.م</b>
-      </div>
-
-      <div class="grid grid-cols-2 gap-2.5">
-        <div>
-          <label class="block text-xs text-slate-700 dark:text-slate-300 mb-1">تاريخ التوريد</label>
-          <input type="date" id="supplierCartDateInput" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs">
-        </div>
-        <div>
-          <label class="block text-xs text-emerald-600 dark:text-emerald-400 mb-1">المدفوع كاش للمورد (ج.م)</label>
-          <input type="number" id="supplierCartPaidInput" value="0" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-emerald-600 dark:text-emerald-300 font-bold text-xs">
-        </div>
-      </div>
-
-      <div class="flex gap-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
-        <button onclick="handleSaveMultiItemSupplierInvoice()" class="flex-1 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:brightness-110 text-white rounded-2xl text-xs font-bold transition shadow-lg shadow-purple-600/30">
-          اعتماد الفاتورة وتنزيلها بالمخزن
-        </button>
-        <button onclick="closeModal('addSupplierShipmentModal')" class="px-5 py-3 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold">إلغاء</button>
-      </div>
+      <div style="border-bottom: 1px dashed #666; margin: 10px 0;"></div>
+      <p style="font-size: 10px; margin: 4px 0;">توقيع المستلم (الخزينة): ....................</p>
     </div>
-  </div>
-
-  <!-- Modal 4: ملف العميل المتكامل -->
-  <div id="customerProfileModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-3xl rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
-      <div class="flex justify-between items-start border-b border-slate-200 dark:border-slate-800 pb-3">
-        <div>
-          <div class="flex items-center gap-2">
-            <span id="cpModalClientCode" class="text-xs px-3 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-cyan-400 border border-blue-200 dark:border-blue-500/30 font-bold font-mono">كود: #1</span>
-            <h3 id="cpModalCustomerName" class="text-base font-black text-slate-900 dark:text-white">--</h3>
-          </div>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">هاتف: <a id="cpModalCustomerPhoneLink" href="#" class="text-blue-600 dark:text-blue-400 underline">--</a> | الرقم القومي: <span id="cpModalNationalId" class="text-slate-700 dark:text-slate-300 font-mono">--</span></p>
-          <p id="cpModalGuarantorDetails" class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5"></p>
-        </div>
-        <button onclick="closeModal('customerProfileModal')" class="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-
-      <div class="grid grid-cols-3 gap-2.5 text-center text-xs">
-        <div class="p-3 bg-slate-50 dark:bg-[#080d19] rounded-2xl border border-slate-200 dark:border-slate-800">
-          <span class="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold">إجمالي مشترياته</span>
-          <b id="cpModalGrandTotal" class="text-sm font-black text-slate-900 dark:text-white mt-0.5 block">0 ج.م</b>
-        </div>
-        <div class="p-3 bg-slate-50 dark:bg-[#080d19] rounded-2xl border border-emerald-200 dark:border-emerald-500/20">
-          <span class="text-[10px] text-emerald-600 dark:text-emerald-400 block font-semibold">المسدد منه</span>
-          <b id="cpModalGrandPaid" class="text-sm font-black text-emerald-600 dark:text-emerald-300 mt-0.5 block">0 ج.م</b>
-        </div>
-        <div class="p-3 bg-slate-50 dark:bg-[#080d19] rounded-2xl border border-rose-200 dark:border-rose-500/20">
-          <span class="text-[10px] text-rose-600 dark:text-rose-400 block font-semibold">المتبقي المطلوب</span>
-          <b id="cpModalGrandRemaining" class="text-sm font-black text-rose-600 dark:text-rose-300 mt-0.5 block">0 ج.م</b>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
-        <span class="text-xs font-bold text-slate-700 dark:text-slate-300">فواتير وعقود العميل:</span>
-        <button onclick="openNewSaleForThisCustomer()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow">
-          <i class="fa-solid fa-plus"></i> فاتورة جديدة لهذا العميل
-        </button>
-      </div>
-      <div id="cpModalInvoicesTabs" class="flex gap-2 overflow-x-auto pb-1 custom-scrollbar"></div>
-      <div id="cpModalSelectedInvoiceContainer" class="space-y-3"></div>
-    </div>
-  </div>
-
-  <!-- Modal 5: تحصيل قسط -->
-  <div id="collectInstallmentModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-        <div>
-          <h3 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
-            <i class="fa-solid fa-hand-holding-dollar text-emerald-600 dark:text-emerald-400"></i> تحصيل دفعة قسط
-          </h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" id="colModalCustomerName">--</p>
-        </div>
-        <button onclick="closeModal('collectInstallmentModal')" class="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-
-      <div class="bg-slate-50 dark:bg-[#080d19] p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1.5 text-xs">
-        <p class="text-slate-700 dark:text-slate-300 font-semibold" id="colModalInstallmentDesc">--</p>
-        <div class="flex justify-between text-slate-500 dark:text-slate-400 pt-1">
-          <span>قيمة القسط: <b class="text-slate-900 dark:text-white" id="colModalFullAmount">0 ج</b></span>
-          <span>المتبقي المطلوب: <b class="text-amber-600 dark:text-amber-400" id="colModalRequiredAmount">0 ج</b></span>
-        </div>
-      </div>
-
-      <div>
-        <label class="block text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-1">المبلغ المسدد الآن بالدرج (ج.م) *</label>
-        <input type="number" id="colModalPaidInput" oninput="updateCollectModalPreview()" class="w-full bg-slate-50 dark:bg-[#080d19] border border-emerald-400 dark:border-emerald-500/40 rounded-2xl p-3 text-slate-900 dark:text-white text-base font-black text-center outline-none focus:border-emerald-500">
-      </div>
-
-      <div id="colModalActionChoiceBox" class="p-3 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs hidden">
-        <span class="text-amber-600 dark:text-amber-300 font-bold block">خيارات العجز في حالة السداد الجزئي:</span>
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input type="radio" name="partialActionType" value="keep_open" checked onchange="updateCollectModalPreview()" class="accent-blue-500">
-          <span class="text-slate-700 dark:text-slate-300">إبقاء القسط مفتوحاً لحين سداد الباقي</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input type="radio" name="partialActionType" value="rollover" onchange="updateCollectModalPreview()" class="accent-blue-500">
-          <span class="text-slate-700 dark:text-slate-300">ترحيل باقي المبلغ تلقائياً على القسط القادم</span>
-        </label>
-      </div>
-
-      <p id="colModalPreviewText" class="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-950/40 p-3 rounded-2xl border border-slate-200 dark:border-slate-800/80 leading-relaxed"></p>
-
-      <div class="flex gap-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
-        <button onclick="confirmCollectInstallment()" class="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 text-white rounded-2xl text-xs font-bold transition shadow-lg shadow-emerald-600/30">تأكيد استلام المبلغ</button>
-        <button onclick="closeModal('collectInstallmentModal')" class="px-5 py-3 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold">إلغاء</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal 6: قوالب رسائل الواتساب -->
-  <div id="chooseWhatsAppTemplateModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-        <div>
-          <h3 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
-            <i class="fa-brands fa-whatsapp text-emerald-500 dark:text-emerald-400 text-base"></i> إرسال تذكير عبر واتساب
-          </h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" id="waModalCustomerName">--</p>
-        </div>
-        <button onclick="closeModal('chooseWhatsAppTemplateModal')" class="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="space-y-2.5">
-        <button onclick="executeSendWhatsAppTemplate('friendly')" class="w-full p-3.5 rounded-2xl bg-slate-50 hover:bg-emerald-50 dark:bg-slate-900 dark:hover:bg-emerald-950/40 border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50 text-right transition group">
-          <b class="text-xs text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-300 block">رسالة تذكير ودية 🌸</b>
-          <span class="text-[10px] text-slate-500 dark:text-slate-400 block mt-1">تذكير لطيف بموعد القسط وموقف الحساب.</span>
-        </button>
-        <button onclick="executeSendWhatsAppTemplate('formal')" class="w-full p-3.5 rounded-2xl bg-slate-50 hover:bg-amber-50 dark:bg-slate-900 dark:hover:bg-amber-950/40 border border-slate-200 dark:border-slate-800 hover:border-amber-500/50 text-right transition group">
-          <b class="text-xs text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-300 block">إشعار رسمي بالاستحقاق ⚠️</b>
-          <span class="text-[10px] text-slate-500 dark:text-slate-400 block mt-1">مطالبة رسمية بالسداد مع بيان تفصيلي بالأقساط.</span>
-        </button>
-        <button onclick="executeSendWhatsAppTemplate('urgent')" class="w-full p-3.5 rounded-2xl bg-slate-50 hover:bg-rose-50 dark:bg-slate-900 dark:hover:bg-rose-950/40 border border-slate-200 dark:border-slate-800 hover:border-rose-500/50 text-right transition group">
-          <b class="text-xs text-slate-900 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-300 block">إنذار نهائي شديد اللهجة 🛑</b>
-          <span class="text-[10px] text-slate-500 dark:text-slate-400 block mt-1">إنذار قبل اتخاذ الإجراءات القانونية تجاه العميل والضامن.</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal 7: ماسح الباركود بالكاميرا -->
-  <div id="barcodeScannerModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-sm rounded-3xl p-4 shadow-2xl space-y-3">
-      <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-2">
-        <h3 class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
-          <i class="fa-solid fa-camera text-blue-600 dark:text-cyan-400"></i> ماسح الكاميرا وقارئ الباركود
-        </h3>
-        <button onclick="closeBarcodeScanner()" class="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div id="barcode-scanner-box" class="overflow-hidden rounded-2xl bg-black border border-slate-200 dark:border-slate-800 min-h-[220px]"></div>
-      <p id="scannerInstructionText" class="text-[11px] text-slate-500 dark:text-slate-400 text-center"></p>
-      <button onclick="closeBarcodeScanner()" class="w-full py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold">إغلاق الكاميرا</button>
-    </div>
-  </div>
-
-  <!-- Modal 8: استعلام الجهاز بالباركود -->
-  <div id="deviceInquiryModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-2">
-        <h3 class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5"><i class="fa-solid fa-circle-info text-blue-600 dark:text-cyan-400"></i> بيانات الجهاز المفحوص</h3>
-        <button onclick="closeModal('deviceInquiryModal')" class="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div id="deviceInquiryResultContent"></div>
-      <div class="flex gap-2">
-        <button onclick="proceedToSellInquiredDevice()" class="flex-1 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-2xl text-xs font-bold shadow-lg shadow-blue-600/30">بيع هذا الجهاز فوراً 🛒</button>
-        <button onclick="closeModal('deviceInquiryModal')" class="px-5 py-3 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold">إغلاق</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal 9: عرض تفاصيل فاتورة بيع فردية -->
-  <div id="viewSingleInvoiceModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-lg rounded-3xl p-5 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-        <div>
-          <h3 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
-            <i class="fa-solid fa-receipt text-blue-600 dark:text-cyan-400"></i> تفاصيل الفاتورة <span id="vsimInvoiceId" class="text-blue-600 dark:text-cyan-400 font-mono">--</span>
-          </h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" id="vsimClientMeta">--</p>
-        </div>
-        <button onclick="closeModal('viewSingleInvoiceModal')" class="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50 dark:bg-[#080d19]/60 custom-scrollbar">
-        <table class="w-full text-right text-xs">
-          <thead class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-            <tr>
-              <th class="p-2.5 text-center">العدد</th>
-              <th class="p-2.5">الصنف</th>
-              <th class="p-2.5">السيريال</th>
-              <th class="p-2.5">سعر الوحدة</th>
-              <th class="p-2.5">الإجمالي</th>
-            </tr>
-          </thead>
-          <tbody id="vsimItemsTbody" class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-800 dark:text-slate-300"></tbody>
-        </table>
-      </div>
-      <div class="flex justify-between items-center p-3 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs">
-        <span class="text-slate-700 dark:text-slate-300 font-bold">إجمالي الفاتورة:</span>
-        <b id="vsimGrandTotal" class="text-sm font-black text-emerald-600 dark:text-emerald-400">0 ج.م</b>
-      </div>
-      <div class="flex gap-2">
-        <button onclick="printCurrentViewedSaleInvoice()" class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2 shadow">
-          <i class="fa-solid fa-print"></i> طباعة إيصال الفاتورة (80mm)
-        </button>
-        <button onclick="closeModal('viewSingleInvoiceModal')" class="px-5 py-3 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white rounded-2xl text-xs font-bold transition">إغلاق</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal 10: تعديل الفاتورة -->
-  <div id="editSaleInvoiceModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-lg rounded-3xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar">
-      <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-        <h3 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
-          <i class="fa-solid fa-pen-to-square text-amber-500 dark:text-amber-400"></i> تعديل بيانات الفاتورة <span id="editInvoiceIdLabel" class="text-blue-600 dark:text-cyan-400 font-mono">--</span>
-        </h3>
-        <button onclick="closeModal('editSaleInvoiceModal')" class="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-
-      <div class="space-y-3">
-        <div class="grid grid-cols-2 gap-2.5">
-          <div>
-            <label class="block text-xs text-slate-700 dark:text-slate-300 mb-1">اسم العميل *</label>
-            <input type="text" id="editCustomerNameInput" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs">
-          </div>
-          <div>
-            <label class="block text-xs text-slate-700 dark:text-slate-300 mb-1">هاتف العميل *</label>
-            <input type="tel" id="editCustomerPhoneInput" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs">
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs text-slate-600 dark:text-slate-400 mb-1">اسم الصنف أو الموديل</label>
-          <input type="text" id="editDeviceRawNameInput" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs">
-        </div>
-
-        <div class="grid grid-cols-2 gap-2.5">
-          <div>
-            <label class="block text-xs text-slate-600 dark:text-slate-400 mb-1">العدد</label>
-            <input type="number" id="editQuantityInput" min="1" oninput="calculateEditInvoiceMath()" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs text-center font-bold">
-          </div>
-          <div>
-            <label class="block text-xs text-slate-600 dark:text-slate-400 mb-1">سعر الوحدة كاش</label>
-            <input type="number" id="editUnitPriceInput" oninput="calculateEditInvoiceMath()" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs font-bold">
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs text-slate-600 dark:text-slate-400 mb-1">السيريال نمبر</label>
-          <input type="text" id="editSerialInput" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs">
-        </div>
-
-        <div>
-          <label class="block text-xs text-slate-600 dark:text-slate-400 mb-1">إجمالي الكاش للأصناف</label>
-          <input type="number" id="editCashTotalInput" readonly class="w-full bg-slate-100 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
-        </div>
-
-        <div id="editInstallmentBox" class="space-y-2.5 bg-slate-50 dark:bg-[#080d19] p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 hidden">
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">المقدم</label>
-              <input type="number" id="editDownPaymentInput" oninput="calculateEditInvoiceMath()" class="w-full bg-white dark:bg-[#0e1628] border border-slate-300 dark:border-slate-800 rounded-xl p-1.5 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
-            </div>
-            <div>
-              <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">نسبة الفائدة %</label>
-              <input type="number" id="editInterestRateInput" oninput="calculateEditInvoiceMath()" class="w-full bg-white dark:bg-[#0e1628] border border-slate-300 dark:border-slate-800 rounded-xl p-1.5 text-blue-600 dark:text-cyan-400 text-xs font-bold">
-            </div>
-            <div>
-              <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">الشهور</label>
-              <input type="number" id="editMonthsInput" oninput="calculateEditInvoiceMath()" class="w-full bg-white dark:bg-[#0e1628] border border-slate-300 dark:border-slate-800 rounded-xl p-1.5 text-slate-900 dark:text-white text-xs text-center font-bold">
-            </div>
-          </div>
-          <div class="flex justify-between items-center text-xs pt-1 border-t border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-            <span>الإجمالي: <b class="text-slate-900 dark:text-white" id="editCalculatedTotal">0 ج</b></span>
-            <span>القسط: <b class="text-blue-600 dark:text-cyan-400" id="editCalculatedMonthly">0 ج</b></span>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex gap-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
-        <button onclick="handleSaveInvoiceEdits()" class="flex-1 py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-2xl text-xs font-bold transition shadow-lg shadow-amber-600/30">حفظ التعديلات</button>
-        <button onclick="closeModal('editSaleInvoiceModal')" class="px-5 py-3 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold">إلغاء</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal 11: إضافة مصروف جديد -->
-  <div id="addExpenseModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-        <h3 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
-          <i class="fa-solid fa-money-bill-transfer text-rose-500 dark:text-rose-400"></i> تسجيل مصروف أو نولون جديد
-        </h3>
-        <button onclick="closeModal('addExpenseModal')" class="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">بند المصروف أو الوصف *</label>
-          <input type="text" id="expenseTitleInput" placeholder="مثال: نولون نقل شاشات، فاتورة كهرباء" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-3 text-slate-900 dark:text-white text-xs outline-none focus:border-rose-500 transition">
-        </div>
-        <div class="grid grid-cols-2 gap-2.5">
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">التصنيف</label>
-            <select id="expenseCategorySelect" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs">
-              <option value="نقل وشحن">نقل وشحن ونولون</option>
-              <option value="بوفيه وضيافة">بوفيه ومشروبات</option>
-              <option value="صيانة وهوالك">صيانة وتلفيات</option>
-              <option value="كهرباء ومرافق">كهرباء وفواتير</option>
-              <option value="أخرى">مصاريف أخرى</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-rose-600 dark:text-rose-400 mb-1">المبلغ (ج.م) *</label>
-            <input type="number" id="expenseAmountInput" placeholder="0" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-rose-600 dark:text-rose-400 font-bold text-xs outline-none focus:border-rose-500">
-          </div>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">التاريخ</label>
-          <input type="date" id="expenseDateInput" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ملاحظات إضافية</label>
-          <input type="text" id="expenseNotesInput" placeholder="أي تفاصيل خاصة بالمصروف" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs">
-        </div>
-      </div>
-      <div class="flex gap-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
-        <button onclick="handleSaveExpense()" class="flex-1 py-3 bg-gradient-to-r from-rose-600 to-pink-600 hover:brightness-110 text-white rounded-2xl text-xs font-bold transition shadow-lg shadow-rose-600/30">تسجيل وخصم المصروف</button>
-        <button onclick="closeModal('addExpenseModal')" class="px-5 py-3 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold">إلغاء</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal 12: كتابة رسالة عروض جماعية للعملاء -->
-  <div id="broadcastPromoModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-        <h3 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
-          <i class="fa-brands fa-whatsapp text-emerald-500 text-base"></i> تجهيز رسالة العرض الترويجي
-        </h3>
-        <button onclick="closeModal('broadcastPromoModal')" class="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">نص العرض الترويجي:</label>
-        <textarea id="promoCustomMessageInput" rows="5" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-3 text-slate-900 dark:text-white text-xs outline-none focus:border-emerald-500 leading-relaxed"></textarea>
-      </div>
-      <p class="text-[11px] text-slate-400">سيتم حفظ نص الرسالة واستخدامه عند الضغط على زر إرسال لأي عميل في الدليل.</p>
-      <div class="flex gap-2">
-        <button onclick="saveAndApplyPromoMessage()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold shadow">حفظ الرسالة</button>
-        <button onclick="closeModal('broadcastPromoModal')" class="px-5 py-3 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold">إلغاء</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="excel-engine.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="app.js?v=final_auth_v30"></script>
-</body>
-</html>
+  `;
+  windowPrintReceiptHTML(html);
+}
 // ==========================================
 // المحرك التشغيلي المتطور (app.js) - الجزء الثاني
 // ==========================================
