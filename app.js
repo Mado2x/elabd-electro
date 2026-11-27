@@ -312,9 +312,30 @@ function parseItemsFromRecord(record) {
   });
 }
 
-// =================== نظام تفعيل وإغلاق الورديات وسجل الحركات ===================
+// =================== نظام الورديات المستقلة (تبدأ من الصفر عند كل تفعيل) ===================
+function createFreshShiftObject() {
+  const dt = getFormattedDateTimeNow();
+  const archive = getStoredShiftsArchive();
+  return {
+    id: 'SHIFT-' + (archive.length + 1) + '-' + Date.now().toString().slice(-3),
+    status: 'open',
+    openedAt: dt.full,
+    date: dt.date,
+    directSalesCash: 0,
+    installmentsCash: 0,
+    expensesDeducted: 0,
+    supplierPayments: 0,
+    logs: []
+  };
+}
+
 function getActiveShift() {
-  try { const d = localStorage.getItem(STORAGE_KEY_ACTIVE_SHIFT); return d ? JSON.parse(d) : null; } catch (e) { return null; }
+  try {
+    const d = localStorage.getItem(STORAGE_KEY_ACTIVE_SHIFT);
+    return d ? JSON.parse(d) : null;
+  } catch (e) {
+    return null;
+  }
 }
 
 function updateShiftButtonUI() {
@@ -322,55 +343,48 @@ function updateShiftButtonUI() {
   const btn = document.getElementById('shiftToggleStatusBtn');
   if (!btn) return;
   if (activeShift && activeShift.status === 'open') {
+    const netNow = (activeShift.directSalesCash || 0) + (activeShift.installmentsCash || 0) - (activeShift.expensesDeducted || 0);
     btn.className = "w-full py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition shadow";
-    btn.innerHTML = `<i class="fa-solid fa-lock"></i> إغلاق الوردية النشطة (${activeShift.id})`;
+    btn.innerHTML = `<i class="fa-solid fa-lock"></i> إغلاق الوردية النشطة (${netNow.toLocaleString()} ج)`;
   } else {
     btn.className = "w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition shadow";
-    btn.innerHTML = `<i class="fa-solid fa-play"></i> تفعيل وردية جديدة`;
+    btn.innerHTML = `<i class="fa-solid fa-play"></i> تفعيل وردية جديدة (0 ج)`;
   }
 }
 
 function toggleShiftActivationState() {
   const activeShift = getActiveShift();
-  const dt = getFormattedDateTimeNow();
-
   if (!activeShift || activeShift.status !== 'open') {
-    const archive = getStoredShiftsArchive();
-    const newShift = {
-      id: 'SHIFT-' + (archive.length + 1),
-      status: 'open',
-      openedAt: dt.full,
-      date: dt.date,
-      logs: []
-    };
+    const newShift = createFreshShiftObject();
     localStorage.setItem(STORAGE_KEY_ACTIVE_SHIFT, JSON.stringify(newShift));
     updateShiftButtonUI();
-    showToast(`تم تفعيل الوردية (${newShift.id}) بنجاح ✅`, 'success');
+    showToast(`تم تفعيل وردية جديدة (${newShift.id}) برصيد ابتدائي 0 ج.م ✅`, 'success');
   } else {
     openDailyShiftModal();
   }
 }
 
-function logActionToActiveShift(actionType, description, amount = 0) {
+// تسجيل أي حركة داخل الوردية النشطة فقط وتحديث عداداتها المستقلة
+function logActionToActiveShift(categoryKey, actionLabel, description, amount = 0) {
   let activeShift = getActiveShift();
-  const dt = getFormattedDateTimeNow();
-  // إذا لم تكن هناك وردية مفعلة، يتم فتح وردية تلقائياً لتسجيل الحركات وعدم ضياعها
   if (!activeShift || activeShift.status !== 'open') {
-    const archive = getStoredShiftsArchive();
-    activeShift = {
-      id: 'SHIFT-' + (archive.length + 1),
-      status: 'open',
-      openedAt: dt.full,
-      date: dt.date,
-      logs: []
-    };
+    activeShift = createFreshShiftObject();
   }
+
+  const val = parseFloat(amount) || 0;
+  if (categoryKey === 'sale') activeShift.directSalesCash = (activeShift.directSalesCash || 0) + val;
+  if (categoryKey === 'installment') activeShift.installmentsCash = (activeShift.installmentsCash || 0) + val;
+  if (categoryKey === 'expense') activeShift.expensesDeducted = (activeShift.expensesDeducted || 0) + val;
+  if (categoryKey === 'supplier') activeShift.supplierPayments = (activeShift.supplierPayments || 0) + val;
+
+  const dt = getFormattedDateTimeNow();
   activeShift.logs.push({
     time: dt.time,
-    type: actionType,
+    type: actionLabel,
     desc: description,
-    amount: parseFloat(amount) || 0
+    amount: val
   });
+
   localStorage.setItem(STORAGE_KEY_ACTIVE_SHIFT, JSON.stringify(activeShift));
   updateShiftButtonUI();
 }
@@ -513,9 +527,7 @@ function renderDashboard() {
   setSensitiveVal('dashTotalExpensesVal', `${totalExpensesVal.toLocaleString()} ج.م`);
   setSensitiveVal('dashNetProfitVal', `${netProfitVal.toLocaleString()} ج.م`);
 
-  // تطبيق حالة الإخفاء (زر العين) إن كانت مفعلة
   applyCashBoxPrivacyState();
-
   renderTopSellingProductsReport(salesCountMap, filteredMonthPiecesCount);
 
   const dueTableBody = document.getElementById('dueInstallmentsTableBody');
@@ -939,8 +951,8 @@ function confirmCollectInstallment() {
 
   setStoredContracts(contracts);
   
-  // تسجيل الحركة في الوردية
-  logActionToActiveShift('تحصيل قسط', `${cnt.customerName} (قسط #${currentCollectingInstallmentNum})`, paidVal);
+  // تسجيل الحركة في الوردية النشطة فقط
+  logActionToActiveShift('installment', 'تحصيل قسط', `${cnt.customerName} (قسط #${currentCollectingInstallmentNum})`, paidVal);
 
   closeModal('collectInstallmentModal');
   renderDashboard();
@@ -1227,7 +1239,6 @@ function toggleInstallmentFields() {
   if (isInstallment) calculateInstallmentMath();
 }
 
-// حسبة التقسيط الصحيحة: الفائدة كنسبة مباشرة على المبلغ المتبقي بعد المقدم
 function calculateInstallmentMath() {
   let cashTotal = 0;
   currentSaleInvoiceCart.forEach(it => cashTotal += it.total);
@@ -1321,8 +1332,8 @@ function handleSaveSaleInvoice() {
     sales.unshift(newSale);
     setStoredSales(sales);
 
-    // تسجيل الحركة في الوردية
-    logActionToActiveShift('بيع كاش', `${customerName} (${deviceNamesCombined})`, totalCashPrice);
+    // تسجيل الحركة في الوردية النشطة فقط
+    logActionToActiveShift('sale', 'بيع كاش', `${customerName} (${deviceNamesCombined})`, totalCashPrice);
 
     closeModal('newSaleModal');
     clearSaleModalFields();
@@ -1404,8 +1415,8 @@ function handleSaveSaleInvoice() {
     });
     setStoredSales(sales);
 
-    // تسجيل الحركة في الوردية
-    logActionToActiveShift('بيع تقسيط (مقدم)', `${customerName} (${deviceNamesCombined}) - إجمالي العقد ${math.grandTotalContract.toLocaleString()} ج`, math.downPayment);
+    // تسجيل الحركة في الوردية النشطة فقط
+    logActionToActiveShift('sale', 'بيع تقسيط (مقدم)', `${customerName} (${deviceNamesCombined}) - إجمالي العقد ${math.grandTotalContract.toLocaleString()} ج`, math.downPayment);
 
     closeModal('newSaleModal');
     clearSaleModalFields();
@@ -1827,8 +1838,8 @@ function handleSaveMultiItemSupplierInvoice() {
 
   setDetailedSuppliers(suppliers);
 
-  // تسجيل الحركة في الوردية
-  logActionToActiveShift('توريد مخزن', `من المورد: ${sup.name} [${itemsSummary}]`, paidNow);
+  // تسجيل الحركة في الوردية النشطة فقط
+  logActionToActiveShift('supplier', 'توريد مخزن', `من المورد: ${sup.name} [${itemsSummary}]`, paidNow);
 
   closeModal('addSupplierShipmentModal');
   currentSupplierShipmentCart = [];
@@ -1872,7 +1883,7 @@ function paySupplierPrompt(supId) {
       }
     }
     setDetailedSuppliers(suppliers);
-    logActionToActiveShift('سداد لمورد', `دفعة للمورد: ${sup.name}`, originalAmt);
+    logActionToActiveShift('supplier', 'سداد لمورد', `دفعة للمورد: ${sup.name}`, originalAmt);
     renderSuppliersTable();
     renderDashboard();
     alert('تم تسجيل السداد للمورد بنجاح.');
@@ -2062,7 +2073,7 @@ function exportAnnualReportToExcel() {
   XLSX.writeFile(wb, `تقرير_مبيعات_أولاد_العبد_${year}.xlsx`);
 }
 
-// =================== المصاريف والدرج والورديات ===================
+// =================== المصاريف والدرج والورديات المستقلة ===================
 function renderExpensesTable() {
   const expenses = getStoredExpenses();
   const tbody = document.getElementById('expensesTableBody');
@@ -2098,8 +2109,8 @@ function handleSaveExpense() {
   expenses.unshift({ id: 'EXP-' + Date.now(), date, title, category, amount, notes });
   setStoredExpenses(expenses);
 
-  // تسجيل الحركة في الوردية
-  logActionToActiveShift('مصروف', `${title} (${category})`, amount);
+  // تسجيل الحركة في الوردية النشطة فقط
+  logActionToActiveShift('expense', 'مصروف', `${title} (${category})`, amount);
 
   closeModal('addExpenseModal');
   document.getElementById('expenseTitleInput').value = '';
@@ -2120,50 +2131,34 @@ function deleteExpense(expId) {
   });
 }
 
+// عرض أرقام الوردية النشطة فقط (تبدأ من صفر في كل تفعيل)
 function openDailyShiftModal() {
-  const dt = getFormattedDateTimeNow();
-  const sales = getStoredSales();
-  const contracts = getStoredContracts();
-  const expenses = getStoredExpenses();
+  const activeShift = getActiveShift();
 
-  let todaySalesCash = 0;
-  sales.forEach(s => {
-    if (s.date && s.date.startsWith(dt.date)) todaySalesCash += (parseFloat(s.paidImmediately) || 0);
-  });
-
-  let todayInstCash = 0;
-  contracts.forEach(cnt => {
-    (cnt.installments || []).forEach(inst => {
-      if (inst.paidDate && inst.paidDate.startsWith(dt.date) && inst.paidActual > 0) todayInstCash += parseFloat(inst.paidActual);
-    });
-  });
-
-  let todayExpenses = 0;
-  expenses.forEach(e => {
-    if (e.date && e.date.startsWith(dt.date)) todayExpenses += (parseFloat(e.amount) || 0);
-  });
-
-  const netDrawerCash = (todaySalesCash + todayInstCash) - todayExpenses;
+  const shiftSalesCash = activeShift ? (parseFloat(activeShift.directSalesCash) || 0) : 0;
+  const shiftInstCash = activeShift ? (parseFloat(activeShift.installmentsCash) || 0) : 0;
+  const shiftExpenses = activeShift ? (parseFloat(activeShift.expensesDeducted) || 0) : 0;
+  const netDrawerCash = (shiftSalesCash + shiftInstCash) - shiftExpenses;
 
   const sSales = document.getElementById('shiftTodaySalesCash');
-  if (sSales) sSales.innerText = `${todaySalesCash.toLocaleString()} ج.م`;
+  if (sSales) sSales.innerText = `${shiftSalesCash.toLocaleString()} ج.م`;
   const sInst = document.getElementById('shiftTodayInstCash');
-  if (sInst) sInst.innerText = `${todayInstCash.toLocaleString()} ج.م`;
+  if (sInst) sInst.innerText = `${shiftInstCash.toLocaleString()} ج.م`;
   const sExp = document.getElementById('shiftTodayExpenses');
-  if (sExp) sExp.innerText = `${todayExpenses.toLocaleString()} ج.م`;
+  if (sExp) sExp.innerText = `${shiftExpenses.toLocaleString()} ج.م`;
   const sNet = document.getElementById('shiftNetDrawerCash');
   if (sNet) sNet.innerText = `${netDrawerCash.toLocaleString()} ج.م`;
 
-  // عرض سجل الحركات المسجلة داخل الوردية المفتوحة
-  const activeShift = getActiveShift();
   const logs = (activeShift && Array.isArray(activeShift.logs)) ? activeShift.logs : [];
   const countEl = document.getElementById('activeShiftLogsCount');
   if (countEl) countEl.innerText = logs.length;
 
   const logsBox = document.getElementById('activeShiftLogsPreview');
   if (logsBox) {
-    if (logs.length === 0) {
-      logsBox.innerHTML = `<p class="text-center text-slate-400 py-2">لا توجد حركات مسجلة في الوردية الحالية بعد.</p>`;
+    if (!activeShift || activeShift.status !== 'open') {
+      logsBox.innerHTML = `<p class="text-center text-amber-500 font-bold py-2">لا توجد وردية مفعلة حالياً! اضغط "تفعيل وردية جديدة" للبدء من الصفر.</p>`;
+    } else if (logs.length === 0) {
+      logsBox.innerHTML = `<p class="text-center text-slate-400 py-2">الوردية مفعلة (${activeShift.openedAt}) ولم يتم تسجيل حركات فيها بعد.</p>`;
     } else {
       logsBox.innerHTML = logs.map(l => `
         <div class="flex justify-between items-center p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
@@ -2181,57 +2176,46 @@ function openDailyShiftModal() {
   openModal('dailyShiftModal');
 }
 
+// إغلاق الوردية الحالية وتصفير العداد للوردية القادمة
 function closeDailyShiftAndArchive() {
+  const activeShift = getActiveShift();
+  if (!activeShift || activeShift.status !== 'open') {
+    alert('عفواً! لا توجد وردية مفعلة حالياً لإغلاقها. اضغط على زر "تفعيل وردية جديدة" أولاً.');
+    return;
+  }
+
   const dt = getFormattedDateTimeNow();
   const archive = getStoredShiftsArchive();
-  const activeShift = getActiveShift();
 
-  const sales = getStoredSales();
-  const contracts = getStoredContracts();
-  const expenses = getStoredExpenses();
+  const shiftSalesCash = parseFloat(activeShift.directSalesCash) || 0;
+  const shiftInstCash = parseFloat(activeShift.installmentsCash) || 0;
+  const shiftExpenses = parseFloat(activeShift.expensesDeducted) || 0;
+  const netDrawerCash = (shiftSalesCash + shiftInstCash) - shiftExpenses;
 
-  let todaySalesCash = 0;
-  sales.forEach(s => {
-    if (s.date && s.date.startsWith(dt.date)) todaySalesCash += (parseFloat(s.paidImmediately) || 0);
-  });
-
-  let todayInstCash = 0;
-  contracts.forEach(cnt => {
-    (cnt.installments || []).forEach(inst => {
-      if (inst.paidDate && inst.paidDate.startsWith(dt.date) && inst.paidActual > 0) todayInstCash += parseFloat(inst.paidActual);
-    });
-  });
-
-  let todayExpenses = 0;
-  expenses.forEach(e => {
-    if (e.date && e.date.startsWith(dt.date)) todayExpenses += (parseFloat(e.amount) || 0);
-  });
-
-  const netDrawerCash = (todaySalesCash + todayInstCash) - todayExpenses;
   const shiftRecord = {
-    id: (activeShift && activeShift.id) ? activeShift.id : ('SHIFT-' + (archive.length + 1)),
+    id: activeShift.id || ('SHIFT-' + (archive.length + 1)),
     date: dt.date,
     time: dt.time,
-    openedAt: (activeShift && activeShift.openedAt) ? activeShift.openedAt : dt.full,
-    fullDateTime: dt.full,
-    directSalesCash: todaySalesCash,
-    installmentsCash: todayInstCash,
-    expensesDeducted: todayExpenses,
+    openedAt: activeShift.openedAt || dt.full,
+    fullDateTime: `من ${activeShift.openedAt || dt.full} إلى ${dt.full}`,
+    directSalesCash: shiftSalesCash,
+    installmentsCash: shiftInstCash,
+    expensesDeducted: shiftExpenses,
     netDrawerCash: netDrawerCash,
-    logs: (activeShift && Array.isArray(activeShift.logs)) ? activeShift.logs : []
+    logs: Array.isArray(activeShift.logs) ? activeShift.logs : []
   };
 
   archive.unshift(shiftRecord);
   setStoredShiftsArchive(archive);
 
-  // إغلاق الوردية النشطة وتحديث الزرار
+  // مسح الوردية النشطة بالكامل حتى تبدأ الوردية القادمة من الصفر تماماً
   localStorage.removeItem(STORAGE_KEY_ACTIVE_SHIFT);
   updateShiftButtonUI();
 
   if (typeof exportCurrentDatabaseToExcel === 'function') exportCurrentDatabaseToExcel(false);
   closeModal('dailyShiftModal');
   renderShiftsArchive();
-  showToast(`تم إغلاق الوردية وحفظ سجل الحركات بصافي (${netDrawerCash.toLocaleString()} ج.م)`, 'success');
+  showToast(`تم إغلاق الوردية وحفظها بالأرشيف بصافي (${netDrawerCash.toLocaleString()} ج.م) - الوردية القادمة ستبدأ من 0 ج`, 'success');
 }
 
 function renderShiftsArchive() {
@@ -2263,7 +2247,7 @@ function renderShiftsArchive() {
     tbody.innerHTML += `
       <tr>
         <td class="p-2.5 font-bold font-mono text-blue-600 dark:text-cyan-400">#${s.id}</td>
-        <td class="p-2.5 text-slate-800 dark:text-slate-200">${s.fullDateTime}</td>
+        <td class="p-2.5 text-slate-800 dark:text-slate-200 text-[11px]">${s.fullDateTime}</td>
         <td class="p-2.5 font-bold text-emerald-600">${s.directSalesCash.toLocaleString()} ج</td>
         <td class="p-2.5 font-bold text-blue-600 dark:text-cyan-400">${s.installmentsCash.toLocaleString()} ج</td>
         <td class="p-2.5 font-bold text-rose-600">-${s.expensesDeducted.toLocaleString()} ج</td>
@@ -2286,7 +2270,7 @@ function viewArchivedShiftLogs(shiftId) {
   const idEl = document.getElementById('vslShiftIdLabel');
   if (idEl) idEl.innerText = `#${s.id}`;
   const metaEl = document.getElementById('vslShiftMetaLabel');
-  if (metaEl) metaEl.innerText = `تاريخ التقفيل: ${s.fullDateTime} | الصافي بالدرج: ${s.netDrawerCash.toLocaleString()} ج.م`;
+  if (metaEl) metaEl.innerText = `الفترة: ${s.fullDateTime} | الصافي بالدرج: ${s.netDrawerCash.toLocaleString()} ج.م`;
 
   const tbody = document.getElementById('vslShiftLogsTbody');
   if (tbody) {
@@ -2320,7 +2304,7 @@ function exportShiftsArchiveToExcel() {
   const archive = getStoredShiftsArchive();
   const data = archive.map(s => ({
     "رقم الوردية": s.id,
-    "التاريخ والوقت": s.fullDateTime,
+    "الفترة والتاريخ": s.fullDateTime,
     "كاش المبيعات المباشرة": s.directSalesCash,
     "أقساط محصلة": s.installmentsCash,
     "المصاريف المخصومة": s.expensesDeducted,
@@ -2335,6 +2319,7 @@ function exportShiftsArchiveToExcel() {
 
 function printDailyShiftReport() {
   const dt = getFormattedDateTimeNow();
+  const activeShift = getActiveShift();
   const sSales = document.getElementById('shiftTodaySalesCash')?.innerText || '0 ج.م';
   const sInst = document.getElementById('shiftTodayInstCash')?.innerText || '0 ج.م';
   const sExp = document.getElementById('shiftTodayExpenses')?.innerText || '0 ج.م';
@@ -2343,12 +2328,13 @@ function printDailyShiftReport() {
   const html = `
     <div style="text-align: center; font-size: 13px; line-height: 1.6; direction: rtl; font-family: 'Cairo', sans-serif;">
       <h2 style="margin: 0; font-size: 16px; font-weight: bold;">معرض أولاد العبد</h2>
-      <p style="margin: 2px 0; font-size: 12px; font-weight: bold;">تقرير تقفيل الوردية اليومية (Z-Report)</p>
-      <p style="margin: 2px 0; font-size: 11px; color: #555;">الوقت: ${dt.full}</p>
+      <p style="margin: 2px 0; font-size: 12px; font-weight: bold;">تقرير تقفيل الوردية (${activeShift ? activeShift.id : 'الحالية'})</p>
+      <p style="margin: 2px 0; font-size: 10px; color: #555;">الفتح: ${activeShift ? activeShift.openedAt : dt.full}</p>
+      <p style="margin: 2px 0; font-size: 10px; color: #555;">التقفيل: ${dt.full}</p>
       <div style="border-bottom: 1px dashed #000; margin: 8px 0;"></div>
       <table style="width: 100%; font-size: 12px; text-align: right; border-collapse: collapse;">
-        <tr><td style="padding: 5px 0;">مبيعات كاش اليوم:</td><td style="text-align: left; font-weight: bold;">${sSales}</td></tr>
-        <tr><td style="padding: 5px 0;">أقساط محصلة اليوم:</td><td style="text-align: left; font-weight: bold;">${sInst}</td></tr>
+        <tr><td style="padding: 5px 0;">مبيعات كاش الوردية:</td><td style="text-align: left; font-weight: bold;">${sSales}</td></tr>
+        <tr><td style="padding: 5px 0;">أقساط محصلة بالوردية:</td><td style="text-align: left; font-weight: bold;">${sInst}</td></tr>
         <tr><td style="padding: 5px 0;">مصاريف ونولون خارج:</td><td style="text-align: left; font-weight: bold; color: #dc2626;">-${sExp}</td></tr>
       </table>
       <div style="border-bottom: 1px solid #000; margin: 8px 0;"></div>
@@ -2372,7 +2358,7 @@ function printArchivedShiftReport(shiftId) {
     <div style="text-align: center; font-size: 13px; line-height: 1.6; direction: rtl; font-family: 'Cairo', sans-serif;">
       <h2 style="margin: 0; font-size: 16px; font-weight: bold;">معرض أولاد العبد</h2>
       <p style="margin: 2px 0; font-size: 12px; font-weight: bold;">إيصال وردية مؤرشفة #${s.id}</p>
-      <p style="margin: 2px 0; font-size: 11px; color: #555;">الوقت والتاريخ: ${s.fullDateTime}</p>
+      <p style="margin: 2px 0; font-size: 10px; color: #555;">${s.fullDateTime}</p>
       <div style="border-bottom: 1px dashed #000; margin: 8px 0;"></div>
       <table style="width: 100%; font-size: 12px; text-align: right; border-collapse: collapse;">
         <tr><td style="padding: 4px 0;">كاش مبيعات مباشرة:</td><td style="text-align: left; font-weight: bold;">${s.directSalesCash.toLocaleString()} ج</td></tr>
