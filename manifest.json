@@ -1,0 +1,15 @@
+{
+  "name": "معرض أولاد العبد",
+  "short_name": "أولاد العبد",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#080c15",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3659/3659899.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
