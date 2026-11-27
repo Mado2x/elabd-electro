@@ -100,9 +100,9 @@
         <i class="fa-solid fa-calculator"></i> جرد وتقفيل الدرج الآن
       </button>
       <!-- زر إعادة تهيئة وتصفير البيانات -->
-      <button onclick="resetAllSystemDataProtected()" class="w-full py-1.5 bg-rose-600/15 hover:bg-rose-600 text-rose-600 dark:text-rose-400 hover:text-white border border-rose-500/30 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition">
-        <i class="fa-solid fa-rotate-left"></i> إعادة تهيئة البيانات (تصفير)
-      </button>
+<button onclick="if(prompt('أدخل الرقم السري للمدير:')==='1234'){localStorage.clear();location.reload();}" class="w-full py-1.5 bg-rose-600/15 hover:bg-rose-600 text-rose-600 dark:text-rose-400 hover:text-white border border-rose-500/30 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition">
+  <i class="fa-solid fa-rotate-left"></i> إعادة تهيئة البيانات (تصفير)
+</button>
       <input type="file" id="excelFileInput" accept=".xlsx, .xls" class="hidden" onchange="importDatabaseFromExcelFile(event)">
     </div>
 
