@@ -2,9 +2,6 @@
 // المحرك التشغيلي الشامل لمعرض أولاد العبد
 // ==========================================
 
-const STORAGE_KEY_AUTH_SESSION = 'elabd_auth_session_v1';
-const STORAGE_KEY_SYSTEM_USERNAME = 'elabd_sys_user_v1';
-const STORAGE_KEY_OWNER_PIN = 'elabd_owner_pin_v6';
 const STORAGE_KEY_DETAILED_SUPPLIERS = 'elabd_clean_suppliers_v6';
 const STORAGE_KEY_SELLING_PRICES = 'elabd_clean_prices_v6';
 const STORAGE_KEY_SALES = 'elabd_clean_sales_v6';
@@ -32,144 +29,9 @@ let currentTargetInputIdForScanner = null;
 let lastInquiredDeviceObject = null;
 let toastTimeoutInstance = null;
 
-// =================== دوال الحساب وتسجيل الدخول ===================
-function getSystemUsername() {
-  return localStorage.getItem(STORAGE_KEY_SYSTEM_USERNAME) || 'admin';
-}
-
-function getOwnerPin() {
-  return localStorage.getItem(STORAGE_KEY_OWNER_PIN) || '1234';
-}
-
-function checkAuthSession() {
-  const isAuth = localStorage.getItem(STORAGE_KEY_AUTH_SESSION);
-  const overlay = document.getElementById('appLoginOverlay');
-  if (!overlay) return;
-
-  if (isAuth === 'true') {
-    overlay.style.display = 'none';
-  } else {
-    overlay.style.display = 'flex';
-    const uInput = document.getElementById('loginUsernameInput');
-    if (uInput) setTimeout(() => uInput.focus(), 150);
-  }
-}
-
-function handleSystemLogin(e) {
-  if (e && e.preventDefault) e.preventDefault();
-  const uInput = document.getElementById('loginUsernameInput');
-  const pInput = document.getElementById('loginPasswordInput');
-  const errEl = document.getElementById('loginErrorMsg');
-
-  const enteredUser = uInput ? uInput.value.trim().toLowerCase() : '';
-  const enteredPass = pInput ? pInput.value.trim() : '';
-
-  const correctUser = getSystemUsername().toLowerCase();
-  const correctPass = getOwnerPin();
-
-  const isUserValid = (enteredUser === correctUser) || (enteredUser === 'admin');
-  const isPassValid = (enteredPass === correctPass) || (enteredPass === '1234') || (enteredPass === '0000');
-
-  if (isUserValid && isPassValid) {
-    localStorage.setItem(STORAGE_KEY_AUTH_SESSION, 'true');
-    const overlay = document.getElementById('appLoginOverlay');
-    if (overlay) overlay.style.display = 'none';
-    if (errEl) errEl.classList.add('hidden');
-    if (uInput) uInput.value = '';
-    if (pInput) pInput.value = '';
-    showToast('تم تسجيل الدخول بنجاح', 'success');
-  } else {
-    if (errEl) {
-      errEl.innerText = 'اسم المستخدم أو كلمة المرور غير صحيحة!';
-      errEl.classList.remove('hidden');
-    }
-  }
-}
-
-function handleSystemLogout() {
-  if (confirm('هل أنت متأكد من تسجيل الخروج وقفل النظام؟')) {
-    localStorage.removeItem(STORAGE_KEY_AUTH_SESSION);
-    const overlay = document.getElementById('appLoginOverlay');
-    if (overlay) overlay.style.display = 'flex';
-    showToast('تم تسجيل الخروج بنجاح', 'info');
-  }
-}
-
-function openChangeCredentialsModal() {
-  requireOwnerAuth(() => {
-    const uInput = document.getElementById('newUsernameInput');
-    const pInput = document.getElementById('newPasswordInput');
-    if (uInput) uInput.value = getSystemUsername();
-    if (pInput) pInput.value = getOwnerPin();
-    openModal('changeCredentialsModal');
-  });
-}
-
-function saveNewCredentials() {
-  const uInput = document.getElementById('newUsernameInput');
-  const pInput = document.getElementById('newPasswordInput');
-  const newU = uInput ? uInput.value.trim() : '';
-  const newP = pInput ? pInput.value.trim() : '';
-
-  if (!newU || !newP) {
-    alert('يرجى ملء اسم المستخدم وكلمة المرور!');
-    return;
-  }
-
-  localStorage.setItem(STORAGE_KEY_SYSTEM_USERNAME, newU);
-  localStorage.setItem(STORAGE_KEY_OWNER_PIN, newP);
-  closeModal('changeCredentialsModal');
-  showToast('تم تحديث بيانات الدخول بنجاح ✔', 'success');
-}
-
-function openForgotPasswordPrompt() {
-  const recoveryKey = prompt('استعادة الحساب 🔑\nأدخل رمز الأمان الرئيسي لمالك المعرض (Master Key):');
-  if (recoveryKey === null) return;
-
-  if (recoveryKey.trim() === '0000') {
-    const currentU = getSystemUsername();
-    const currentP = getOwnerPin();
-    alert(`بيانات حسابك المسجلة:\nاسم المستخدم: ${currentU}\nكلمة المرور: ${currentP}`);
-  } else {
-    alert('رمز الأمان الرئيسي غير صحيح!');
-  }
-}
-
+// =================== تنفيذ العمليات مباشرة بدون قفل ===================
 function requireOwnerAuth(actionCallback) {
-  const currentPin = getOwnerPin();
-  if (window.Swal) {
-    Swal.fire({
-      title: 'صلاحيات المالك 🔒',
-      text: 'يرجى إدخال الرقم السري لتأكيد العملية:',
-      input: 'password',
-      inputPlaceholder: 'أدخل الباسورد...',
-      showCancelButton: true,
-      confirmButtonText: 'تأكيد',
-      cancelButtonText: 'إلغاء',
-      confirmButtonColor: '#2563eb',
-      cancelButtonColor: '#64748b',
-      background: document.documentElement.classList.contains('dark') ? '#111726' : '#ffffff',
-      color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#1e293b',
-      customClass: { popup: 'rounded-3xl border border-slate-700' },
-      preConfirm: (enteredPin) => {
-        if (!enteredPin) {
-          Swal.showValidationMessage('يرجى كتابة الرقم السري!');
-        } else if (enteredPin !== currentPin && enteredPin !== '0000') {
-          Swal.showValidationMessage('الرقم السري غير صحيح!');
-        }
-        return enteredPin;
-      }
-    }).then((result) => {
-      if (result.isConfirmed) actionCallback();
-    });
-  } else {
-    const entered = prompt('صلاحيات المالك 🔒\nأدخل الرقم السري:');
-    if (entered === currentPin || entered === '0000') {
-      actionCallback();
-    } else if (entered !== null) {
-      alert('عفواً، الرقم السري غير صحيح!');
-    }
-  }
+  if (typeof actionCallback === 'function') actionCallback();
 }
 
 // =================== المظهر والإشعارات ===================
@@ -356,7 +218,6 @@ function parseItemsFromRecord(record) {
 
 // =================== بدء التشغيل والتنقل ===================
 window.addEventListener('DOMContentLoaded', () => {
-  checkAuthSession();
   initThemeMode();
   const dt = getFormattedDateTimeNow();
   const startDateInput = document.getElementById('instStartDate');
