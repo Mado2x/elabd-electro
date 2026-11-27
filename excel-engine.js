@@ -28,7 +28,6 @@ function exportCurrentDatabaseToExcel(downloadTriggeredByUser = false) {
       'المتبقي المطلوب': Number(c.remainingAmount) || 0, 'القسط الشهري': Number(c.monthlyAmount) || 0,
       'مدة التقسيط (شهور)': Number(c.months) || 0, 'نسبة الفائدة %': Number(c.interestRate) || 0,
       'تاريخ الفاتورة': c.invoiceDate || c.startDate || '',
-      // الحفاظ على تفاصيل الأقساط عند التصدير ثم إعادة الاستيراد
       'تفاصيل الأقساط JSON': JSON.stringify(Array.isArray(c.installments) ? c.installments : [])
     })), ['كود العميل','معرف العقد','اسم العميل','هاتف العميل','الأجهزة','إجمالي العقد بالفوائد','المسدد','المتبقي المطلوب']);
 
@@ -65,7 +64,10 @@ function exportCurrentDatabaseToExcel(downloadTriggeredByUser = false) {
     })), ['معرف المصروف','التاريخ','بند المصروف','التصنيف','المبلغ (ج.م)','ملاحظات']);
 
     XLSX.writeFile(wb, `معرض_أولاد_العبد_قاعدة_بيانات_${localDateString()}.xlsx`);
-    if (downloadTriggeredByUser) alert('تم تصدير قاعدة البيانات إلى Excel بنجاح.');
+    if (downloadTriggeredByUser) {
+      if (typeof showToast === 'function') showToast('تم تصدير قاعدة البيانات إلى Excel بنجاح.', 'success');
+      else alert('تم تصدير قاعدة البيانات إلى Excel بنجاح.');
+    }
   } catch (err) {
     console.error('Excel Export Error:', err);
     alert('تعذر تصدير ملف Excel. تأكد من تحميل مكتبة Excel ثم حاول مرة أخرى.');
@@ -86,8 +88,8 @@ function safeJsonArray(value) {
   if (!value) return [];
   try { const parsed = JSON.parse(String(value)); return Array.isArray(parsed) ? parsed : []; } catch (_) { return []; }
 }
+
 function downloadImportSafetyBackup() {
-  // نسخة JSON من بيانات النظام الحالية قبل الاستيراد؛ لا تتضمن جلسة الدخول.
   const keys = [
     'elabd_clean_suppliers_v6','elabd_clean_prices_v6','elabd_clean_sales_v6',
     'elabd_clean_contracts_v6','elabd_clean_expenses_v6','elabd_shifts_archive_v6','elabd_promo_template_v6'
@@ -189,7 +191,7 @@ function importDatabaseFromExcelFile(event) {
       if (parsedExpenses) setStoredExpenses(parsedExpenses);
       if (parsedSuppliers) setDetailedSuppliers(parsedSuppliers);
       if (parsedSales) setStoredSales(parsedSales);
-      // أسعار البيع من شيت المخزن إن وجد؛ لا نعيد بناء أسعار من بيانات غير موجودة.
+
       const inventoryRows = sheetRows('المخزن والأرصدة');
       if (inventoryRows && inventoryRows.length) {
         const prices = getSellingPrices();
