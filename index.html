@@ -77,24 +77,18 @@
       </button>
     </div>
 
-    <!-- كارت إدارة الإكسيل والنسخ الاحتياطي والوردية -->
+    <!-- كارت إدارة الإكسيل والوردية -->
     <div class="p-3 mx-3 my-2 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/30 space-y-2 shadow-sm">
       <div class="flex items-center justify-between text-xs">
         <span class="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1.5"><i class="fa-solid fa-file-excel"></i> قاعدة البيانات</span>
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
       </div>
       <div class="grid grid-cols-2 gap-1.5 text-[11px]">
-        <button onclick="document.getElementById('excelFileInput').click()" class="py-1.5 px-2 rounded-xl bg-white dark:bg-slate-800/80 hover:bg-emerald-100 dark:hover:bg-emerald-600/30 text-emerald-700 dark:text-emerald-300 border border-slate-200 dark:border-slate-700 font-bold flex items-center justify-center gap-1 transition">
+        <button onclick="document.getElementById('excelFileInput').click()" class="py-2 px-2 rounded-xl bg-white dark:bg-slate-800/80 hover:bg-emerald-100 dark:hover:bg-emerald-600/30 text-emerald-700 dark:text-emerald-300 border border-slate-200 dark:border-slate-700 font-bold flex items-center justify-center gap-1 transition">
           <i class="fa-solid fa-folder-open"></i> استرجاع Excel
         </button>
-        <button onclick="exportCurrentDatabaseToExcel(true)" class="py-1.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center justify-center gap-1 transition shadow">
+        <button onclick="exportCurrentDatabaseToExcel(true)" class="py-2 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center justify-center gap-1 transition shadow">
           <i class="fa-solid fa-floppy-disk"></i> حفظ Excel
-        </button>
-        <button onclick="exportLocalBackupJSON()" class="py-1.5 px-2 rounded-xl bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/30 dark:hover:bg-amber-800/50 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/50 font-bold flex items-center justify-center gap-1 transition" title="تنزيل نسخة احتياطية JSON">
-          <i class="fa-solid fa-download"></i> نسخ JSON
-        </button>
-        <button onclick="document.getElementById('jsonBackupInput').click()" class="py-1.5 px-2 rounded-xl bg-amber-600/15 hover:bg-amber-600/25 text-amber-800 dark:text-amber-300 border border-amber-400/40 font-bold flex items-center justify-center gap-1 transition" title="استرجاع نسخة JSON">
-          <i class="fa-solid fa-upload"></i> استعادة JSON
         </button>
       </div>
       <!-- زر تفعيل وإغلاق الوردية -->
@@ -105,7 +99,6 @@
         <i class="fa-solid fa-calculator"></i> جرد وتقفيل الدرج الآن
       </button>
       <input type="file" id="excelFileInput" accept=".xlsx, .xls" class="hidden" onchange="importDatabaseFromExcelFile(event)">
-      <input type="file" id="jsonBackupInput" accept=".json" class="hidden" onchange="importLocalBackupJSON(event)">
     </div>
 
     <!-- روابط القائمة الجانبية -->
