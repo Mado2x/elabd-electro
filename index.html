@@ -531,8 +531,11 @@
 
         <div class="flex flex-col sm:flex-row gap-2">
           <input type="text" id="customersSearchInput" oninput="renderCustomersDirectory()" placeholder="بحث باسم العميل أو رقم الهاتف..." class="flex-1 bg-slate-50 dark:bg-[#0b101e] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition">
-          <button onclick="toggleSelectAllCustomers()" class="px-4 py-2.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 text-blue-700 dark:text-cyan-400 border border-blue-200 dark:border-blue-800 rounded-2xl text-xs font-bold transition whitespace-nowrap">
-            <i class="fa-solid fa-check-double"></i> تحديد / إلغاء الكل
+          <button type="button" onclick="selectAllVisibleCustomers(true)" class="px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-2xl text-xs font-bold transition whitespace-nowrap">
+            <i class="fa-solid fa-check-double"></i> تحديد الكل
+          </button>
+          <button type="button" onclick="selectAllVisibleCustomers(false)" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold transition whitespace-nowrap">
+            إلغاء التحديد
           </button>
         </div>
 
@@ -540,8 +543,8 @@
           <table class="w-full text-right text-xs">
             <thead class="bg-slate-100 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
               <tr>
-                <th class="p-3 text-center w-10">
-                  <input type="checkbox" id="selectAllCustomersCheckbox" onchange="handleSelectAllCheckboxChange(this.checked)" class="w-4 h-4 accent-emerald-600 rounded cursor-pointer">
+                <th class="p-3 text-center w-12">
+                  <input type="checkbox" id="selectAllCustomersCheckbox" onchange="selectAllVisibleCustomers(this.checked)" class="w-4 h-4 accent-emerald-600 rounded cursor-pointer">
                 </th>
                 <th class="p-3">كود</th>
                 <th class="p-3">اسم العميل</th>
@@ -1318,7 +1321,6 @@
         <button onclick="closeModal('bulkWhatsAppQueueModal')" class="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
-      <!-- شريط التقدم -->
       <div class="space-y-1.5">
         <div class="flex justify-between text-xs font-bold">
           <span class="text-slate-600 dark:text-slate-300">التقدم في القائمة:</span>
@@ -1329,7 +1331,6 @@
         </div>
       </div>
 
-      <!-- كارت العميل الحالي -->
       <div class="p-4 bg-slate-50 dark:bg-[#080d19] rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
         <div class="flex justify-between items-center">
           <span class="text-slate-400">العميل المستهدف الآن:</span>
