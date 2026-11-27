@@ -36,9 +36,9 @@
 </head>
 <body class="bg-slate-100 text-slate-800 dark:bg-[#080c15] dark:text-slate-100 min-h-screen pb-16 md:pb-0 flex flex-col md:flex-row relative selection:bg-blue-600 selection:text-white">
 
-  <!-- واجهة تسجيل الدخول النظيفة مع نسيت كلمة السر -->
+  <!-- واجهة تسجيل الدخول -->
   <div id="appLoginOverlay" class="fixed inset-0 z-[200] bg-slate-900/95 backdrop-blur-2xl flex items-center justify-center p-4">
-    <div class="w-full max-w-sm glass-card dark:bg-[#0e1628] border border-slate-300 dark:border-slate-700/80 rounded-3xl p-6 shadow-2xl space-y-4 text-center">
+    <form onsubmit="handleSystemLogin(event)" class="w-full max-w-sm glass-card dark:bg-[#0e1628] border border-slate-300 dark:border-slate-700/80 rounded-3xl p-6 shadow-2xl space-y-4 text-center">
       <div class="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-tr from-blue-600 to-cyan-500 p-0.5 shadow-xl shadow-blue-500/25">
         <div class="w-full h-full bg-white dark:bg-[#0a0f1d] rounded-3xl flex items-center justify-center text-blue-600 dark:text-cyan-400">
           <i class="fa-solid fa-shield-halved text-2xl"></i>
@@ -53,7 +53,7 @@
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">اسم المستخدم</label>
           <div class="relative">
-            <input type="text" id="loginUsernameInput" autocomplete="off" placeholder="" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-3 text-slate-900 dark:text-white text-xs outline-none focus:border-blue-500 pr-9 transition">
+            <input type="text" id="loginUsernameInput" autocomplete="off" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-3 text-slate-900 dark:text-white text-xs outline-none focus:border-blue-500 pr-9 transition">
             <span class="absolute right-3.5 top-3.5 text-slate-400"><i class="fa-solid fa-user text-xs"></i></span>
           </div>
         </div>
@@ -64,18 +64,18 @@
             <button type="button" onclick="openForgotPasswordPrompt()" class="text-[11px] text-cyan-500 hover:underline">نسيت كلمة السر؟</button>
           </div>
           <div class="relative">
-            <input type="password" id="loginPasswordInput" autocomplete="off" placeholder="" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-3 text-slate-900 dark:text-white text-xs outline-none focus:border-blue-500 pr-9 transition">
+            <input type="password" id="loginPasswordInput" autocomplete="off" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-3 text-slate-900 dark:text-white text-xs outline-none focus:border-blue-500 pr-9 transition">
             <span class="absolute right-3.5 top-3.5 text-slate-400"><i class="fa-solid fa-key text-xs"></i></span>
           </div>
         </div>
 
         <p id="loginErrorMsg" class="text-[11px] text-rose-500 text-center font-bold hidden"></p>
 
-        <button type="button" onclick="handleSystemLogin()" class="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white rounded-2xl text-xs font-black shadow-lg shadow-blue-600/30 transition transform active:scale-95">
+        <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white rounded-2xl text-xs font-black shadow-lg shadow-blue-600/30 transition transform active:scale-95">
           دخول للنظام <i class="fa-solid fa-arrow-left mr-1"></i>
         </button>
       </div>
-    </div>
+    </form>
   </div>
 
   <div class="ambient-glow-blue top-0 right-10 hidden dark:block"></div>
@@ -119,27 +119,31 @@
       </button>
     </div>
 
-    <!-- كارت إدارة الإكسيل والوردية -->
+    <!-- كارت إدارة الإكسيل والنسخ الاحتياطي والوردية -->
     <div class="p-3 mx-3 my-2 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/30 space-y-2 shadow-sm">
       <div class="flex items-center justify-between text-xs">
         <span class="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1.5"><i class="fa-solid fa-file-excel"></i> قاعدة البيانات</span>
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
       </div>
       <div class="grid grid-cols-2 gap-1.5 text-[11px]">
-        <button onclick="document.getElementById('excelFileInput').click()" class="py-1.5 px-2 rounded-xl bg-white dark:bg-slate-800/80 hover:bg-emerald-100 dark:hover:bg-emerald-600/30 text-emerald-700 dark:text-emerald-300 border border-slate-200 dark:border-slate-700 font-bold flex items-center justify-center gap-1.5 transition">
-          <i class="fa-solid fa-folder-open"></i> استرجاع
+        <button onclick="document.getElementById('excelFileInput').click()" class="py-1.5 px-2 rounded-xl bg-white dark:bg-slate-800/80 hover:bg-emerald-100 dark:hover:bg-emerald-600/30 text-emerald-700 dark:text-emerald-300 border border-slate-200 dark:border-slate-700 font-bold flex items-center justify-center gap-1 transition">
+          <i class="fa-solid fa-folder-open"></i> استرجاع Excel
         </button>
-        <button onclick="exportCurrentDatabaseToExcel(true)" class="py-1.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center justify-center gap-1.5 transition shadow">
-          <i class="fa-solid fa-floppy-disk"></i> حفظ اليوم
+        <button onclick="exportCurrentDatabaseToExcel(true)" class="py-1.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center justify-center gap-1 transition shadow">
+          <i class="fa-solid fa-floppy-disk"></i> حفظ Excel
         </button>
-        <button onclick="exportLocalBackupJSON()" class="col-span-2 py-1.5 px-2 rounded-xl bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/30 dark:hover:bg-amber-800/50 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/50 font-bold flex items-center justify-center gap-1.5 transition">
-          <i class="fa-solid fa-shield-halved"></i> تنزيل نسخة احتياطية آمنة (JSON)
+        <button onclick="exportLocalBackupJSON()" class="py-1.5 px-2 rounded-xl bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/30 dark:hover:bg-amber-800/50 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/50 font-bold flex items-center justify-center gap-1 transition" title="تنزيل نسخة احتياطية JSON">
+          <i class="fa-solid fa-download"></i> نسخ JSON
+        </button>
+        <button onclick="document.getElementById('jsonBackupInput').click()" class="py-1.5 px-2 rounded-xl bg-amber-600/15 hover:bg-amber-600/25 text-amber-800 dark:text-amber-300 border border-amber-400/40 font-bold flex items-center justify-center gap-1 transition" title="استرجاع نسخة JSON">
+          <i class="fa-solid fa-upload"></i> استعادة JSON
         </button>
       </div>
       <button onclick="openDailyShiftModal()" class="w-full py-1.5 bg-blue-600/10 hover:bg-blue-600/20 text-blue-600 dark:text-cyan-400 border border-blue-500/30 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition">
         <i class="fa-solid fa-calculator"></i> تقفيل الوردية اليومية (الدرج)
       </button>
       <input type="file" id="excelFileInput" accept=".xlsx, .xls" class="hidden" onchange="importDatabaseFromExcelFile(event)">
+      <input type="file" id="jsonBackupInput" accept=".json" class="hidden" onchange="importLocalBackupJSON(event)">
     </div>
 
     <!-- روابط القائمة الجانبية -->
@@ -300,7 +304,7 @@
       <div class="glass-card border border-slate-200 dark:border-slate-800/90 rounded-3xl p-4 md:p-5 space-y-3.5 shadow-xl">
         <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
           <h3 class="text-xs md:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <i class="fa-solid fa-bell text-rose-500"></i> تحصيل الأقساط المستحقة للشهر الحالي
+            <i class="fa-solid fa-bell text-rose-500"></i> تحصيل الأقساط المستحقة للشهر المحدد
           </h3>
           <span id="dueCountBadge" class="text-[11px] px-3 py-1 rounded-full bg-rose-100 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30 font-bold">0 عميل مستحق</span>
         </div>
@@ -333,7 +337,7 @@
           </div>
           <div class="flex items-center gap-2 w-full md:w-auto">
             <select id="annualReportYearSelect" onchange="renderAnnualReportsView()" class="bg-slate-50 dark:bg-[#0b101e] border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white font-bold outline-none">
-              <option value="2026">سنة 2026</option>
+              <option value="2026" selected>سنة 2026</option>
               <option value="2027">سنة 2027</option>
               <option value="2028">سنة 2028</option>
             </select>
@@ -481,6 +485,7 @@
         </div>
       </div>
     </section>
+
     <!-- VIEW 6: فواتير البيع -->
     <section id="view-sales" class="hidden space-y-4">
       <div class="glass-card border border-slate-200 dark:border-slate-800/90 rounded-3xl p-4 md:p-5 space-y-4 shadow-xl">
@@ -896,7 +901,7 @@
             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">الباركود (اختياري)</label>
             <div class="flex gap-2">
               <input type="text" id="shipItemBarcodeInput" placeholder="الباركود المطبوع" class="flex-1 bg-white dark:bg-[#0e1628] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white text-xs outline-none focus:border-purple-500">
-              <button onclick="openBarcodeScanner('shipItemBarcodeInput')" class="px-3 py-2 bg-slate-200 dark:bg-slate-800 text-cyan-600 dark:text-cyan-400 rounded-2xl border border-slate-300 dark:border-slate-700 text-xs">📷</button>
+              <button type="button" onclick="openBarcodeScanner('shipItemBarcodeInput')" class="px-3 py-2 bg-slate-200 dark:bg-slate-800 text-cyan-600 dark:text-cyan-400 rounded-2xl border border-slate-300 dark:border-slate-700 text-xs">📷</button>
             </div>
           </div>
         </div>
@@ -912,7 +917,7 @@
           </div>
         </div>
 
-        <button onclick="addItemToSupplierCart()" class="w-full py-2.5 bg-purple-600/20 hover:bg-purple-600 text-purple-700 dark:text-purple-300 hover:text-white border border-purple-500/30 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2">
+        <button type="button" onclick="addItemToSupplierCart()" class="w-full py-2.5 bg-purple-600/20 hover:bg-purple-600 text-purple-700 dark:text-purple-300 hover:text-white border border-purple-500/30 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-plus"></i> إضافة الصنف للفاتورة
         </button>
       </div>
@@ -1085,7 +1090,7 @@
         <button onclick="closeBarcodeScanner()" class="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div id="barcode-scanner-box" class="overflow-hidden rounded-2xl bg-black border border-slate-200 dark:border-slate-800 min-h-[220px]"></div>
-      <p id="scannerInstructionText" class="text-[11px] text-slate-500 dark:text-slate-400 text-center"></p>
+      <p id="scannerInstructionText" class="text-[11px] text-slate-500 dark:text-slate-400 text-center">وجه الكاميرا نحو الباركود للمسح التلقائي</p>
       <button onclick="closeBarcodeScanner()" class="w-full py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold">إغلاق الكاميرا</button>
     </div>
   </div>
@@ -1288,7 +1293,7 @@
     </div>
   </div>
 
-  <!-- Modal 13: تعديل بيانات الدخول (اسم المستخدم وكلمة المرور) -->
+  <!-- Modal 13: تعديل بيانات الدخول -->
   <div id="changeCredentialsModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[250] hidden flex items-center justify-center p-3.5">
     <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
@@ -1316,6 +1321,6 @@
 
   <script src="excel-engine.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="app.js?v=security_inventory_update_20261021"></script>
+  <script src="app.js"></script>
 </body>
 </html>
