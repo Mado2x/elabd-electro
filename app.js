@@ -2555,27 +2555,47 @@ function executeSendWhatsAppTemplate(type) {
   window.open(`https://wa.me/2${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
+function normalizePhoneKey(rawPhone) {
+  return String(rawPhone || '').replace(/[^0-9]/g, '');
+}
+
 function getUniqueCustomersList(searchFilter = '') {
   const contracts = getStoredContracts();
   const sales = getStoredSales();
   const clientsMap = {};
 
   sales.forEach(s => {
-    const phone = (s.customerPhone || '').toString().trim();
-    if (!phone) return;
-    if (!clientsMap[phone]) {
-      clientsMap[phone] = { name: s.customerName, phone: phone, type: s.type, totalBought: 0 };
+    const cleanKey = normalizePhoneKey(s.customerPhone);
+    if (!cleanKey) return;
+    if (!clientsMap[cleanKey]) {
+      clientsMap[cleanKey] = {
+        key: cleanKey,
+        name: (s.customerName || 'عميل').trim(),
+        phone: String(s.customerPhone || '').trim(),
+        type: s.type || 'كاش',
+        totalBought: 0
+      };
     }
-    clientsMap[phone].totalBought += (parseFloat(s.totalPrice) || 0);
+    clientsMap[cleanKey].totalBought += (parseFloat(s.totalPrice) || 0);
   });
 
   contracts.forEach(c => {
-    const phone = (c.customerPhone || '').toString().trim();
-    if (phone && clientsMap[phone]) clientsMap[phone].code = c.clientCode;
+    const cleanKey = normalizePhoneKey(c.customerPhone);
+    if (!cleanKey) return;
+    if (!clientsMap[cleanKey]) {
+      clientsMap[cleanKey] = {
+        key: cleanKey,
+        name: (c.customerName || 'عميل').trim(),
+        phone: String(c.customerPhone || '').trim(),
+        type: 'تقسيط',
+        totalBought: parseFloat(c.totalWithInterest) || 0
+      };
+    }
+    clientsMap[cleanKey].code = c.clientCode;
   });
 
   return Object.values(clientsMap).filter(cl =>
-    !searchFilter || cl.name.toLowerCase().includes(searchFilter) || cl.phone.includes(searchFilter)
+    !searchFilter || cl.name.toLowerCase().includes(searchFilter) || cl.key.includes(searchFilter) || cl.phone.includes(searchFilter)
   );
 }
 
@@ -2587,11 +2607,6 @@ function renderCustomersDirectory() {
   const search = (document.getElementById('customersSearchInput')?.value || '').trim().toLowerCase();
   const list = getUniqueCustomersList(search);
 
-  if (selectedBulkCustomersSet.size === 0 && list.length > 0 && !tbody.dataset.initialized) {
-    list.forEach(cl => selectedBulkCustomersSet.add(cl.phone));
-    tbody.dataset.initialized = 'true';
-  }
-
   if (list.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500">لا يوجد عملاء مسجلين.</td></tr>`;
     updateSelectedCustomersCounter();
@@ -2599,19 +2614,20 @@ function renderCustomersDirectory() {
   }
 
   list.forEach((cl, idx) => {
-    const isChecked = selectedBulkCustomersSet.has(cl.phone);
+    const isChecked = selectedBulkCustomersSet.has(cl.key);
+    const safeName = cl.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     tbody.innerHTML += `
-      <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition">
+      <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition ${isChecked ? 'bg-emerald-500/5' : ''}">
         <td class="p-3 text-center">
-          <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSingleCustomerSelection('${cl.phone}', this.checked)" class="w-4 h-4 accent-emerald-600 rounded cursor-pointer">
+          <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSingleCustomerSelection('${cl.key}', this.checked)" class="w-4 h-4 accent-emerald-600 rounded cursor-pointer">
         </td>
         <td class="p-3 font-mono font-bold text-blue-600 dark:text-cyan-400">#${cl.code || (idx + 1)}</td>
-        <td class="p-3 font-bold text-slate-900 dark:text-white">${cl.name}</td>
+        <td class="p-3 font-bold text-slate-900 dark:text-white cursor-pointer" onclick="toggleSingleCustomerSelection('${cl.key}', ${!isChecked})">${cl.name}</td>
         <td class="p-3 font-mono text-slate-600 dark:text-slate-300">${cl.phone}</td>
         <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${cl.type === 'كاش' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}">${cl.type}</span></td>
         <td class="p-3 font-bold text-slate-900 dark:text-white">${cl.totalBought.toLocaleString()} ج.م</td>
         <td class="p-3 text-center">
-          <button onclick="sendPromoWhatsAppToCustomer('${cl.name.replace(/'/g, "\\'")}', '${cl.phone}')" class="px-3 py-1 bg-emerald-600/15 hover:bg-emerald-600 text-emerald-700 dark:text-emerald-300 hover:text-white border border-emerald-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1.5 mx-auto">
+          <button onclick="sendPromoWhatsAppToCustomer('${safeName}', '${cl.phone}')" class="px-3 py-1 bg-emerald-600/15 hover:bg-emerald-600 text-emerald-700 dark:text-emerald-300 hover:text-white border border-emerald-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1.5 mx-auto">
             <i class="fa-brands fa-whatsapp"></i> إرسال
           </button>
         </td>
@@ -2622,46 +2638,40 @@ function renderCustomersDirectory() {
   updateSelectedCustomersCounter();
 }
 
-function toggleSingleCustomerSelection(phone, isChecked) {
-  if (isChecked) selectedBulkCustomersSet.add(phone);
-  else selectedBulkCustomersSet.delete(phone);
-  updateSelectedCustomersCounter();
-}
-
-function handleSelectAllCheckboxChange(isChecked) {
-  const search = (document.getElementById('customersSearchInput')?.value || '').trim().toLowerCase();
-  const list = getUniqueCustomersList(search);
-  list.forEach(cl => {
-    if (isChecked) selectedBulkCustomersSet.add(cl.phone);
-    else selectedBulkCustomersSet.delete(cl.phone);
-  });
+function toggleSingleCustomerSelection(cleanKey, isChecked) {
+  if (isChecked) selectedBulkCustomersSet.add(cleanKey);
+  else selectedBulkCustomersSet.delete(cleanKey);
   renderCustomersDirectory();
 }
 
-function toggleSelectAllCustomers() {
-  const masterCb = document.getElementById('selectAllCustomersCheckbox');
-  const newState = masterCb ? !masterCb.checked : true;
-  if (masterCb) masterCb.checked = newState;
-  handleSelectAllCheckboxChange(newState);
+function selectAllVisibleCustomers(shouldSelect) {
+  const search = (document.getElementById('customersSearchInput')?.value || '').trim().toLowerCase();
+  const list = getUniqueCustomersList(search);
+  list.forEach(cl => {
+    if (shouldSelect) selectedBulkCustomersSet.add(cl.key);
+    else selectedBulkCustomersSet.delete(cl.key);
+  });
+  renderCustomersDirectory();
 }
 
 function updateSelectedCustomersCounter() {
   const badge = document.getElementById('selectedCustomersCountBadge');
   if (badge) badge.innerText = selectedBulkCustomersSet.size;
+
   const search = (document.getElementById('customersSearchInput')?.value || '').trim().toLowerCase();
   const list = getUniqueCustomersList(search);
   const masterCb = document.getElementById('selectAllCustomersCheckbox');
   if (masterCb) {
-    masterCb.checked = list.length > 0 && list.every(cl => selectedBulkCustomersSet.has(cl.phone));
+    masterCb.checked = list.length > 0 && list.every(cl => selectedBulkCustomersSet.has(cl.key));
   }
 }
 
 function startBulkWhatsAppCampaign() {
   const allCustomers = getUniqueCustomersList('');
-  bulkWhatsAppQueueList = allCustomers.filter(cl => selectedBulkCustomersSet.has(cl.phone));
+  bulkWhatsAppQueueList = allCustomers.filter(cl => selectedBulkCustomersSet.has(cl.key));
 
   if (bulkWhatsAppQueueList.length === 0) {
-    alert('يرجى تحديد عميل واحد على الأقل من القائمة لإرسال الحملة.');
+    alert('يرجى تحديد عميل واحد على الأقل من القائمة (أو اضغط "تحديد الكل") لإرسال الحملة.');
     return;
   }
 
@@ -2738,7 +2748,7 @@ function saveAndApplyPromoMessage() {
 
 function sendPromoWhatsAppToCustomer(name, phone) {
   const template = localStorage.getItem(STORAGE_KEY_PROMO_TEMPLATE) || 'أقوى العروض من معرض أولاد العبد للأجهزة الكهربائية!';
-  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  const cleanPhone = normalizePhoneKey(phone);
   window.open(`https://wa.me/2${cleanPhone}?text=${encodeURIComponent(`أهلاً بحضرتك أستاذ ${name} 🌸\n` + template)}`, '_blank');
 }
 
