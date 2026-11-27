@@ -64,13 +64,16 @@
       <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-slate-800 dark:hover:text-white p-1 rounded-xl"><i class="fa-solid fa-xmark text-lg"></i></button>
     </div>
 
-    <!-- تبديل الوضع -->
-    <div class="px-3 pt-3">
-      <button onclick="toggleThemeMode()" class="w-full flex items-center justify-between px-3.5 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/90 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition">
-        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2" id="themeStatusText">
+    <!-- تبديل الوضع وتغيير الباسورد -->
+    <div class="px-3 pt-3 flex gap-1.5">
+      <button onclick="toggleThemeMode()" class="flex-1 flex items-center justify-between px-3 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/90 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition">
+        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5" id="themeStatusText">
           <i class="fa-solid fa-moon text-indigo-400"></i> الوضع الليلي
         </span>
-        <span class="text-xs px-2.5 py-1 rounded-xl bg-blue-600 text-white font-bold" id="themeSwitchIcon">تغيير ☀️</span>
+        <span class="text-[10px] px-2 py-0.5 rounded-lg bg-blue-600 text-white font-bold" id="themeSwitchIcon">☀️</span>
+      </button>
+      <button onclick="changeOwnerPasswordModal()" class="px-3 py-2 rounded-2xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 text-xs font-bold transition" title="تغيير الرقم السري للمدير">
+        <i class="fa-solid fa-key"></i>
       </button>
     </div>
 
@@ -94,8 +97,12 @@
           <i class="fa-solid fa-upload"></i> استعادة JSON
         </button>
       </div>
+      <!-- زر تفعيل وإغلاق الوردية -->
+      <button onclick="toggleShiftActivationState()" id="shiftToggleStatusBtn" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition shadow">
+        <i class="fa-solid fa-play"></i> تفعيل وردية جديدة
+      </button>
       <button onclick="openDailyShiftModal()" class="w-full py-1.5 bg-blue-600/10 hover:bg-blue-600/20 text-blue-600 dark:text-cyan-400 border border-blue-500/30 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition">
-        <i class="fa-solid fa-calculator"></i> تقفيل الوردية اليومية (الدرج)
+        <i class="fa-solid fa-calculator"></i> جرد وتقفيل الدرج الآن
       </button>
       <input type="file" id="excelFileInput" accept=".xlsx, .xls" class="hidden" onchange="importDatabaseFromExcelFile(event)">
       <input type="file" id="jsonBackupInput" accept=".json" class="hidden" onchange="importLocalBackupJSON(event)">
@@ -173,9 +180,14 @@
               <span class="px-2.5 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/30 text-cyan-600 dark:text-cyan-400 text-[11px] font-bold">
                 <i class="fa-solid fa-circle-dot text-[8px] ml-1"></i> حركة الصندوق اليومي
               </span>
+              <!-- زر العين للإخفاء والإظهار -->
+              <button onclick="toggleCashBoxPrivacy()" id="toggleCashEyeBtn" class="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 transition border border-slate-200 dark:border-slate-700" title="إخفاء أو إظهار الأرقام">
+                <i class="fa-solid fa-eye-slash" id="cashEyeIcon"></i>
+                <span id="cashEyeText">إخفاء</span>
+              </button>
             </div>
             <div class="flex items-baseline gap-2.5 mt-1">
-              <h3 class="text-3xl md:text-4xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight" id="dashTotalSalesVal">0 ج.م</h3>
+              <h3 class="text-3xl md:text-4xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight cash-sensitive-val" id="dashTotalSalesVal">0 ج.م</h3>
               <span class="text-xs text-slate-500 dark:text-slate-400 font-semibold">رصيد الخزينة الصافي</span>
             </div>
           </div>
@@ -198,7 +210,7 @@
               <span class="text-[11px] text-slate-500 dark:text-slate-400 font-bold">المحصل فعلياً</span>
               <div class="w-7 h-7 rounded-xl bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs"><i class="fa-solid fa-vault"></i></div>
             </div>
-            <b class="text-base md:text-xl font-black text-emerald-600 dark:text-emerald-400 block" id="dashCashCollectedVal">0 ج.م</b>
+            <b class="text-base md:text-xl font-black text-emerald-600 dark:text-emerald-400 block cash-sensitive-val" id="dashCashCollectedVal">0 ج.م</b>
           </div>
 
           <div class="p-4 rounded-2xl bg-slate-50 dark:bg-[#0b101e]/80 border border-slate-200 dark:border-slate-800 hover:border-amber-500/40 transition group">
@@ -206,7 +218,7 @@
               <span class="text-[11px] text-slate-500 dark:text-slate-400 font-bold">أقساط بالخارج</span>
               <div class="w-7 h-7 rounded-xl bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs"><i class="fa-solid fa-hand-holding-dollar"></i></div>
             </div>
-            <b class="text-base md:text-xl font-black text-amber-600 dark:text-amber-300 block" id="dashInstallmentsRemainingVal">0 ج.م</b>
+            <b class="text-base md:text-xl font-black text-amber-600 dark:text-amber-300 block cash-sensitive-val" id="dashInstallmentsRemainingVal">0 ج.م</b>
           </div>
 
           <div class="p-4 rounded-2xl bg-slate-50 dark:bg-[#0b101e]/80 border border-slate-200 dark:border-slate-800 hover:border-rose-500/40 transition group">
@@ -214,7 +226,7 @@
               <span class="text-[11px] text-slate-500 dark:text-slate-400 font-bold">ديون للموردين</span>
               <div class="w-7 h-7 rounded-xl bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xs"><i class="fa-solid fa-truck"></i></div>
             </div>
-            <b class="text-base md:text-xl font-black text-rose-600 dark:text-rose-400 block" id="dashSuppliersDebtsVal">0 ج.م</b>
+            <b class="text-base md:text-xl font-black text-rose-600 dark:text-rose-400 block cash-sensitive-val" id="dashSuppliersDebtsVal">0 ج.م</b>
           </div>
 
           <div class="p-4 rounded-2xl bg-slate-50 dark:bg-[#0b101e]/80 border border-slate-200 dark:border-slate-800 hover:border-purple-500/40 transition group">
@@ -222,7 +234,7 @@
               <span class="text-[11px] text-slate-500 dark:text-slate-400 font-bold">المصاريف والهوالك</span>
               <div class="w-7 h-7 rounded-xl bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xs"><i class="fa-solid fa-receipt"></i></div>
             </div>
-            <b class="text-base md:text-xl font-black text-purple-600 dark:text-purple-300 block" id="dashTotalExpensesVal">0 ج.م</b>
+            <b class="text-base md:text-xl font-black text-purple-600 dark:text-purple-300 block cash-sensitive-val" id="dashTotalExpensesVal">0 ج.م</b>
           </div>
         </div>
 
@@ -230,7 +242,7 @@
           <span class="text-slate-300 font-semibold flex items-center gap-2">
             <i class="fa-solid fa-sack-dollar text-emerald-400 text-sm"></i> صافي الأرباح التقديرية (بعد خصم تكلفة البضائع والمصاريف):
           </span>
-          <b class="text-base md:text-lg font-black text-emerald-400" id="dashNetProfitVal">0 ج.م</b>
+          <b class="text-base md:text-lg font-black text-emerald-400 cash-sensitive-val" id="dashNetProfitVal">0 ج.م</b>
         </div>
       </div>
 
@@ -409,7 +421,7 @@
             <h3 class="text-sm md:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <i class="fa-solid fa-boxes-stacked text-amber-500 dark:text-amber-400"></i> جرد المخزن وأرصدة الأجهزة
             </h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">الأجهزة التي يصل رصيدها إلى 3 قطع أو أقل يظهر لها تنبيه نواقص فوري.</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">الأجهزة التي يصل رصيدها إلى 3 قطع أو أقل يظهر لها تنبيه نواقص فوري (تحديث الأسعار محمي برقم سري).</p>
           </div>
           <button onclick="exportInventoryToExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-bold flex items-center gap-2 transition shadow">
             <i class="fa-solid fa-file-excel"></i> تصدير المخزن
@@ -540,9 +552,9 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
           <div>
             <h3 class="text-sm md:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <i class="fa-solid fa-vault text-blue-500"></i> أرشيف تقفيلات الوردية وحركة الدرج اليومية
+              <i class="fa-solid fa-vault text-blue-500"></i> أرشيف تقفيلات الوردية وسجل الحركات اليومية
             </h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">مراجعة تاريخية للدرج اليومي، الشهري، والسنوي مع الأوقات الدقيقة.</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">مراجعة تاريخية للدرج وكل حركات البيع والشراء والمصاريف المسجلة داخل كل وردية.</p>
           </div>
           <button onclick="exportShiftsArchiveToExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-bold flex items-center gap-1.5 shadow">
             <i class="fa-solid fa-file-excel"></i> تصدير إكسيل
@@ -591,7 +603,7 @@
 
   <!-- Modal: تقفيل الوردية اليومية (Z-Report) -->
   <div id="dailyShiftModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
-    <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+    <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-lg rounded-3xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
         <h3 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
           <i class="fa-solid fa-calculator text-blue-500"></i> تقفيل الوردية اليومية وحساب الدرج
@@ -620,13 +632,52 @@
             طباعة تقرير 🖨️
           </button>
         </div>
+
+        <!-- عرض سجل حركات الوردية النشطة -->
+        <div class="pt-2">
+          <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
+            <i class="fa-solid fa-list-check text-cyan-500"></i> سجل الحركات داخل الوردية الحالية (<span id="activeShiftLogsCount">0</span>):
+          </h4>
+          <div id="activeShiftLogsPreview" class="max-h-40 overflow-y-auto custom-scrollbar space-y-1.5 bg-slate-50 dark:bg-[#080d19] p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800">
+            <p class="text-center text-slate-400 py-2">لا توجد حركات مسجلة في الوردية المفتوحة.</p>
+          </div>
+        </div>
       </div>
       <div class="flex gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
         <button onclick="closeDailyShiftAndArchive()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold shadow">
-          حفظ إكسيل وتقفيل الوردية في الأرشيف
+          إغلاق الوردية وحفظها بالأرشيف
         </button>
         <button onclick="closeModal('dailyShiftModal')" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold">إلغاء</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal: عرض سجل حركات وردية مؤرشفة -->
+  <div id="viewShiftLogsModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
+    <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-xl rounded-3xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div>
+          <h3 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+            <i class="fa-solid fa-clipboard-list text-blue-500"></i> سجل حركات الوردية <span id="vslShiftIdLabel" class="text-cyan-400 font-mono">--</span>
+          </h3>
+          <p class="text-xs text-slate-400 mt-0.5" id="vslShiftMetaLabel">--</p>
+        </div>
+        <button onclick="closeModal('viewShiftLogsModal')" class="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50 dark:bg-[#080d19]/60 custom-scrollbar">
+        <table class="w-full text-right text-xs">
+          <thead class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+            <tr>
+              <th class="p-2.5">الوقت</th>
+              <th class="p-2.5">نوع الحركة</th>
+              <th class="p-2.5">البيان والتفاصيل</th>
+              <th class="p-2.5">المبلغ</th>
+            </tr>
+          </thead>
+          <tbody id="vslShiftLogsTbody" class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-800 dark:text-slate-300"></tbody>
+        </table>
+      </div>
+      <button onclick="closeModal('viewShiftLogsModal')" class="w-full py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-white rounded-2xl text-xs font-bold">إغلاق</button>
     </div>
   </div>
 
@@ -744,7 +795,7 @@
       </div>
 
       <div class="flex justify-between items-center p-3 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs">
-        <span class="font-bold text-slate-700 dark:text-slate-300">إجمالي الأجهزة بالسلة:</span>
+        <span class="font-bold text-slate-700 dark:text-slate-300">إجمالي الأجهزة بالسلة (كاش):</span>
         <b id="saleCartGrandTotalDisplay" class="text-sm font-black text-emerald-600 dark:text-emerald-400">0 ج.م</b>
       </div>
 
@@ -757,14 +808,14 @@
           </div>
           <div>
             <label class="block text-xs text-slate-700 dark:text-slate-300 mb-1">مدة التقسيط (شهور)</label>
-            <input type="number" id="instMonths" value="12" min="1" oninput="calculateInstallmentMath()" class="w-full bg-white dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white font-bold text-xs outline-none focus:border-blue-500">
+            <input type="number" id="instMonths" value="10" min="1" oninput="calculateInstallmentMath()" class="w-full bg-white dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-slate-900 dark:text-white font-bold text-xs outline-none focus:border-blue-500">
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-2.5">
           <div>
-            <label class="block text-xs text-slate-700 dark:text-slate-300 mb-1">نسبة الفائدة السنوية (%)</label>
-            <input type="number" id="instInterestRate" value="15" oninput="calculateInstallmentMath()" class="w-full bg-white dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-blue-600 dark:text-cyan-400 font-bold text-xs outline-none focus:border-blue-500">
+            <label class="block text-xs text-slate-700 dark:text-slate-300 mb-1">نسبة الفائدة الكلية (%)</label>
+            <input type="number" id="instInterestRate" value="35" oninput="calculateInstallmentMath()" class="w-full bg-white dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-2.5 text-blue-600 dark:text-cyan-400 font-bold text-xs outline-none focus:border-blue-500">
           </div>
           <div>
             <label class="block text-xs text-slate-700 dark:text-slate-300 mb-1">تاريخ أول قسط</label>
@@ -772,12 +823,16 @@
           </div>
         </div>
 
-        <div class="p-3 bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 flex justify-between items-center text-xs">
+        <div class="p-3 bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 grid grid-cols-3 gap-2 text-center text-xs">
+          <div>
+            <span class="text-slate-500 dark:text-slate-400 block text-[10px]">مبلغ الفائدة المضاف:</span>
+            <b id="instCalculatedInterestVal" class="text-amber-600 dark:text-amber-400 text-sm font-black">0 ج.م</b>
+          </div>
           <div>
             <span class="text-slate-500 dark:text-slate-400 block text-[10px]">إجمالي العقد بالفوائد:</span>
             <b id="instCalculatedTotal" class="text-slate-900 dark:text-white text-sm font-black">0 ج.م</b>
           </div>
-          <div class="text-left">
+          <div>
             <span class="text-slate-500 dark:text-slate-400 block text-[10px]">القسط الشهري:</span>
             <b id="instCalculatedMonthly" class="text-blue-600 dark:text-cyan-400 text-sm font-black">0 ج / شهر</b>
           </div>
@@ -1161,6 +1216,7 @@
             </div>
           </div>
           <div class="flex justify-between items-center text-xs pt-1 border-t border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+            <span>الفائدة: <b class="text-amber-500" id="editCalculatedInterest">0 ج</b></span>
             <span>الإجمالي: <b class="text-slate-900 dark:text-white" id="editCalculatedTotal">0 ج</b></span>
             <span>القسط: <b class="text-blue-600 dark:text-cyan-400" id="editCalculatedMonthly">0 ج</b></span>
           </div>
