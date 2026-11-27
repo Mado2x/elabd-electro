@@ -49,7 +49,7 @@ function requireOwnerAuth(actionCallback) {
   if (window.Swal) {
     Swal.fire({
       title: 'حماية المدير 🔒',
-      text: 'أدخل الرقم السري للمتابعة (الحذف أو تعديل الأسعار):',
+      text: 'أدخل الرقم السري للمتابعة (الحذف، التصفير، أو تعديل الأسعار):',
       input: 'password',
       inputPlaceholder: '••••',
       showCancelButton: true,
@@ -104,6 +104,47 @@ function changeOwnerPasswordModal() {
         localStorage.setItem(STORAGE_KEY_OWNER_PASS, newPass.trim());
         alert('تم تغيير الرقم السري بنجاح.');
       }
+    }
+  });
+}
+
+// =================== إعادة تهيئة وتصفير جميع البيانات (محمي بالباسورد) ===================
+function resetAllSystemDataProtected() {
+  requireOwnerAuth(() => {
+    const executeWipe = () => {
+      if (typeof exportCurrentDatabaseToExcel === 'function') {
+        exportCurrentDatabaseToExcel(false);
+      }
+
+      const savedPass = localStorage.getItem(STORAGE_KEY_OWNER_PASS);
+      const savedTheme = localStorage.getItem('elabd_theme_mode');
+
+      localStorage.clear();
+
+      if (savedPass) localStorage.setItem(STORAGE_KEY_OWNER_PASS, savedPass);
+      if (savedTheme) localStorage.setItem('elabd_theme_mode', savedTheme);
+
+      showToast('تم تصفير جميع البيانات بنجاح، جاري إعادة التشغيل...', 'success');
+      setTimeout(() => location.reload(), 1200);
+    };
+
+    if (window.Swal) {
+      Swal.fire({
+        title: 'تحذير: تصفير قاعدة البيانات بالكامل! ⚠️',
+        text: 'سيتم حذف جميع الفواتير، الأقساط، المخزن، الموردين، والمصاريف نهائياً (مع تنزيل نسخة Excel احتياطية قبل المسح). هل أنت متأكد؟',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'نعم، صفّر النظام الآن 🗑️',
+        cancelButtonText: 'تراجع',
+        confirmButtonColor: '#dc2626',
+        background: document.documentElement.classList.contains('dark') ? '#111726' : '#ffffff',
+        color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#1e293b',
+        customClass: { popup: 'rounded-3xl border border-rose-500/40' }
+      }).then((res) => {
+        if (res.isConfirmed) executeWipe();
+      });
+    } else if (confirm('هل أنت متأكد من تصفير جميع بيانات البرنامج؟')) {
+      executeWipe();
     }
   });
 }
@@ -2372,74 +2413,7 @@ function printArchivedShiftReport(shiftId) {
   windowPrintReceiptHTML(html);
 }
 
-// =================== الطباعة والنسخ الاحتياطي ===================
-function exportLocalBackupJSON() {
-  try {
-    const keys = [
-      STORAGE_KEY_DETAILED_SUPPLIERS, STORAGE_KEY_SELLING_PRICES, STORAGE_KEY_SALES,
-      STORAGE_KEY_CONTRACTS, STORAGE_KEY_EXPENSES, STORAGE_KEY_SHIFTS_ARCHIVE,
-      STORAGE_KEY_PROMO_TEMPLATE
-    ];
-    const snapshot = { schemaVersion: 1, exportedAt: new Date().toISOString(), data: {} };
-    keys.forEach(key => {
-      const val = localStorage.getItem(key);
-      if (val !== null) snapshot.data[key] = val;
-    });
-    const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `نسخة_احتياطية_معرض_أولاد_العبد_${getFormattedDateTimeNow().date}.json`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-    showToast('تم تنزيل النسخة الاحتياطية بنجاح ✔', 'success');
-    return true;
-  } catch (error) {
-    alert('تعذر إنشاء النسخة الاحتياطية.');
-    return false;
-  }
-}
-
-function importLocalBackupJSON(event) {
-  const input = event && event.target;
-  const file = input && input.files && input.files[0];
-  if (!file) return;
-  const resetInput = () => { if (input) input.value = ''; };
-
-  if (!confirm('هل تريد استرجاع النسخة الاحتياطية (JSON)؟ سيتم استبدال البيانات الحالية ببيانات النسخة المحددة.')) {
-    resetInput();
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onerror = () => { alert('تعذر قراءة ملف النسخة الاحتياطية.'); resetInput(); };
-  reader.onload = function(e) {
-    try {
-      const parsed = JSON.parse(e.target.result);
-      if (!parsed || typeof parsed.data !== 'object') throw new Error('تنسيق ملف النسخة الاحتياطية غير صالح.');
-      const allowedKeys = [
-        STORAGE_KEY_DETAILED_SUPPLIERS, STORAGE_KEY_SELLING_PRICES, STORAGE_KEY_SALES,
-        STORAGE_KEY_CONTRACTS, STORAGE_KEY_EXPENSES, STORAGE_KEY_SHIFTS_ARCHIVE,
-        STORAGE_KEY_PROMO_TEMPLATE
-      ];
-      allowedKeys.forEach(key => {
-        if (parsed.data[key] !== undefined) {
-          localStorage.setItem(key, parsed.data[key]);
-        }
-      });
-      alert('تم استرجاع النسخة الاحتياطية بنجاح، سيتم تحديث النظام الآن.');
-      location.reload();
-    } catch (err) {
-      alert(`تعذر استرجاع النسخة: ${err.message}`);
-    } finally {
-      resetInput();
-    }
-  };
-  reader.readAsText(file, 'utf-8');
-}
-
+// =================== الطباعة الحرارية ===================
 function windowPrintReceiptHTML(contentHtml) {
   const printArea = document.getElementById('printableReceiptArea');
   if (!printArea) return;
