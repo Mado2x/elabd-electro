@@ -34,6 +34,11 @@ let currentTargetInputIdForScanner = null;
 let lastInquiredDeviceObject = null;
 let toastTimeoutInstance = null;
 
+// متغيرات حملة الواتساب الجماعية
+let selectedBulkCustomersSet = new Set();
+let bulkWhatsAppQueueList = [];
+let bulkWhatsAppCurrentIndex = 0;
+
 // =================== حماية المدير بالرقم السري ===================
 function getOwnerPassword() {
   return localStorage.getItem(STORAGE_KEY_OWNER_PASS) || '1234';
@@ -364,7 +369,6 @@ function toggleShiftActivationState() {
   }
 }
 
-// تسجيل أي حركة داخل الوردية النشطة فقط وتحديث عداداتها المستقلة
 function logActionToActiveShift(categoryKey, actionLabel, description, amount = 0) {
   let activeShift = getActiveShift();
   if (!activeShift || activeShift.status !== 'open') {
@@ -951,7 +955,6 @@ function confirmCollectInstallment() {
 
   setStoredContracts(contracts);
   
-  // تسجيل الحركة في الوردية النشطة فقط
   logActionToActiveShift('installment', 'تحصيل قسط', `${cnt.customerName} (قسط #${currentCollectingInstallmentNum})`, paidVal);
 
   closeModal('collectInstallmentModal');
@@ -1332,7 +1335,6 @@ function handleSaveSaleInvoice() {
     sales.unshift(newSale);
     setStoredSales(sales);
 
-    // تسجيل الحركة في الوردية النشطة فقط
     logActionToActiveShift('sale', 'بيع كاش', `${customerName} (${deviceNamesCombined})`, totalCashPrice);
 
     closeModal('newSaleModal');
@@ -1415,7 +1417,6 @@ function handleSaveSaleInvoice() {
     });
     setStoredSales(sales);
 
-    // تسجيل الحركة في الوردية النشطة فقط
     logActionToActiveShift('sale', 'بيع تقسيط (مقدم)', `${customerName} (${deviceNamesCombined}) - إجمالي العقد ${math.grandTotalContract.toLocaleString()} ج`, math.downPayment);
 
     closeModal('newSaleModal');
@@ -1838,7 +1839,6 @@ function handleSaveMultiItemSupplierInvoice() {
 
   setDetailedSuppliers(suppliers);
 
-  // تسجيل الحركة في الوردية النشطة فقط
   logActionToActiveShift('supplier', 'توريد مخزن', `من المورد: ${sup.name} [${itemsSummary}]`, paidNow);
 
   closeModal('addSupplierShipmentModal');
@@ -2109,7 +2109,6 @@ function handleSaveExpense() {
   expenses.unshift({ id: 'EXP-' + Date.now(), date, title, category, amount, notes });
   setStoredExpenses(expenses);
 
-  // تسجيل الحركة في الوردية النشطة فقط
   logActionToActiveShift('expense', 'مصروف', `${title} (${category})`, amount);
 
   closeModal('addExpenseModal');
@@ -2131,7 +2130,6 @@ function deleteExpense(expId) {
   });
 }
 
-// عرض أرقام الوردية النشطة فقط (تبدأ من صفر في كل تفعيل)
 function openDailyShiftModal() {
   const activeShift = getActiveShift();
 
@@ -2176,7 +2174,6 @@ function openDailyShiftModal() {
   openModal('dailyShiftModal');
 }
 
-// إغلاق الوردية الحالية وتصفير العداد للوردية القادمة
 function closeDailyShiftAndArchive() {
   const activeShift = getActiveShift();
   if (!activeShift || activeShift.status !== 'open') {
@@ -2208,7 +2205,6 @@ function closeDailyShiftAndArchive() {
   archive.unshift(shiftRecord);
   setStoredShiftsArchive(archive);
 
-  // مسح الوردية النشطة بالكامل حتى تبدأ الوردية القادمة من الصفر تماماً
   localStorage.removeItem(STORAGE_KEY_ACTIVE_SHIFT);
   updateShiftButtonUI();
 
@@ -2506,7 +2502,7 @@ function printCurrentViewedSaleInvoice() {
   windowPrintReceiptHTML(html);
 }
 
-// =================== قوالب الواتساب ودليل العملاء ===================
+// =================== قوالب الواتساب ودليل العملاء والحملة الجماعية ===================
 function openChooseWhatsAppModal(contractId) {
   currentContractForWhatsApp = getStoredContracts().find(x => x.id === contractId);
   if (!currentContractForWhatsApp) return;
@@ -2559,24 +2555,18 @@ function executeSendWhatsAppTemplate(type) {
   window.open(`https://wa.me/2${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-function renderCustomersDirectory() {
+function getUniqueCustomersList(searchFilter = '') {
   const contracts = getStoredContracts();
   const sales = getStoredSales();
-  const tbody = document.getElementById('customersDirectoryTableBody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  const search = (document.getElementById('customersSearchInput')?.value || '').trim().toLowerCase();
   const clientsMap = {};
 
   sales.forEach(s => {
     const phone = (s.customerPhone || '').toString().trim();
     if (!phone) return;
     if (!clientsMap[phone]) {
-      clientsMap[phone] = { name: s.customerName, phone: phone, type: s.type, totalBought: 0, devices: [] };
+      clientsMap[phone] = { name: s.customerName, phone: phone, type: s.type, totalBought: 0 };
     }
     clientsMap[phone].totalBought += (parseFloat(s.totalPrice) || 0);
-    if (s.deviceName) clientsMap[phone].devices.push(s.deviceName);
   });
 
   contracts.forEach(c => {
@@ -2584,29 +2574,151 @@ function renderCustomersDirectory() {
     if (phone && clientsMap[phone]) clientsMap[phone].code = c.clientCode;
   });
 
-  const list = Object.values(clientsMap).filter(cl => cl.name.toLowerCase().includes(search) || cl.phone.includes(search));
+  return Object.values(clientsMap).filter(cl =>
+    !searchFilter || cl.name.toLowerCase().includes(searchFilter) || cl.phone.includes(searchFilter)
+  );
+}
+
+function renderCustomersDirectory() {
+  const tbody = document.getElementById('customersDirectoryTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  const search = (document.getElementById('customersSearchInput')?.value || '').trim().toLowerCase();
+  const list = getUniqueCustomersList(search);
+
+  if (selectedBulkCustomersSet.size === 0 && list.length > 0 && !tbody.dataset.initialized) {
+    list.forEach(cl => selectedBulkCustomersSet.add(cl.phone));
+    tbody.dataset.initialized = 'true';
+  }
 
   if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500">لا يوجد عملاء مسجلين.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500">لا يوجد عملاء مسجلين.</td></tr>`;
+    updateSelectedCustomersCounter();
     return;
   }
 
   list.forEach((cl, idx) => {
+    const isChecked = selectedBulkCustomersSet.has(cl.phone);
     tbody.innerHTML += `
-      <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50">
+      <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition">
+        <td class="p-3 text-center">
+          <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSingleCustomerSelection('${cl.phone}', this.checked)" class="w-4 h-4 accent-emerald-600 rounded cursor-pointer">
+        </td>
         <td class="p-3 font-mono font-bold text-blue-600 dark:text-cyan-400">#${cl.code || (idx + 1)}</td>
         <td class="p-3 font-bold text-slate-900 dark:text-white">${cl.name}</td>
         <td class="p-3 font-mono text-slate-600 dark:text-slate-300">${cl.phone}</td>
         <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${cl.type === 'كاش' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}">${cl.type}</span></td>
         <td class="p-3 font-bold text-slate-900 dark:text-white">${cl.totalBought.toLocaleString()} ج.م</td>
         <td class="p-3 text-center">
-          <button onclick="sendPromoWhatsAppToCustomer('${cl.name.replace(/'/g, "\\'")}', '${cl.phone}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 mx-auto shadow">
-            <i class="fa-brands fa-whatsapp"></i> إرسال العرض
+          <button onclick="sendPromoWhatsAppToCustomer('${cl.name.replace(/'/g, "\\'")}', '${cl.phone}')" class="px-3 py-1 bg-emerald-600/15 hover:bg-emerald-600 text-emerald-700 dark:text-emerald-300 hover:text-white border border-emerald-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1.5 mx-auto">
+            <i class="fa-brands fa-whatsapp"></i> إرسال
           </button>
         </td>
       </tr>
     `;
   });
+
+  updateSelectedCustomersCounter();
+}
+
+function toggleSingleCustomerSelection(phone, isChecked) {
+  if (isChecked) selectedBulkCustomersSet.add(phone);
+  else selectedBulkCustomersSet.delete(phone);
+  updateSelectedCustomersCounter();
+}
+
+function handleSelectAllCheckboxChange(isChecked) {
+  const search = (document.getElementById('customersSearchInput')?.value || '').trim().toLowerCase();
+  const list = getUniqueCustomersList(search);
+  list.forEach(cl => {
+    if (isChecked) selectedBulkCustomersSet.add(cl.phone);
+    else selectedBulkCustomersSet.delete(cl.phone);
+  });
+  renderCustomersDirectory();
+}
+
+function toggleSelectAllCustomers() {
+  const masterCb = document.getElementById('selectAllCustomersCheckbox');
+  const newState = masterCb ? !masterCb.checked : true;
+  if (masterCb) masterCb.checked = newState;
+  handleSelectAllCheckboxChange(newState);
+}
+
+function updateSelectedCustomersCounter() {
+  const badge = document.getElementById('selectedCustomersCountBadge');
+  if (badge) badge.innerText = selectedBulkCustomersSet.size;
+  const search = (document.getElementById('customersSearchInput')?.value || '').trim().toLowerCase();
+  const list = getUniqueCustomersList(search);
+  const masterCb = document.getElementById('selectAllCustomersCheckbox');
+  if (masterCb) {
+    masterCb.checked = list.length > 0 && list.every(cl => selectedBulkCustomersSet.has(cl.phone));
+  }
+}
+
+function startBulkWhatsAppCampaign() {
+  const allCustomers = getUniqueCustomersList('');
+  bulkWhatsAppQueueList = allCustomers.filter(cl => selectedBulkCustomersSet.has(cl.phone));
+
+  if (bulkWhatsAppQueueList.length === 0) {
+    alert('يرجى تحديد عميل واحد على الأقل من القائمة لإرسال الحملة.');
+    return;
+  }
+
+  bulkWhatsAppCurrentIndex = 0;
+  renderBulkQueueStepUI();
+  openModal('bulkWhatsAppQueueModal');
+}
+
+function renderBulkQueueStepUI() {
+  const total = bulkWhatsAppQueueList.length;
+  if (bulkWhatsAppCurrentIndex >= total) {
+    closeModal('bulkWhatsAppQueueModal');
+    showToast(`تم الانتهاء من إرسال الحملة لجميع العملاء المحددين (${total} عميل) 🎉`, 'success');
+    return;
+  }
+
+  const customer = bulkWhatsAppQueueList[bulkWhatsAppCurrentIndex];
+  const template = localStorage.getItem(STORAGE_KEY_PROMO_TEMPLATE) ||
+    `تحية طيبة من معرض أولاد العبد للأجهزة الكهربائية والمنزلية 🏢\nيسعدنا إبلاغ سيادتكم بوصول تشكيلة جديدة من الأجهزة بأفضل الأسعار وأنظمة تقسيط ميسرة!\nتشرفنا زيارتكم في المعرض للاستفادة من العروض ✨`;
+
+  const fullMsg = `أهلاً بحضرتك أستاذ ${customer.name} 🌸\n` + template;
+
+  const progressText = document.getElementById('bulkWaProgressText');
+  if (progressText) progressText.innerText = `${bulkWhatsAppCurrentIndex + 1} من ${total}`;
+
+  const progressBar = document.getElementById('bulkWaProgressBar');
+  if (progressBar) progressBar.style.width = `${Math.round(((bulkWhatsAppCurrentIndex + 1) / total) * 100)}%`;
+
+  const nameEl = document.getElementById('bulkWaCurrentName');
+  if (nameEl) nameEl.innerText = customer.name;
+
+  const phoneEl = document.getElementById('bulkWaCurrentPhone');
+  if (phoneEl) phoneEl.innerText = customer.phone;
+
+  const msgEl = document.getElementById('bulkWaPreviewMsg');
+  if (msgEl) msgEl.innerText = fullMsg;
+
+  const btnEl = document.getElementById('bulkWaSendNextBtn');
+  if (btnEl) {
+    const isLast = (bulkWhatsAppCurrentIndex === total - 1);
+    btnEl.innerHTML = isLast
+      ? `<i class="fa-brands fa-whatsapp text-base"></i> إرسال للعميل الأخير وإنهاء الحملة ✔`
+      : `<i class="fa-brands fa-whatsapp text-base"></i> إرسال لـ (${customer.name}) والانتقال للتالي ⬅️`;
+  }
+}
+
+function sendCurrentAndAdvanceBulkQueue() {
+  const customer = bulkWhatsAppQueueList[bulkWhatsAppCurrentIndex];
+  if (!customer) return;
+  sendPromoWhatsAppToCustomer(customer.name, customer.phone);
+  bulkWhatsAppCurrentIndex++;
+  renderBulkQueueStepUI();
+}
+
+function skipCurrentInBulkQueue() {
+  bulkWhatsAppCurrentIndex++;
+  renderBulkQueueStepUI();
 }
 
 function openBroadcastPromoModal() {
