@@ -99,7 +99,7 @@
       </div>
       <!-- زر تفعيل وإغلاق الوردية -->
       <button onclick="toggleShiftActivationState()" id="shiftToggleStatusBtn" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition shadow">
-        <i class="fa-solid fa-play"></i> تفعيل وردية جديدة
+        <i class="fa-solid fa-play"></i> تفعيل وردية جديدة (0 ج)
       </button>
       <button onclick="openDailyShiftModal()" class="w-full py-1.5 bg-blue-600/10 hover:bg-blue-600/20 text-blue-600 dark:text-cyan-400 border border-blue-500/30 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition">
         <i class="fa-solid fa-calculator"></i> جرد وتقفيل الدرج الآن
@@ -517,27 +517,38 @@
             <h3 class="text-sm md:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <i class="fa-solid fa-bullhorn text-emerald-500"></i> قاعدة بيانات العملاء والعروض الترويجية
             </h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">تواصل مع عملائك وابعت أحدث عروض وأجهزة المعرض عبر واتساب.</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">حدد العملاء وابعت أحدث عروض وأجهزة المعرض عبر واتساب بضغطة واحدة.</p>
           </div>
-          <button onclick="openBroadcastPromoModal()" class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-emerald-600/30">
-            <i class="fa-brands fa-whatsapp text-sm"></i> كتابة رسالة عروض جماعية
-          </button>
+          <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <button onclick="openBroadcastPromoModal()" class="flex-1 sm:flex-none px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition">
+              <i class="fa-solid fa-pen-to-square text-emerald-500"></i> تعديل نص العرض
+            </button>
+            <button onclick="startBulkWhatsAppCampaign()" class="flex-1 sm:flex-none px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition">
+              <i class="fa-brands fa-whatsapp text-sm"></i> إرسال جماعي للمحددين (<span id="selectedCustomersCountBadge">0</span>)
+            </button>
+          </div>
         </div>
 
-        <div>
-          <input type="text" id="customersSearchInput" oninput="renderCustomersDirectory()" placeholder="بحث باسم العميل أو رقم الهاتف..." class="w-full bg-slate-50 dark:bg-[#0b101e] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition">
+        <div class="flex flex-col sm:flex-row gap-2">
+          <input type="text" id="customersSearchInput" oninput="renderCustomersDirectory()" placeholder="بحث باسم العميل أو رقم الهاتف..." class="flex-1 bg-slate-50 dark:bg-[#0b101e] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition">
+          <button onclick="toggleSelectAllCustomers()" class="px-4 py-2.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 text-blue-700 dark:text-cyan-400 border border-blue-200 dark:border-blue-800 rounded-2xl text-xs font-bold transition whitespace-nowrap">
+            <i class="fa-solid fa-check-double"></i> تحديد / إلغاء الكل
+          </button>
         </div>
 
         <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl custom-scrollbar">
           <table class="w-full text-right text-xs">
             <thead class="bg-slate-100 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
               <tr>
+                <th class="p-3 text-center w-10">
+                  <input type="checkbox" id="selectAllCustomersCheckbox" onchange="handleSelectAllCheckboxChange(this.checked)" class="w-4 h-4 accent-emerald-600 rounded cursor-pointer">
+                </th>
                 <th class="p-3">كود</th>
                 <th class="p-3">اسم العميل</th>
                 <th class="p-3">رقم الهاتف</th>
                 <th class="p-3">نوع التعامل</th>
                 <th class="p-3">إجمالي المسحوبات</th>
-                <th class="p-3 text-center">إرسال عرض ترويجي</th>
+                <th class="p-3 text-center">إرسال فردي</th>
               </tr>
             </thead>
             <tbody id="customersDirectoryTableBody" class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300"></tbody>
@@ -581,7 +592,7 @@
             <thead class="bg-slate-100 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th class="p-3">رقم الوردية</th>
-                <th class="p-3">التاريخ والوقت</th>
+                <th class="p-3">الفترة والتاريخ</th>
                 <th class="p-3">كاش البيع المباشر</th>
                 <th class="p-3">تحصيل الأقساط</th>
                 <th class="p-3 text-rose-500">المصاريف</th>
@@ -606,21 +617,21 @@
     <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-lg rounded-3xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
         <h3 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
-          <i class="fa-solid fa-calculator text-blue-500"></i> تقفيل الوردية اليومية وحساب الدرج
+          <i class="fa-solid fa-calculator text-blue-500"></i> جرد وتقفيل الوردية الحالية
         </h3>
         <button onclick="closeModal('dailyShiftModal')" class="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1 rounded-xl"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="space-y-2.5 text-xs">
         <div class="p-3 bg-slate-50 dark:bg-[#080d19] rounded-2xl border border-slate-200 dark:border-slate-800 flex justify-between items-center">
-          <span class="text-slate-600 dark:text-slate-400">كاش المبيعات المباشرة اليوم:</span>
+          <span class="text-slate-600 dark:text-slate-400">كاش المبيعات المباشرة بالوردية:</span>
           <b class="text-emerald-600 dark:text-emerald-400 text-sm font-bold" id="shiftTodaySalesCash">0 ج</b>
         </div>
         <div class="p-3 bg-slate-50 dark:bg-[#080d19] rounded-2xl border border-slate-200 dark:border-slate-800 flex justify-between items-center">
-          <span class="text-slate-600 dark:text-slate-400">أقساط محصلة في الدرج اليوم:</span>
+          <span class="text-slate-600 dark:text-slate-400">أقساط محصلة في الدرج بالوردية:</span>
           <b class="text-emerald-600 dark:text-emerald-400 text-sm font-bold" id="shiftTodayInstCash">0 ج</b>
         </div>
         <div class="p-3 bg-slate-50 dark:bg-[#080d19] rounded-2xl border border-slate-200 dark:border-slate-800 flex justify-between items-center">
-          <span class="text-slate-600 dark:text-slate-400">مصاريف ونولون خرجت اليوم:</span>
+          <span class="text-slate-600 dark:text-slate-400">مصاريف ونولون خرجت بالوردية:</span>
           <b class="text-rose-600 dark:text-rose-400 text-sm font-bold" id="shiftTodayExpenses">0 ج</b>
         </div>
         <div class="p-4 bg-blue-50 dark:bg-blue-950/40 rounded-2xl border border-blue-200 dark:border-blue-500/30 flex justify-between items-center">
@@ -1289,10 +1300,58 @@
         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">نص العرض الترويجي:</label>
         <textarea id="promoCustomMessageInput" rows="5" class="w-full bg-slate-50 dark:bg-[#080d19] border border-slate-300 dark:border-slate-800 rounded-2xl p-3 text-slate-900 dark:text-white text-xs outline-none focus:border-emerald-500 leading-relaxed"></textarea>
       </div>
-      <p class="text-[11px] text-slate-400">سيتم حفظ نص الرسالة واستخدامه عند الضغط على زر إرسال لأي عميل في الدليل.</p>
+      <p class="text-[11px] text-slate-400">سيتم حفظ نص الرسالة واستخدامه في حملات الإرسال الجماعي أو الفردي للعملاء.</p>
       <div class="flex gap-2">
         <button onclick="saveAndApplyPromoMessage()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold shadow">حفظ الرسالة</button>
         <button onclick="closeModal('broadcastPromoModal')" class="px-5 py-3 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 13: معالج الإرسال الجماعي للواتساب -->
+  <div id="bulkWhatsAppQueueModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5">
+    <div class="bg-white dark:bg-[#0e1628] border border-slate-200 dark:border-slate-700/80 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+        <h3 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+          <i class="fa-brands fa-whatsapp text-emerald-500 text-base"></i> حملة الإرسال الجماعي للعملاء
+        </h3>
+        <button onclick="closeModal('bulkWhatsAppQueueModal')" class="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- شريط التقدم -->
+      <div class="space-y-1.5">
+        <div class="flex justify-between text-xs font-bold">
+          <span class="text-slate-600 dark:text-slate-300">التقدم في القائمة:</span>
+          <span class="text-emerald-600 dark:text-emerald-400" id="bulkWaProgressText">1 من 10</span>
+        </div>
+        <div class="w-full h-2.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+          <div id="bulkWaProgressBar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 10%;"></div>
+        </div>
+      </div>
+
+      <!-- كارت العميل الحالي -->
+      <div class="p-4 bg-slate-50 dark:bg-[#080d19] rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+        <div class="flex justify-between items-center">
+          <span class="text-slate-400">العميل المستهدف الآن:</span>
+          <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">جاهز للإرسال</span>
+        </div>
+        <h4 id="bulkWaCurrentName" class="text-base font-black text-slate-900 dark:text-white">--</h4>
+        <p id="bulkWaCurrentPhone" class="font-mono text-blue-600 dark:text-cyan-400 font-bold">--</p>
+        <div class="p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-300 max-h-28 overflow-y-auto whitespace-pre-line" id="bulkWaPreviewMsg"></div>
+      </div>
+
+      <div class="flex flex-col gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+        <button onclick="sendCurrentAndAdvanceBulkQueue()" id="bulkWaSendNextBtn" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 text-white rounded-2xl text-xs font-black shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition">
+          <i class="fa-brands fa-whatsapp text-base"></i> إرسال لهذا العميل والانتقال للتالي ⬅️
+        </button>
+        <div class="flex gap-2">
+          <button onclick="skipCurrentInBulkQueue()" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition">
+            تخطي هذا العميل ⏭️
+          </button>
+          <button onclick="closeModal('bulkWhatsAppQueueModal')" class="px-4 py-2 bg-rose-500/10 text-rose-500 border border-rose-500/30 rounded-xl text-xs font-bold">
+            إنهاء الحملة
+          </button>
+        </div>
       </div>
     </div>
   </div>
